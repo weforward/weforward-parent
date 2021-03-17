@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+	xmlns:beans="http://www.springframework.org/schema/beans"
+	xmlns:tool="http://www.springframework.org/schema/tool"
+	xmlns="http://weforward.cn/schema/weforward"
+	targetNamespace="http://weforward.cn/schema/weforward">
+
+	<xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+	<xsd:import
+		namespace="http://www.springframework.org/schema/beans"
+		schemaLocation="http://www.springframework.org/schema/beans/spring-beans.xsd" />
+	<xsd:import
+		namespace="http://www.springframework.org/schema/tool" />
+
+	<xsd:element name="service">
+		<xsd:complexType>
+			<xsd:sequence>
+				<xsd:element name="name" type="xsd:string" minOccurs="0" maxOccurs="1" />
+				<xsd:element name="host" type="xsd:string" minOccurs="0" maxOccurs="1" />
+				<xsd:element name="port" type="xsd:string" minOccurs="0" maxOccurs="1" />
+				<xsd:element name="path" type="xsd:string" minOccurs="0" maxOccurs="1" />
+				<xsd:element name="no" type="xsd:string" minOccurs="0" maxOccurs="1" />
+				<xsd:element name="servicesUrl" type="xsd:string" minOccurs="0" maxOccurs="1" />
+				<xsd:element name="meterRegistryUrl" type="xsd:string" minOccurs="0" maxOccurs="1" />
+				<xsd:element name="traceRegisterUrl" type="xsd:string" minOccurs="0" maxOccurs="1" />
+				<xsd:element name="innerMethodEnabled" type="xsd:string" minOccurs="0" maxOccurs="1" />
+				<xsd:element name="methodsAwareEnabled" type="xsd:string" minOccurs="0" maxOccurs="1" />
+				<xsd:element name="maxHttpSize" type="xsd:integer" minOccurs="0" maxOccurs="1" />
+				<xsd:element name="elapseTime" type="xsd:integer" minOccurs="0" maxOccurs="1" />
+				<xsd:element name="forwardEnable" type="xsd:boolean" minOccurs="0" maxOccurs="1" />
+				<xsd:element name="requestMaxSize" type="xsd:integer" minOccurs="0" maxOccurs="1" />
+				<xsd:element name="heartbeatPeriod" type="xsd:integer" minOccurs="0" maxOccurs="1" />
+				<xsd:element name="version" type="xsd:string" minOccurs="0" maxOccurs="1" />
+				<xsd:element name="compatibleVersion" type="xsd:string" minOccurs="0" maxOccurs="1" />
+				<xsd:element name="description" type="xsd:string" minOccurs="0" maxOccurs="1" />
+				<xsd:element name="modifyPath" type="xsd:string" minOccurs="0" maxOccurs="1" />
+				<xsd:element name="runningId" type="xsd:string" minOccurs="0" maxOccurs="1" />
+			</xsd:sequence>
+		</xsd:complexType>
+	</xsd:element>
+	<xsd:element name="cloudprop">
+		<xsd:complexType>
+			<xsd:sequence>
+				<xsd:element name="disableCloud" type="xsd:boolean" minOccurs="0" maxOccurs="1"/>
+			</xsd:sequence>
+		</xsd:complexType>
+	</xsd:element>
+</xsd:schema>
