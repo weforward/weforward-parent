@@ -1,0 +1,1092 @@
+= Weforward Framework
+
+ Weforward Framework 提供一些底层支持，用于快速构建微服务.
+ 
+== 快速入门
+
+=== 1.引用项目
+==== 1.1 maven方式引入
+[source,xml]
+----
+<dependency>
+	<groupId>cn.weforward</groupId>
+	<artifactId>weforward-framework</artifactId>
+	<version>${version}</version>
+</dependency>
+----	
+
+==== 1.2 gradle方式的引入
+[source,xml]
+----
+dependencies {
+    compile 'cn.weforward:weforward-framework:${version}'
+}
+----	
+
+=== 2.配置服务入口
+在/src/main/resources目录下增加weforward-endpoint-conf.xml内容如下
+[source,xml]
+----
+<?xml version="1.0" encoding="UTF-8" ?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+  http://www.springframework.org/schema/beans/spring-beans-4.3.xsd
+  http://www.springframework.org/schema/context
+  http://www.springframework.org/schema/context/spring-context-4.3.xsd">
+	<!-- 服务 -->
+	<bean id="service"
+		class="cn.weforward.framework.ext.WeforwardService">
+		<constructor-arg index="0" value="${weforward.name}" />
+		<constructor-arg index="1" value="${weforward.host}" />
+		<constructor-arg index="2" value="${weforward.port}" />
+		<property name="no" value="${weforward.serverid}" />
+		<property name="servicesUrl" value="${weforward.apiUrl}" />
+		<property name="accessId" value="${weforward.service.accessId}" />
+		<property name="accessKey" value="${weforward.service.accessKey}" />
+	</bean>
+	
+</beans>
+----	
+
+=== 3.创建方法集类
+
+[source,java]
+----
+package cn.mytest.weforward;
+
+import cn.weforward.framework.WeforwardMethod;
+import cn.weforward.framework.WeforwardMethods;
+import cn.weforward.protocol.support.datatype.FriendlyObject;
+
+@WeforwardMethods
+public class HomeMethods {
+	
+	@WeforwardMethod
+	public String index(FriendlyObject params) {
+		return "Hello," + params.getString("name");
+	}
+}
+----
+
+=== 4.配置方法集发现
+
+在刚刚的weforward-endpoint-conf.xml配置文件里面增加
+[source,xml]
+----
+<!-- 方法集发现 -->
+<bean class="cn.weforward.framework.ext.MethodsAware">
+	<constructor-arg ref="service" />
+</bean>
+<!-- 扫描指定包的类  -->
+<context:component-scan base-package="cn.mytest.weforward" />
+----
+
+=== 5.配置属性
+经过上面的步骤，我们就可以启动项目了，但是启动时我们需要通过-D指定服务参数，太过麻烦，所以通过配置解决
+
+在weforward-endpoint-conf.xml配置文件里面增加
+[source,xml]
+----
+<!-- 云配置 -->
+<bean id="propertyConfigurer" class="cn.weforward.boot.CloudPropertyPlaceholderConfigurer"/>
+----
+
+CloudPropertyPlaceholderConfigurer会通过下面顺序加载属性
+
+|===
+优先级|说明
+
+|1
+|通过 setLocaion设置的资源
+
+|2
+|classpath下面的weforward-test.properties(一般开发时使用，打包阶段将该文件排除)
+
+|3
+|classpath下面的weforward.properties 
+
+|4
+|Service properties(devops控制台配置的配置)
+
+|===
+
+根据上面的优先级
+我们可以先在/src/main/resources创建weforward.properties 
+增加以下内容
+[source,properties]
+----
+weforward.name=myweforward
+----
+然后在/src/main/resources创建weforward-test.properties 
+增加以下内容
+[source,properties]
+----
+project_name=myweforward
+
+weforward.apiUrl=[网关地址]
+weforward.accessId=[服务访问网关的凭证id]
+weforward.accessKey=[服务访问网关的凭证key]
+
+weforward.host=*
+weforward.port=15000
+----
+
+weforward.host的值为*时，系统会自己读取当前机器的ip，如果有确定的ip也可自行指定
+
+确定定义在 weforward还是weforward-test的方法的是考虑该属性是否环境无关
+如weforward.name大部分情况下是不会变的，所以定义在weforward，
+而weforward.apiUrl则可能由部署的环境决定
+
+=== 6.启动
+
+==== 6.1 XML配置启动
+我们通过运行cn.weforward.boot.SpringXmlApp的main方法类启动微服务
+
+TIP: 如果启动时未指定weforward.serverid属性，则会默认使用x00ff.
+
+启动后，该类会扫描classpath下格式为weforward-*-conf.xml的配置文件.
+如果需要自定义格式，可通过在运行时指定-Dweforward.springconfig=xxx更改
+
+==== 6.2 java bean配置启动
+我们通过运行cn.weforward.boot.SpringAnnotationApp的main方法类启动微服务
+
+TIP: 如果启动时未指定weforward.serverid属性，则会默认使用x00ff.
+
+启动后，该类会读取cn.weforward.SpringConfig.
+如果需要自定义类，-Dweforward.springconfig=xxx更改
+
+
+WARNING: 前面步骤均为xml方式，如果要使用javabean方法启动需要自行修改配置
+
+== 权限验证
+
+=== 1.设置允许类型
+
+微服务的凭证类型分三种
+
+|===
+类型|说明
+
+|无
+|无任何访问凭证
+
+|服务凭证
+|微服务之间调用时使用
+
+|用户凭证
+|用户身份调用微服务时使用
+
+|===
+
+
+对于每一方法集及每一方法均可指定可调用的凭证类型。
+
+指定方法集凭证
+
+
+[source,java]
+----
+@WeforwardMethods(kind = Access.KIND_USER)
+public class HomeMethods
+----
+
+指定方法凭证
+
+[source,java]
+----
+@WeforwardMethod(kind = Access.KIND_USER)
+public String index(FriendlyObject params) {
+	return "Hello," + params.getString("name");
+}
+----
+
+当方法集跟方法都有指定时，以方法指定的优先。
+如果方法集有指定，方法没有，则方法按方法集的类型。
+
+=== 2.设置验证器
+
+针对三种凭证类型类型。WeforwardService类提供三个对应的方法设置验证器
+
+[source,java]
+----
+/**
+* 设置未有凭证的验证器
+* 
+* @param a
+*/
+public void setNoneAuthorizer(Authorizer authorizer)
+	
+/**
+* 设置服务验证器
+* 
+* @param a
+*/
+public void setServiceAuthorizer(Authorizer authorizer) 
+
+/**
+* 设置用户验证器
+* 
+* @param a
+*/
+public void setUserAuthorizer(Authorizer authorizer) 
+----
+
+=== 3.功能举例
+
+==== 3.1 限制无凭证不能调用
+[source,xml]
+----
+<?xml version="1.0" encoding="UTF-8" ?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+  http://www.springframework.org/schema/beans/spring-beans-4.3.xsd
+  http://www.springframework.org/schema/context
+  http://www.springframework.org/schema/context/spring-context-4.3.xsd">
+	<!-- 服务 -->
+	<bean id="service"
+		class="cn.weforward.framework.ext.WeforwardService">
+		<constructor-arg index="0" value="${weforward.name}" />
+		<constructor-arg index="1" value="${weforward.host}" />
+		<constructor-arg index="2" value="${weforward.port}" />
+		<property name="no" value="${weforward.serverid}" />
+		<property name="servicesUrl" value="${weforward.apiUrl}" />
+		<property name="accessId" value="${weforward.service.accessId}" />
+		<property name="accessKey" value="${weforward.service.accessKey}" />
+		<property name="noneAuthorizer">
+			<bean class="cn.weforward.framework.ext.OnOffAuthorizer">
+				<constructor-arg value="false" />
+			</bean>
+		</property>
+	</bean>
+</beans>
+----	
+
+==== 3.2 限制指定ip服务凭证才能调用
+[source,xml]
+----
+<?xml version="1.0" encoding="UTF-8" ?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+  http://www.springframework.org/schema/beans/spring-beans-4.3.xsd
+  http://www.springframework.org/schema/context
+  http://www.springframework.org/schema/context/spring-context-4.3.xsd">
+	<!-- 服务 -->
+	<bean id="service"
+		class="cn.weforward.framework.ext.WeforwardService">
+		<constructor-arg index="0" value="${weforward.name}" />
+		<constructor-arg index="1" value="${weforward.host}" />
+		<constructor-arg index="2" value="${weforward.port}" />
+		<property name="no" value="${weforward.serverid}" />
+		<property name="servicesUrl" value="${weforward.apiUrl}" />
+		<property name="accessId" value="${weforward.service.accessId}" />
+		<property name="accessKey" value="${weforward.service.accessKey}" />
+		<property name="serviceAuthorizer">
+			<bean class="cn.weforward.framework.ext.IpRangesAuthorizer">
+				<constructor-arg value="127.0.0.1;192.168.0.1-192.168.0.255" />
+			</bean>
+		</property>
+	</bean>
+</beans>
+----
+
+==== 3.3 限制用户凭证权限
+
+[source,xml]
+----
+<?xml version="1.0" encoding="UTF-8" ?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+  http://www.springframework.org/schema/beans/spring-beans-4.3.xsd
+  http://www.springframework.org/schema/context
+  http://www.springframework.org/schema/context/spring-context-4.3.xsd">
+	<!-- 服务 -->
+	<bean id="service"
+		class="cn.weforward.framework.ext.WeforwardService">
+		<constructor-arg index="0" value="${weforward.name}" />
+		<constructor-arg index="1" value="${weforward.host}" />
+		<constructor-arg index="2" value="${weforward.port}" />
+		<property name="no" value="${weforward.serverid}" />
+		<property name="servicesUrl" value="${weforward.apiUrl}" />
+		<property name="accessId" value="${weforward.service.accessId}" />
+		<property name="accessKey" value="${weforward.service.accessKey}" />
+		<property name="userAuthorizer">
+			<bean class="cn.weforward.framework.ext.UserAuthorizer">
+				<property name="userService" ref="userService"></property>
+			</bean>
+		</property>
+	</bean>
+</beans>
+----
+
+用户验证稍微复杂一点，这里详细说明一下
+
+首先，我们除了限制只有用户凭证才可以调用方法的同时，还需要根据方法名的不同限制不同的用户可调用
+最简单的例子就是管理员与普通用户，管理员用于管理系统的方法是不允许普通用户访问的。
+
+所以对于用户凭证，除了类型以外，还会有权限的概念。在使用UserAuthorizer时，会要求提供一个UserService
+该接口一般需要自己实现。
+主要需要实现下面的接口:
+[source,java]
+----
+/**
+* 根据访问许可标识获取用户
+* 
+* @param accessId
+* @return
+*/
+User getUserByAccess(String accessId);
+----
+
+该接口返回一个User.通过getRight可以获取该用户可以访问的方法名。
+
+匹配模式如下：
+[source,java]
+----
+/**
+* 权限URI的模式串。<br/>
+* 支持通配符"*"、"**"；"*"匹配"/"以外的字符；"**"放在最后，表示匹配全部字符。
+* 
+* <pre>
+* URI样例：
+* /abc/*.jspx
+* /abc/**
+* /abc/def/*.jspx
+* /ab-*
+* /ab-**
+* **
+* </pre>
+* 
+* 
+* @return
+*/
+String getUriPattern();
+----
+
+通过实现以上方法，就可以限制当前用户可访问调用的方法。
+
+由于默认需要检查用户权限，所以可能会导致一些无需权限控制的方法（如用户主页）不可访问
+这里只需要配置UserAuthorizer的setIgnoreCheckRightUris指定忽略权限权限的方法即可
+如:
+[source,xml]
+----
+<?xml version="1.0" encoding="UTF-8" ?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+  http://www.springframework.org/schema/beans/spring-beans-4.3.xsd
+  http://www.springframework.org/schema/context
+  http://www.springframework.org/schema/context/spring-context-4.3.xsd">
+	<!-- 服务 -->
+	<bean id="service"
+		class="cn.weforward.framework.ext.WeforwardService">
+		<constructor-arg index="0" value="${weforward.name}" />
+		<constructor-arg index="1" value="${weforward.host}" />
+		<constructor-arg index="2" value="${weforward.port}" />
+		<property name="no" value="${weforward.serverid}" />
+		<property name="servicesUrl" value="${weforward.apiUrl}" />
+		<property name="accessId" value="${weforward.service.accessId}" />
+		<property name="accessKey" value="${weforward.service.accessKey}" />
+		<property name="userAuthorizer">
+			<bean class="cn.weforward.framework.ext.UserAuthorizer">
+				<property name="userService" ref="userService"></property>
+				<property name="ignoreCheckRightUris">
+					<list>
+						<value>home/**</value>
+					</list>
+				</property>
+			</bean>
+		</property>
+	</bean>
+</beans>
+----
+
+== 方法说明
+
+=== 1.入参
+使用	@WeforwardMethod 注释的方法可以接受以下入参
+
+[source,java]
+----
+@WeforwardMethod
+public String index(String path, Header header, Request request, Response response, DtObject params,FriendlyObject friendparams,VO voparams,VO vo) {
+return "Hello," + friendparams.getString("name");
+}
+----
+
+
+WARNING: 入参只按类区分参数名无关，即(String path)与(String method)为同一类型入参
+
+参数说明
+
+|===
+参数类|说明
+
+|String
+|方法名，如 home/index
+
+|Header
+|请求头
+
+|Request
+|请求对象 
+
+|Response
+|响应对象
+
+|DtObject
+|请求参数
+
+|FriendlyObject
+|友好的请求参数对象
+
+|VO
+|值VO对象，值VO为具备一个无参构造和一堆getset方法的自定义对象
+
+|===
+
+方法入参的所有参数均为可选，即下面的方法都为合法的
+
+[source,java]
+----
+@WeforwardMethod
+public String index1();
+
+@WeforwardMethod
+public String index2(DtObject params);
+
+@WeforwardMethod
+public String index3(FriendlyObject params);
+----
+
+
+当入参为值VO对象时,系统会通过无参构造创建一个值VO对象,然后调用其对象的set方法注入请求参数数据。
+
+假设请求参数为
+
+[source,json]
+----
+{
+    "method":"home/index",
+    "params":{
+        "user_name":"HelloWorld",
+        "age":18,
+        "level":["1","2","3"]
+    }
+}
+----
+
+则对象的值VO可以为
+[source,java]
+----
+public class UserView {
+
+	protected int m_Age;
+	protected String m_UserName;
+	protected List<String> m_Levels;
+
+	public UserView() {
+
+	}
+
+	public void setUserName(String v) {
+		m_UserName = v;
+	}
+
+	public String getUserName() {
+		return m_UserName;
+	}
+
+	public void setAge(int age) {
+		m_Age = age;
+	}
+
+	public int getAge() {
+		return m_Age;
+	}
+
+	public void setLevels(List<String> list) {
+		m_Levels = list;
+	}
+
+	public List<String> getLevels() {
+		return m_Levels;
+	}
+}
+
+@WeforwardMethod
+public String index(UserView params) {
+	return "Hello," + params.getUserName();
+}
+
+----
+
+=== 2.返回值 
+
+方法的返回值支持以下类型
+
+|===
+类型|说明|默认值
+
+|byte
+|
+|0
+
+|short
+|
+|0
+
+|int
+|
+|0
+
+|long
+|
+|0
+
+|float
+|
+|0
+
+|double
+|
+|0
+
+|boolean
+|
+|false
+
+|Byte
+|
+|null
+
+|Short
+|
+|null
+
+|Integer
+|
+|null
+
+|Long
+|
+|null
+
+|Float
+|
+|null
+
+|Double
+|
+|null
+
+|Boolean
+|
+|null
+
+|String
+|
+|null
+
+|java.math.BigInteger
+|将转换成字符串格式
+|null
+
+|java.math.BigDecimal
+|将转换成字符串格式
+|null
+
+|java.util.Date
+|将转换成GMT时间格式表示的字串:yyyy-MM-dd'T'HH:mm:ss.SSS'Z'，如2019-10-29T00:30:00.666Z
+|null
+
+|Iterable
+|将转换成数组
+|null
+
+|java.util.Iterator
+|将转换成数组
+|null
+
+|java.util.Collection
+|将转换成数组
+|null
+
+|java.util.Map
+|将转换成对象
+|null
+
+|cn.weforward.common.ResultPage
+|将转换成分页对象
+|null
+
+|VO
+|值VO对象，值VO为具备一个无参构造和一堆getset方法的自定义对象
+|null
+
+|void
+|什么都不返回
+|null
+
+|===
+
+当返回值为值 VO对象时,系统调用对象的get方法返回参数。如下面定义的UserView为返回值是，将返回
+
+[source,java]
+----
+@WeforwardMethod
+public UserView index(UserView params) {
+	return params;
+}
+----
+
+[source,json]
+----
+{
+      "user_name":"HelloWorld",
+      "age":18,
+      "level":["1","2","3"]
+}
+----
+
+当返回值为ResultPage时，将会自动翻页，具体为
+
+[source,java]
+----
+Integer pageSize = tryGetInteger(params, "page_size");
+if (null != pageSize) {
+	rp.setPageSize(pageSize);
+}
+Integer page = tryGetInteger(params, "page");
+if (page != null) {
+	rp.gotoPage(page);
+} else {
+	rp.gotoPage(1);
+}
+----
+
+该代码实现了接收调用端的page和page_size参数，自动处理翻转页面。
+所以方法只需要直接返回ResultPage即可，不需要关心翻页
+
+[source,java]
+----
+@WeforwardMethod
+public ResultPage<UserView> index(UserView params) {
+	return ResultPageHelper.empty();
+}
+----
+
+
+=== 3.异常
+
+方法可以通过抛出ApiException，提示调用端业务异常,
+如:
+[source,java]
+----
+@WeforwardMethod
+public void index(UserView params) throws ApiException {
+	if (StringUtil.isEmpty(params.getUserName())) {
+		throw new ApiException(ApiException.CODE_ILLEGAL_ARGUMENT, "用户名不能为空");
+	}
+}
+----
+
+[source,json]
+----
+{
+	"code":20001,
+	"msg":"用户名不能为空"
+}
+----
+
+方法集也可以通过实现ExceptionHandler实现处理异常，如
+
+[source,java]
+----
+@WeforwardMethods
+public class HomeMethods implements ExceptionHandler {
+
+	@WeforwardMethod
+	public void index(UserView params) {
+		if (StringUtil.isEmpty(params.getUserName())) {
+			throw new NullPointerException("用户名不能为空");
+		}
+	}
+
+	public Throwable exception(Throwable error) {
+		if (error instanceof NullPointerException) {
+			return new ApiException(ApiException.CODE_ILLEGAL_ARGUMENT, error.getMessage());
+		}
+		return error;
+	}
+}
+----
+
+如果只想处理特定异常，用可以在方法集写一个以特定异常类为入参，并返回特定异常类的方法，并加上@WeforwardWhenException即可
+
+[source,java]
+----
+
+@WeforwardMethods
+public class HomeMethods {
+
+	@WeforwardMethod
+	public void index(UserView params) {
+		if (StringUtil.isEmpty(params.getUserName())) {
+			throw new NullPointerException("用户名不能为空");
+		}
+	}
+
+	@WeforwardWhenException
+	public ApiException NPE(NullPointerException error) {
+		return new ApiException(ApiException.CODE_ILLEGAL_ARGUMENT, error.getMessage());
+	}
+}
+
+----
+
+=== 4.切面
+
+有时我们可能需要在调用方法前或调用方法后统计处理了东西，Framework提供了一些简单的拦截方法。
+
+==== 4.1 Before
+
+@WeforwardBefore 注释的方法会在执行方法前被调用，入参逻辑与@WeforwardMethod方法相同，返回值可以是void或特定的object
+当返回特定的object是，将会做为下一个方法的入参注入。如：
+
+[source,java]
+----
+@WeforwardBefore
+public UserParam before(UserParam params) {
+	if (StringUtil.isEmpty(params.getUserName())) {
+		params.setUserName("无名");
+	}
+	return params;
+}
+
+@WeforwardMethod
+public void index(UserParam params) {
+	if (StringUtil.isEmpty(params.getUserName())) {
+		throw new NullPointerException("用户名不能为空");
+	}
+}
+
+----
+
+==== 4.2 After
+
+@WeforwardAfter 注释的方法会在执行方法后被调用，入参逻辑在@WeforwardMethod方法增加了@WeforwardMethod的返回类型
+当返回特定的object是，将会做为下一个方法的入参注入，如果是最后一个方法，将作为最终的方法返回值。如：
+
+[source,java]
+----
+@WeforwardMethod
+public UserView index(UserView params) {
+	if (StringUtil.isEmpty(params.getUserName())) {
+		throw new NullPointerException("用户名不能为空");
+	}
+	return new UserView(params.getUserName());
+}
+
+@WeforwardAfter
+public UserView after(UserView params) {
+	if (StringUtil.isEmpty(params.getUserName())) {
+		params.setUserName("无名");
+	}
+	return params;
+}
+----
+
+=== 5.自定义方法名
+
+按照默认规则，方法名由方法集名称（去掉Methods结尾）+/+对应方法名称组成
+
+如下方法名为 home/hello_world
+[source,java]
+----
+@WeforwardMethods
+public class HomeMethods {
+
+	@WeforwardMethod
+	public String helloWorld() {
+		return "HelloWorld";
+	}
+
+}
+----
+
+我们称呼 home为方法组，用于将各方法分组，防止名称冲突，如果不想分组，则可以在@WeforwardMethods加上root=true
+
+如下方法名为 hello_world
+[source,java]
+----
+@WeforwardMethods(root = true)
+public class HomeMethods {
+
+	@WeforwardMethod
+	public String helloWorld() {
+		return "HelloWorld";
+	}
+
+}
+----
+
+如果想指定方法名称，可通过指定name=xxx
+如下方法名为home/hello
+
+[source,java]
+----
+@WeforwardMethods
+public class HomeMethods {
+
+	@WeforwardMethod(name = "hello")
+	public String helloWorld() {
+		return "HelloWorld";
+	}
+}
+----
+
+IMPORTANT: 方法组名称同样可以自行指定
+
+当指定的名称为Ant风格表达式时，则该方法会匹配所有符合规则的方法名。
+[source,java]
+----
+@WeforwardMethods
+public class HomeMethods {
+
+	@WeforwardMethod(name = "hello*")
+	public String helloWorld() {
+		return "HelloWorld";
+	}
+}
+----
+
+还有一种需求，就是整个服务都加上一个方法组，防止服务之间的方法名冲突。这种可以通过构造WeforwardService时指定。
+
+[source,xml]
+----
+<?xml version="1.0" encoding="UTF-8" ?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+  http://www.springframework.org/schema/beans/spring-beans-4.3.xsd
+  http://www.springframework.org/schema/context
+  http://www.springframework.org/schema/context/spring-context-4.3.xsd">
+	<!-- 服务 -->
+	<bean id="service"
+		class="cn.weforward.framework.ext.WeforwardService">
+		<constructor-arg index="0" value="${weforward.name}" />
+		<constructor-arg index="1" value="${weforward.host}" />
+		<constructor-arg index="2" value="${weforward.port}" />
+		<constructor-arg index="3" value="/my/" />
+		<property name="no" value="${weforward.serverid}" />
+		<property name="servicesUrl" value="${weforward.apiUrl}" />
+		<property name="accessId" value="${weforward.service.accessId}" />
+		<property name="accessKey" value="${weforward.service.accessKey}" />
+	</bean>
+</beans>
+----	
+
+配置后该项目的方法名都会加上/my/方法组前缀，如:/my/home/hello_world.
+
+MethodsAware也同样具备相同的功能，可为自己发现的类配置上方法组
+
+[source,xml]
+----
+<?xml version="1.0" encoding="UTF-8" ?>
+<bean class="cn.weforward.framework.ext.MethodsAware">
+		<constructor-arg ref="service" />
+		<property name="basePath" value="/my/"/>
+</bean>
+----	
+
+@Event 用于指定事件回调，增加些注释后，方法名前会加上_event_
+
+如下方法名为 home/_event_hello_world
+[source,java]
+----
+@WeforwardMethods
+public class HomeMethods {
+	@Event
+	@WeforwardMethod
+	public String helloWorld() {
+		return "HelloWorld";
+	}
+
+}
+----
+
+
+== 会话
+
+调用方法是，Framework会依赖ThreadLocal,创建一个会话,通过可以拿到相关信息
+如:
+
+[source,java]
+----
+WeforwardSession.TLS.getIp();
+WeforwardSession.TLS.getUser();
+----
+
+WARNING: 要获取user，需要配置UserAuthorizer并注入UserService.
+
+== 资源
+
+对于资源的处理操作需要分两步
+
+获取资源id->上传/下载
+
+当方法的返回值实现了WeforwardResource接口时，调用端即可获取资源id
+
+[source,java]
+----
+@WeforwardMethod
+public WeforwardResource index() {
+	return WeforwardResourceHelper.valueOf("1.zip", 3600);
+}
+----
+
+
+处理上传操作的类需要实现ResourceUploader
+
+[source,java]
+----
+@WeforwardMethods
+public class HomeMethods implements ResourceUploader {
+
+	@WeforwardMethod
+	public WeforwardResource index() {
+		return WeforwardResourceHelper.valueOf("1.zip", 3600);
+	}
+
+	public boolean saveFile(String resourceId, WeforwardFile... files) throws IOException {
+		if (StringUtil.eq(resourceId, "1.zip")) {
+			// TODO 保存数据
+			return true;
+		}
+		return false;
+	}
+}
+
+----
+
+处理下载操作的类需要实现ResourceDownloader
+
+[source,java]
+----
+package cn.mytest.weforward;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+
+import cn.weforward.common.util.StringUtil;
+import cn.weforward.framework.ResourceDownloader;
+import cn.weforward.framework.WeforwardFile;
+import cn.weforward.framework.WeforwardMethod;
+import cn.weforward.framework.WeforwardMethods;
+import cn.weforward.framework.WeforwardResource;
+import cn.weforward.framework.util.WeforwardResourceHelper;
+
+@WeforwardMethods
+public class HomeMethods implements ResourceDownloader {
+
+	@WeforwardMethod
+	public WeforwardResource index() {
+		return WeforwardResourceHelper.valueOf("1.zip", 3600);
+	}
+
+	public WeforwardFile findFile(String resourceId) throws IOException {
+		if (StringUtil.eq(resourceId, "1.zip")) {
+			InputStream in = new ByteArrayInputStream("HelloWrold".getBytes());
+			return WeforwardResourceHelper.newFile("1.zip", in);
+		}
+		return null;
+	}
+}
+
+----
+
+== 转发
+
+当资源需要由特定实例处理时，我们可以使用转发策略，将请求转发到特定实例。
+
+=== 1.开启支持回源
+
+通过调用WeforwardService的setForwardEnable可启用转发支持
+[source,xml]
+----
+	<bean id="service"
+		class="cn.weforward.framework.ext.WeforwardService">
+		...
+		<property name="setForwardEnable" value="true"/>
+		...
+	</bean>
+----
+
+支持转发的请求数据的最大字节数据默认为2m,如果该服务的请求可能大于该值，则可通过setRequestMaxSize指定。
+
+=== 2.转发
+
+在服务开启转发的提前下，我们在方法里面抛出ForwardException异常即可让网关转发请求。
+
+[source,java]
+----
+@WeforwardMethod
+public String helloWorld() throws ApiException {
+	throw new ForwardException("另一个服务的编号");
+}
+----
+
+ForwardException还指供了一些快捷方法
+如:
+
+判断对象是否需要转发
+[source,java]
+----
+@WeforwardMethod
+public void helloWorld() throws ApiException {
+	Object object = new DistributedObject() {
+
+		public boolean iDo() {
+			return false;
+		}
+
+		public String getDriverIt() {
+			return "另一个网关编号";
+		}
+	};
+	ForwardException.forwardToIfNeed(object);
+	System.out.println(object.toString());
+}
+----
+
+TIP: 对象需要实现DistributedObject接口
+
+指定转换到备份服务
+
+[source,java]
+----
+@WeforwardMethod
+public void helloWorld() throws ApiException {
+	boolean overload = false;
+	if (overload) {
+		ForwardException.forwardBackUp();
+	}
+}
+----
