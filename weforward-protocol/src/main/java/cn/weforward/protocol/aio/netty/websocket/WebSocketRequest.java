@@ -3,7 +3,7 @@ package cn.weforward.protocol.aio.netty.websocket;
 import cn.weforward.protocol.aio.http.HttpHeaders;
 
 /**
- * Websocket下的请求封装
+ * Websocket涓嬬殑璇锋眰灏佽
  * 
  * @author liangyi
  *

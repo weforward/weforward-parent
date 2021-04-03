@@ -10,6 +10,7 @@
  */
 package cn.weforward.boot;
 
+import org.springframework.beans.factory.annotation.Configurable;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 import cn.weforward.boot.support.AbstractSpringApp;
@@ -18,7 +19,7 @@ import cn.weforward.common.util.StringUtil;
 /**
  * 基于{@link AnnotationConfigApplicationContext} 的入口
  * 
- * 要求使用java类配置(使用@Configuration注解的类)，默认读取cn.weforward.SpringConfig类
+ * 要求使用java类配置(使用{@link Configurable}注解的类)，默认读取cn.weforward.SpringConfig类
  * 
  * 如果要指定格式，可用-Dweforward.springconfig=xxx 指定
  * 
