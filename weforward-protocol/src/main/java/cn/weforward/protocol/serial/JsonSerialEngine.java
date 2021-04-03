@@ -20,6 +20,7 @@ import java.util.Enumeration;
 import cn.weforward.common.KvPair;
 import cn.weforward.common.execption.InvalidFormatException;
 import cn.weforward.common.io.BytesOutputStream;
+import cn.weforward.common.json.JsonOutput;
 import cn.weforward.common.json.JsonOutputStream;
 import cn.weforward.common.json.JsonUtil;
 import cn.weforward.common.util.Bytes;
@@ -56,7 +57,7 @@ public class JsonSerialEngine implements SerialEngine {
 		formatObject(object, jos);
 	}
 
-	public static void formatObject(DtObject object, JsonOutputStream output) throws IOException {
+	public static void formatObject(DtObject object, JsonOutput output) throws IOException {
 		if (object instanceof JsonDtObject) {
 			String json = ((JsonDtObject) object).getJsonString();
 			if (null != json) {
@@ -83,7 +84,7 @@ public class JsonSerialEngine implements SerialEngine {
 		output.append('}');
 	}
 
-	public static void formatList(DtList list, JsonOutputStream output) throws IOException {
+	public static void formatList(DtList list, JsonOutput output) throws IOException {
 		if (list instanceof JsonDtList) {
 			String json = ((JsonDtList) list).getJsonString();
 			if (null != json) {
@@ -106,7 +107,7 @@ public class JsonSerialEngine implements SerialEngine {
 		output.append(']');
 	}
 
-	public static void formatValue(DtBase value, JsonOutputStream output) throws IOException {
+	public static void formatValue(DtBase value, JsonOutput output) throws IOException {
 		if (null == value) {
 			output.append("null");
 			return;

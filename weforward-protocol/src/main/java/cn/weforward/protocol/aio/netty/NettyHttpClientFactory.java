@@ -11,6 +11,7 @@
 package cn.weforward.protocol.aio.netty;
 
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -24,6 +25,8 @@ import javax.net.ssl.SSLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import cn.weforward.common.util.NumberUtil;
+import cn.weforward.common.util.StringBuilderPool;
 import cn.weforward.protocol.aio.ClientHandler;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -43,6 +46,7 @@ import io.netty.handler.codec.http.HttpRequestEncoder;
 import io.netty.handler.codec.http.HttpResponseDecoder;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
+import io.netty.util.NettyRuntime;
 import io.netty.util.concurrent.DefaultThreadFactory;
 import io.netty.util.concurrent.ScheduledFuture;
 import io.netty.util.internal.OutOfDirectMemoryError;
@@ -57,7 +61,7 @@ public class NettyHttpClientFactory {
 	static final Logger _Logger = LoggerFactory.getLogger(NettyHttpClientFactory.class);
 
 	Bootstrap m_Bootstrap;
-	EventLoopGroup m_EventLoopGroup;
+	volatile EventLoopGroup m_EventLoopGroup;
 	/** 按主机+端口组织的连接池 */
 	Map<String, Service> m_Services;
 	/** SSL支持 */
@@ -70,9 +74,16 @@ public class NettyHttpClientFactory {
 	protected int m_IdleMillis = 10 * 60 * 1000;
 	/** 是否debug模式 */
 	protected boolean m_DebugEnabled = false;
+	/** 尽量控制的每组并发连接数（若指定） */
+	protected int m_FineConnections = NumberUtil
+			.toInt(System.getProperty("cn.weforward.protocol.aio.netty.FINE_CONNECTIONS"), 100);
 
 	public NettyHttpClientFactory() {
 		m_Services = new HashMap<String, Service>();
+		m_Threads = NettyRuntime.availableProcessors() * 2;
+		if (m_Threads > 8) {
+			m_Threads = 8;
+		}
 	}
 
 	public void setName(String name) {
@@ -85,6 +96,10 @@ public class NettyHttpClientFactory {
 
 	public void setThreads(int threads) {
 		m_Threads = threads;
+	}
+
+	public void setFineConnections(int max) {
+		m_FineConnections = max;
 	}
 
 	/**
@@ -111,24 +126,24 @@ public class NettyHttpClientFactory {
 		synchronized (m_Services) {
 			service = m_Services.get(key);
 			if (null == service) {
-				service = new Service(host, port);
+				service = new Service(key);
 				m_Services.put(key, service);
 			}
 		}
 		return service;
 	}
 
-	private Channel getIdelChannel(String host, int port) {
-		String key = genKey(host, port);
-		Service service;
-		synchronized (m_Services) {
-			service = m_Services.get(key);
-			if (null != service) {
-				return service.get();
-			}
-		}
-		return null;
-	}
+	// private Channel getIdelChannel(String host, int port) {
+	// String key = genKey(host, port);
+	// Service service;
+	// synchronized (m_Services) {
+	// service = m_Services.get(key);
+	// if (null != service) {
+	// return service.get();
+	// }
+	// }
+	// return null;
+	// }
 
 	/**
 	 * 创建异步HTTP客户端
@@ -147,40 +162,52 @@ public class NettyHttpClientFactory {
 		if (ssl && null == m_SslContext) {
 			throw new SSLException("不支持");
 		}
-		start();
 
-		Channel channel = getIdelChannel(host, port);
+		// Channel channel = getIdelChannel(host, port);
+		final Service service = openService(host, port);
+		Channel channel = service.get();
+		if (null == channel) {
+			try {
+				// 没有空闲连接，准备创建新连接
+				channel = service.pending(m_FineConnections);
+			} catch (InterruptedException e) {
+				throw new InterruptedIOException(e.getMessage());
+			}
+		}
 		if (null != channel) {
 			// 有空闲连接，直接关联
 			channel.pipeline().addLast("client", client);
 			return;
 		}
-		ChannelFuture f = m_Bootstrap.connect(host, port);
-		f.addListener(new ChannelFutureListener() {
-			@Override
-			public void operationComplete(ChannelFuture future) throws Exception {
-				Channel channel = future.channel();
-				if (future.isSuccess()) {
-					InetSocketAddress ia = (InetSocketAddress) channel.remoteAddress();
-					String host = ia.getHostString();
-					int port = ia.getPort();
-					ChannelPipeline pipeline = channel.pipeline();
-					if (ssl) {
-						pipeline.addFirst("ssl", m_SslContext.newHandler(channel.alloc()));
+		ChannelFuture future = null;
+		try {
+			future = open().connect(host, port);
+			future.addListener(new ChannelFutureListener() {
+				@Override
+				public void operationComplete(ChannelFuture future) throws Exception {
+					Channel channel = future.channel();
+					if (future.isSuccess()) {
+						ChannelPipeline pipeline = channel.pipeline();
+						if (ssl) {
+							pipeline.addFirst("ssl", m_SslContext.newHandler(channel.alloc()));
+						}
+						pipeline.addLast("service", service);
+						pipeline.addLast("client", client);
+						service.trace("已连接", channel);
+					} else {
+						// 连接失败？
+						service.fin();
+						// _Logger.error(future.toString(), future.cause());
+						client.connectFail(future.cause());
+						channel.close();
 					}
-					pipeline.addLast("service", openService(host, port));
-					pipeline.addLast("client", client);
-					if (_Logger.isTraceEnabled()) {
-						_Logger.trace("已连接：" + channel);
-					}
-				} else {
-					// 连接失败？
-					// _Logger.error(future.toString(), future.cause());
-					client.connectFail(future.cause());
-					channel.close();
 				}
+			});
+		} finally {
+			if (null == future) {
+				service.fin();
 			}
-		});
+		}
 	}
 
 	public void free(Channel channel) {
@@ -192,6 +219,7 @@ public class NettyHttpClientFactory {
 		int port = ia.getPort();
 		Service service = openService(host, port);
 		service.free(channel);
+		service.trace("free", channel);
 	}
 
 	/**
@@ -238,32 +266,41 @@ public class NettyHttpClientFactory {
 		m_Bootstrap = null;
 	}
 
-	synchronized private void start() {
+	private Bootstrap open() {
 		if (null != m_EventLoopGroup) {
-			return;
+			return m_Bootstrap;
 		}
-		String name = getName();
-		if (null == name || 0 == name.length()) {
-			name = "hc";
-		} else {
-			name = name + "-hc";
-		}
-		ThreadFactory threadFactory = new DefaultThreadFactory(name);
-		m_EventLoopGroup = new NioEventLoopGroup(m_Threads, threadFactory);
-		m_Bootstrap = new Bootstrap();
-		m_Bootstrap.group(m_EventLoopGroup);
-		m_Bootstrap.channel(NioSocketChannel.class);
-		m_Bootstrap.option(ChannelOption.SO_KEEPALIVE, true);
-		m_Bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000);
-		m_Bootstrap.handler(new ChannelInitializer<SocketChannel>() {
-			@Override
-			public void initChannel(SocketChannel ch) throws Exception {
-				ChannelPipeline pipeline = ch.pipeline();
-				pipeline.addLast("c-encoder", new HttpRequestEncoder());
-				pipeline.addLast("c-decoder", new HttpResponseDecoder());
+		synchronized (this) {
+			if (null != m_EventLoopGroup) {
+				return m_Bootstrap;
 			}
-		});
+			String name = getName();
+			if (null == name || 0 == name.length()) {
+				name = "hc";
+			} else {
+				name = name + "-hc";
+			}
+			ThreadFactory threadFactory = new DefaultThreadFactory(name);
+			NioEventLoopGroup eventLoop = new NioEventLoopGroup(m_Threads, threadFactory);
+			if (null == m_Bootstrap) {
+				m_Bootstrap = new Bootstrap();
+			}
+			m_Bootstrap.group(eventLoop);
+			m_Bootstrap.channel(NioSocketChannel.class);
+			m_Bootstrap.option(ChannelOption.SO_KEEPALIVE, true);
+			m_Bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000);
+			m_Bootstrap.handler(new ChannelInitializer<SocketChannel>() {
+				@Override
+				public void initChannel(SocketChannel ch) throws Exception {
+					ChannelPipeline pipeline = ch.pipeline();
+					pipeline.addLast("c-encoder", new HttpRequestEncoder());
+					pipeline.addLast("c-decoder", new HttpResponseDecoder());
+				}
+			});
+			m_EventLoopGroup = eventLoop;
+		}
 		NettyMemMonitor.getInstance().log();
+		return m_Bootstrap;
 	}
 
 	/**
@@ -326,13 +363,11 @@ public class NettyHttpClientFactory {
 				boolean ret;
 				ret = m_Service.remove(ServiceChannel.this);
 				if (ret) {
-					if (_Logger.isTraceEnabled()) {
-						_Logger.trace("Idle " + m_Channel);
-					}
+					m_Service.trace("Idle", m_Channel);
 					// 关闭
 					m_Channel.close();
-				} else if (_Logger.isTraceEnabled()) {
-					_Logger.trace("not free " + m_Channel);
+				} else {
+					m_Service.trace("not free", m_Channel);
 				}
 			}
 		}
@@ -348,19 +383,46 @@ public class NettyHttpClientFactory {
 	class Service extends ChannelInboundHandlerAdapter {
 		/** 空闲连接 */
 		List<ServiceChannel> m_Channels;
-		/** 主机 */
-		String m_Host;
-		/** 端口 */
-		int m_Port;
+		/** 连接中或处理中的连接数 */
+		int m_Pending;
+		/** 连接重用计数 */
+		int m_Reuses;
+		// final String m_Name;
 
-		Service(String host, int port) {
-			m_Host = host;
-			m_Port = port;
+		Service(String name) {
+			// m_Name = name;
 			m_Channels = new LinkedList<ServiceChannel>();
 		}
 
+		synchronized void fin() {
+			--m_Pending;
+			this.notifyAll();
+		}
+
+		synchronized Channel pending(int max) throws InterruptedException {
+			if (m_Pending + m_Channels.size() >= max) {
+				// 并发连接超额，等一会看看是否有空闲，或再创建新连接
+				this.wait(100);
+				Channel ret = get();
+				if (null != ret) {
+					return ret;
+				}
+				trace("超控", null);
+			}
+			++m_Pending;
+			return null;
+		}
+
+		public int size() {
+			return m_Channels.size();
+		}
+
 		synchronized boolean remove(ServiceChannel serviceChannel) {
-			return m_Channels.remove(serviceChannel);
+			if (m_Channels.remove(serviceChannel)) {
+				fin();
+				return true;
+			}
+			return false;
 		}
 
 		@SuppressWarnings("unlikely-arg-type")
@@ -376,6 +438,8 @@ public class NettyHttpClientFactory {
 			if (m_Channels.size() > 0) {
 				ServiceChannel sc = m_Channels.remove(m_Channels.size() - 1);
 				if (null != sc) {
+					++m_Pending;
+					++m_Reuses;
 					return sc.take();
 				}
 			}
@@ -384,6 +448,7 @@ public class NettyHttpClientFactory {
 
 		synchronized public void free(Channel channel) {
 			m_Channels.add(new ServiceChannel(this, channel));
+			--m_Pending;
 		}
 
 		// @Override
@@ -394,11 +459,11 @@ public class NettyHttpClientFactory {
 
 		@Override
 		public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-			if (_Logger.isTraceEnabled()) {
-				_Logger.trace("断开：" + ctx.channel());
-			}
-			remove(ctx.channel());
+			Channel channel = ctx.channel();
+			remove(channel);
+			fin();
 			super.channelInactive(ctx);
+			trace("断开", channel);
 		}
 
 		@Override
@@ -407,6 +472,36 @@ public class NettyHttpClientFactory {
 				ctx.close();
 			}
 			super.exceptionCaught(ctx, cause);
+		}
+
+		public void trace(String msg, Channel channel) {
+			if (!_Logger.isTraceEnabled()) {
+				return;
+			}
+			StringBuilder builder = StringBuilderPool._128.poll();
+			String content;
+			try {
+				if (null != msg) {
+					builder.append(msg);
+					builder.append(",");
+				}
+				// builder.append(m_Name);
+				builder.append("{idle:").append(size());
+				if (m_Reuses > 0) {
+					builder.append(",reuses:").append(m_Reuses);
+				}
+				if (m_Pending > 0) {
+					builder.append(",pending:").append(m_Pending);
+				}
+				builder.append("}");
+				if (null != channel) {
+					builder.append(channel.toString());
+				}
+				content = builder.toString();
+			} finally {
+				StringBuilderPool._128.offer(builder);
+			}
+			_Logger.trace(content);
 		}
 	}
 }

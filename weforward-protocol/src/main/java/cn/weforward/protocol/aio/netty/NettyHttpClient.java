@@ -66,38 +66,40 @@ import io.netty.util.concurrent.ScheduledFuture;
 public class NettyHttpClient extends ChannelInboundHandlerAdapter implements HttpClient {
 	static final Logger _Logger = LoggerFactory.getLogger(NettyHttpClient.class);
 
-	final NettyHttpClientFactory m_Factory;
-	ClientHandler m_Handler;
-	ChannelHandlerContext m_Ctx;
+	protected final NettyHttpClientFactory m_Factory;
+	protected ClientHandler m_Handler;
+	protected ChannelHandlerContext m_Ctx;
 
 	/** 请求头 */
-	io.netty.handler.codec.http.HttpHeaders m_RequestHeaders;
+	protected io.netty.handler.codec.http.HttpHeaders m_RequestHeaders;
 	/** 请求消息 */
-	HttpRequest m_Request;
+	protected HttpRequest m_Request;
 	/** 输出请求体字节流 */
-	NettyOutputStream m_RequestWriter;
+	protected NettyOutputStream m_RequestWriter;
 	/** 发起请求的时间点 */
-	long m_RequestTimepoint;
+	protected long m_RequestTimepoint;
 	/** 从发起连接到收到完整响应的超时值（毫秒） */
-	int m_Timeout;
+	protected int m_Timeout;
 	/** 超时检查任务 */
-	ScheduledFuture<?> m_TimeoutTask;
+	protected ScheduledFuture<?> m_TimeoutTask;
 
 	/** 收到的请求或发送的响应体总长度 */
-	long m_BodyLength;
+	protected long m_BodyLength;
 	/** 请求/响应传输的时间点（传输完请求头或响应头后） */
-	long m_TransferTimepoint;
+	protected long m_TransferTimepoint;
 	/** 估算的传输速率 */
-	int m_Bps;
+	protected int m_Bps;
 
 	/** 响应消息 */
-	HttpResponse m_Response;
+	protected HttpResponse m_Response;
 	/** 响应内容 */
-	ByteBufStream m_ResponseBody;
+	protected ByteBufStream m_ResponseBody;
 	/** 直接转传响应的内容（收到即转传） */
-	NettyOutputStream m_ResponseTransferTo;
+	protected NettyOutputStream m_ResponseTransferTo;
 	/** 阻塞读超时 */
-	int m_ReadTimeout;
+	protected int m_ReadTimeout;
+	/** HTTP USER AGENT */
+	protected String m_UserAgent;
 
 	protected NettyHttpClient(NettyHttpClientFactory factory, ClientHandler handler) {
 		m_Factory = factory;
@@ -106,6 +108,11 @@ public class NettyHttpClient extends ChannelInboundHandlerAdapter implements Htt
 			// 同步模式下默认超时值为60秒
 			setReadTimeout(60 * 1000);
 		}
+		m_UserAgent = "netty";
+	}
+
+	public void setUserAgent(String agent) {
+		m_UserAgent = agent;
 	}
 
 	public void connectFail(Throwable cause) {
@@ -533,7 +540,7 @@ public class NettyHttpClient extends ChannelInboundHandlerAdapter implements Htt
 			io.netty.handler.codec.http.HttpHeaders headers = openRequestHeaders();
 			headers.set(HttpHeaderNames.HOST, uri.getHost());
 			headers.set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
-			headers.set(HttpHeaderNames.USER_AGENT, "netty");
+			headers.set(HttpHeaderNames.USER_AGENT, m_UserAgent);
 			headers.set(HttpHeaderNames.ACCEPT, "*/*");
 			headers.set(HttpHeaderNames.ACCEPT_CHARSET, "UTF-8");
 

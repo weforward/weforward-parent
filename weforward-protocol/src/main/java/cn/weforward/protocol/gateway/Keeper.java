@@ -107,6 +107,7 @@ public interface Keeper {
 	 * 查询微服务实例
 	 * 
 	 * @param params
+	 *            查询参数
 	 * 
 	 */
 	ResultPage<ServiceExt> searchService(SearchServiceParams params);
@@ -115,6 +116,7 @@ public interface Keeper {
 	 * 获取服务的权限表
 	 * 
 	 * @param name
+	 *            服务名
 	 * 
 	 * @throws WeforwardException
 	 */
@@ -176,16 +178,31 @@ public interface Keeper {
 	 * 移动权限规则的位置
 	 * 
 	 * @param name
+	 *            服务名
 	 * @param from
+	 *            当前位置
 	 * @param to
+	 *            目标位置
 	 * 
 	 */
 	RightTable moveRightRule(String name, int from, int to);
 
 	/**
+	 * 设置服务的权限规则表
+	 * 
+	 * @param name
+	 *            服务名
+	 * @param items
+	 *            规则项
+	 * @return
+	 */
+	RightTable setRightRules(String name, List<RightTableItem> items);
+
+	/**
 	 * 获取服务的流量表
 	 * 
 	 * @param name
+	 *            服务名
 	 * 
 	 */
 	TrafficTable getTrafficTable(String name);
@@ -246,11 +263,25 @@ public interface Keeper {
 	 * 移动流量规则的位置
 	 * 
 	 * @param name
+	 *            服务名
 	 * @param from
+	 *            当前位置
 	 * @param to
+	 *            目标位置
 	 * 
 	 */
 	TrafficTable moveTrafficRule(String name, int from, int to);
+
+	/**
+	 * 设置服务的流量规则表
+	 * 
+	 * @param name
+	 *            服务名
+	 * @param items
+	 *            规则项
+	 * 
+	 */
+	TrafficTable setTrafficRules(String name, List<TrafficTableItem> items);
 
 	// /**
 	// * 获取微服务（多版本）的文档
@@ -264,6 +295,7 @@ public interface Keeper {
 	 * 获取服务的ACL表
 	 * 
 	 * @param name
+	 *            服务名
 	 * 
 	 */
 	AclTable getAclTable(String name);
@@ -312,8 +344,11 @@ public interface Keeper {
 	 * 移动ACL规则项的位置
 	 * 
 	 * @param name
+	 *            服务名
 	 * @param from
+	 *            当前位置
 	 * @param to
+	 *            目标位置
 	 * 
 	 */
 	AclTable moveAclRule(String name, int from, int to);

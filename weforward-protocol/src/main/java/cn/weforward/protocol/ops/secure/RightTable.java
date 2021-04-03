@@ -61,7 +61,8 @@ public interface RightTable {
 	 * 
 	 * @param item
 	 * @param index
-	 * @param name  原位置规则的名称
+	 * @param name
+	 *            原位置规则的名称
 	 */
 	void replaceItem(RightTableItem item, int index, String name);
 
@@ -77,7 +78,16 @@ public interface RightTable {
 	 * 删除指定位置的规则
 	 * 
 	 * @param index
-	 * @param name  原位置规则的名称
+	 * @param name
+	 *            原位置规则的名称
 	 */
 	void removeItem(int index, String name);
+
+	/**
+	 * 设置规则表
+	 * 
+	 * @param items
+	 *            规则项列表
+	 */
+	void setItems(List<RightTableItem> items);
 }

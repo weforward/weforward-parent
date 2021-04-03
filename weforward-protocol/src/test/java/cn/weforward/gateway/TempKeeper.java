@@ -14,6 +14,7 @@ import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
@@ -101,6 +102,9 @@ public class TempKeeper {
 				} else if ("move".equals(arr[1])) {
 					// rt move test 0 1
 					tmp.moveServiceRule(arr[2], Integer.valueOf(arr[3]), Integer.valueOf(arr[4]));
+				} else if ("set".equals(arr[1])) {
+					// rt set test 允许全部 * * * true
+					tmp.setServiceRules(arr[2], arr[3], arr[4], arr[5], arr[6], Boolean.valueOf(arr[7]));
 				}
 			} else if (cmd.startsWith("tt ")) {
 				String[] arr = cmd.split(" ");
@@ -119,6 +123,9 @@ public class TempKeeper {
 				} else if ("move".equals(arr[1])) {
 					// tt move test 0 1
 					tmp.moveTrafficRule(arr[2], Integer.valueOf(arr[3]), Integer.valueOf(arr[4]));
+				} else if ("set".equals(arr[1])) {
+					// tt set test name=all&no=s1&ver=&weight=1&maxFails=3&failTimeout=60
+					tmp.setTrafficRules(arr[2], arr[3]);
 				}
 			} else if (cmd.startsWith("doc ")) {
 				// String[] arr = cmd.split(" ");
@@ -217,7 +224,7 @@ public class TempKeeper {
 		int page = 1;
 		while (rp.gotoPage(page++)) {
 			for (ServiceSummary sum : rp) {
-				System.out.println(sum.getName()+","+sum.getStatus()+","+sum.getSummary());
+				System.out.println(sum.getName() + "," + sum.getStatus() + "," + sum.getSummary());
 			}
 		}
 	}
@@ -264,6 +271,25 @@ public class TempKeeper {
 		}
 		item.setAllow(allow);
 		RightTable table = keeper.appendRightRule(name, new RightTableItemWrap(item));
+		show(table);
+	}
+
+	public void setServiceRules(String name, String itemName, String accId, String accKind, String accGroup,
+			boolean allow) {
+		RightTableItemVo vo = new RightTableItemVo();
+		vo.setName(itemName);
+		if (!"*".equals(accId)) {
+			vo.setAccessId(accId);
+		}
+		if (!"*".equals(accKind)) {
+			vo.setAccessKind(accKind);
+		}
+		if (!"*".equals(accGroup)) {
+			vo.setAccessGroup(accGroup);
+		}
+		vo.setAllow(allow);
+		RightTableItem item = new RightTableItemWrap(vo);
+		RightTable table = keeper.setRightRules(name, Arrays.asList(item, item));
 		show(table);
 	}
 
@@ -323,6 +349,12 @@ public class TempKeeper {
 	public void appendTrafficRule(String name, String itemFormat) {
 		TrafficTableItem item = parseTrafficRule(itemFormat);
 		TrafficTable table = keeper.appendTrafficRule(name, item);
+		show(table);
+	}
+
+	public void setTrafficRules(String name, String itemFormat) {
+		TrafficTableItem item = parseTrafficRule(itemFormat);
+		TrafficTable table = keeper.setTrafficRules(name, Arrays.asList(item, item));
 		show(table);
 	}
 

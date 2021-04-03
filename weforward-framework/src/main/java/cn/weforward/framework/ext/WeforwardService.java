@@ -33,7 +33,6 @@ import org.springframework.context.ApplicationContextAware;
 
 import cn.weforward.common.Destroyable;
 import cn.weforward.common.io.OutputStreamStay;
-import cn.weforward.common.json.JsonOutputStream;
 import cn.weforward.common.restful.RestfulRequest;
 import cn.weforward.common.restful.RestfulResponse;
 import cn.weforward.common.restful.RestfulService;
@@ -41,6 +40,7 @@ import cn.weforward.common.sys.Memory;
 import cn.weforward.common.sys.Shutdown;
 import cn.weforward.common.sys.VmStat;
 import cn.weforward.common.util.ClassUtil;
+import cn.weforward.common.util.ListUtil;
 import cn.weforward.common.util.StringUtil;
 import cn.weforward.common.util.ThreadPool;
 import cn.weforward.framework.ApiException;
@@ -79,13 +79,9 @@ import cn.weforward.protocol.gateway.ServiceRegister;
 import cn.weforward.protocol.gateway.http.HttpServiceRegister;
 import cn.weforward.protocol.gateway.vo.ServiceVo;
 import cn.weforward.protocol.ops.trace.ServiceTraceToken;
-import cn.weforward.protocol.serial.JsonSerialEngine;
 import cn.weforward.protocol.support.SimpleProducer;
 import cn.weforward.protocol.support.SimpleResponse;
 import cn.weforward.protocol.support.datatype.FriendlyObject;
-import cn.weforward.protocol.support.datatype.SimpleDtList;
-import cn.weforward.protocol.support.datatype.SimpleDtObject;
-import cn.weforward.protocol.support.doc.ServiceDocumentVo;
 import cn.weforward.trace.RemoteTraceRegistry;
 import cn.weforward.trace.TraceRegistry;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -161,8 +157,6 @@ public class WeforwardService
 	protected int m_RequestMaxSize;
 	/** 是否启用转换发 */
 	protected boolean m_ForwardEnable;
-	/** 是否显示文档 */
-	protected boolean m_ShowDocEnable;
 	/** 启动时间 */
 	protected long m_StartTime;
 	/** HTTP server */
@@ -173,6 +167,8 @@ public class WeforwardService
 	protected Map<String, List<TopicListenerWrap<?>>> m_Listeners = new HashMap<>();
 	/** 包含的Awares对象 */
 	protected List<ApplicationContextAware> m_ChildAwares = new ArrayList<>();
+	/** UriHandler集合 */
+	protected UriHandlers m_UriHandlers;
 
 	/**
 	 * 构造
@@ -221,6 +217,7 @@ public class WeforwardService
 		m_StreamEndpoint = new StreamEndPoint();
 		m_RestfulServer = new RestfulServer(this);
 		m_HttpServer.setHandlerFactory(m_RestfulServer);
+		m_UriHandlers = new UriHandlers();
 		if (threads > 0) {
 			setExecutor(new ThreadPool(threads, name));
 		}
@@ -370,7 +367,13 @@ public class WeforwardService
 	 * @param enable 开启/关闭
 	 */
 	public void setShowDocEnable(boolean enable) {
-		m_ShowDocEnable = enable;
+		if (enable) {
+			if(null == m_UriHandlers.find(LocalDocUriHandler.URI)) {
+				m_UriHandlers.add(new LocalDocUriHandler(()->m_RpcEndpoint.getServiceDocument()));
+			}
+		} else {
+			m_UriHandlers.remove(LocalDocUriHandler.URI);
+		}
 	}
 
 	/**
@@ -1137,22 +1140,9 @@ public class WeforwardService
 
 		if (null == reqHeader.getAuthType()) {
 			// 非weforward请求
-			if (m_ShowDocEnable && path.startsWith("/__wf_doc/")) {
-				ServiceDocumentVo vo = m_RpcEndpoint.getServiceDocument();
-				response.setHeader("Content-Type", "application/json;charset=utf-8");
-				if (null == vo) {
-					response.setStatus(RestfulResponse.STATUS_NOT_FOUND);
-					response.openOutput().close();
-				} else {
-					response.setStatus(RestfulResponse.STATUS_OK);
-					List<ServiceDocumentVo> vos = Collections.singletonList(vo);
-					SimpleDtObject result = new SimpleDtObject();
-					result.put("docs", SimpleDtList.toDtList(vos, ServiceDocumentVo.MAPPER));
-					try (OutputStream out = response.openOutput()) {
-						JsonOutputStream jos = new JsonOutputStream(out);
-						JsonSerialEngine.formatObject(result, jos);
-					}
-				}
+			UriHandler uriHandler = (null == m_UriHandlers) ? null : m_UriHandlers.find(path);
+			if (null != uriHandler) {
+				uriHandler.handle(request, response);
 				return;
 			}
 			response.setStatus(RestfulResponse.STATUS_BAD_REQUEST);
@@ -1527,6 +1517,13 @@ public class WeforwardService
 			r.register(bean);
 		}
 		return bean;
+	}
+	
+	public void setUriHandlers(List<UriHandler> handlers) {
+		if(ListUtil.isEmpty(handlers)) {
+			return;
+		}
+		m_UriHandlers.addAll(handlers);
 	}
 
 	@Override

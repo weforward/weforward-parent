@@ -62,4 +62,12 @@ public class ServiceExtVo extends ServiceVo {
 		this.state = state;
 	}
 
+	public String getOwner() {
+		return owner;
+	}
+
+	public void setOwner(String owner) {
+		this.owner = owner;
+	}
+
 }

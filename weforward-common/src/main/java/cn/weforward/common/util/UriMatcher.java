@@ -10,6 +10,7 @@
  */
 package cn.weforward.common.util;
 
+import java.util.AbstractList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -54,7 +55,7 @@ public class UriMatcher {
 		setUris(uris);
 	}
 
-	public void setUris(Collection<String> uris) {
+	public synchronized void setUris(Collection<String> uris) {
 		if (null == uris || 0 == uris.size()) {
 			m_Uris = Collections.emptyList();
 			return;
@@ -69,6 +70,67 @@ public class UriMatcher {
 		} else {
 			m_Uris = Arrays.asList(array);
 		}
+	}
+
+	public synchronized void addUri(final String uri) {
+		addUris(Collections.singletonList(uri));
+	}
+
+	public synchronized void addUris(final List<String> uris) {
+		final List<String> oldUris = m_Uris;
+		if (null == oldUris) {
+			setUris(uris);
+		}
+		AbstractList<String> newUris = new AbstractList<String>() {
+
+			@Override
+			public String get(int index) {
+				if (index < oldUris.size()) {
+					return oldUris.get(index);
+				}
+				return uris.get(index - oldUris.size());
+			}
+
+			@Override
+			public int size() {
+				return oldUris.size() + uris.size();
+			}
+
+		};
+		setUris(newUris);
+	}
+
+	public synchronized void removeUri(final String uri) {
+		final List<String> oldUris = m_Uris;
+		if (ListUtil.isEmpty(oldUris)) {
+			return;
+		}
+		final int idx = oldUris.indexOf(uri);
+		if (-1 == idx) {
+			return;
+		}
+		if (1 == oldUris.size()) {
+			setUris(Collections.<String>emptyList());
+			return;
+		}
+
+		AbstractList<String> newUris = new AbstractList<String>() {
+
+			@Override
+			public String get(int index) {
+				if (index < idx) {
+					return oldUris.get(index);
+				}
+				return oldUris.get(index + 1);
+			}
+
+			@Override
+			public int size() {
+				return oldUris.size() - 1;
+			}
+
+		};
+		setUris(newUris);
 	}
 
 	/**
@@ -115,8 +177,7 @@ public class UriMatcher {
 			int split = name.indexOf('*');
 			if (split >= 0) {
 				String prefix = name.substring(0, split);
-				if (split + 2 == name.length() && '*' == name.charAt(split + 1)
-						&& uri.startsWith(prefix)) {
+				if (split + 2 == name.length() && '*' == name.charAt(split + 1) && uri.startsWith(prefix)) {
 					// 是 xxx** 的格式，好泛啊
 					return name;
 				}

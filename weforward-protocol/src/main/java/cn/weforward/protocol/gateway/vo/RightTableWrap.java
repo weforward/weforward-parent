@@ -109,5 +109,14 @@ public class RightTableWrap implements RightTable {
 		RightTable table = m_Keeper.removeRightRule(getName(), index, name);
 		m_Vo = RightTableVo.valueOf(table);
 	}
+	
+	@Override
+	public void setItems(List<RightTableItem> items) {
+		if (null == m_Keeper) {
+			throw new IllegalStateException("尚未注入Keeper");
+		}
+		RightTable table = m_Keeper.setRightRules(getName(), items);
+		m_Vo = RightTableVo.valueOf(table);
+	}
 
 }

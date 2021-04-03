@@ -106,4 +106,12 @@ public class TrafficTableWrap implements TrafficTable {
 		m_Vo = TrafficTableVo.valueOf(table);
 	}
 
+	@Override
+	public void setItems(List<TrafficTableItem> items) {
+		if (null == m_Keeper) {
+			throw new IllegalStateException("尚未注入Keeper");
+		}
+		TrafficTable table = m_Keeper.setTrafficRules(getName(), items);
+		m_Vo = TrafficTableVo.valueOf(table);
+	}
 }

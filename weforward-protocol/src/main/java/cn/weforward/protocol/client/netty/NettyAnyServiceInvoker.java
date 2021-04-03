@@ -149,8 +149,9 @@ public class NettyAnyServiceInvoker extends AbstractServiceInvoker implements Ai
 		try {
 			client = FACTORY.open(ClientHandler.SYNC);
 			client.setReadTimeout(getReadTimeout());
-			client.request(getServiceUrl(request.getHeader().getService()),
-					HttpConstants.METHOD_POST);
+			String serviceName = request.getHeader().getService();
+			client.setUserAgent(serviceName);
+			client.request(getServiceUrl(serviceName), HttpConstants.METHOD_POST);
 			OutputStream out = client.openRequestWriter();
 			m_Producer.make(request, new SimpleProducerOutput(client, out));
 			out.close();
@@ -192,9 +193,10 @@ public class NettyAnyServiceInvoker extends AbstractServiceInvoker implements Ai
 			InvokeHandler handler = new InvokeHandler(request, listener);
 			client = FACTORY.open(handler);
 			handler.setHttpClient(client);
+			String serviceName = request.getHeader().getService();
+			client.setUserAgent(serviceName);
 			client.setReadTimeout(getReadTimeout());
-			client.request(getServiceUrl(request.getHeader().getService()),
-					HttpConstants.METHOD_POST);
+			client.request(getServiceUrl(serviceName), HttpConstants.METHOD_POST);
 			client = null;
 		} catch (IOException e) {
 			throw new ServiceInvokeException("IO异常", e);

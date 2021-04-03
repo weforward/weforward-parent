@@ -16,7 +16,9 @@ import java.util.List;
 
 import cn.weforward.common.ResultPage;
 import cn.weforward.common.crypto.Hex;
+import cn.weforward.common.util.ListUtil;
 import cn.weforward.common.util.StringUtil;
+import cn.weforward.common.util.TransList;
 import cn.weforward.common.util.TransResultPage;
 import cn.weforward.protocol.Access;
 import cn.weforward.protocol.Response;
@@ -295,6 +297,27 @@ public class HttpKeeper implements Keeper {
 		RightTableVo vo = result.getObject("content", RightTableVo.class, m_Mappers);
 		return openRightTable(vo);
 	}
+	
+	@Override
+	public RightTable setRightRules(String name, List<RightTableItem> items) {
+		RequestInvokeObject invokeObj = new RequestInvokeObject("set_right_rules", m_Mappers);
+		invokeObj.putParam("name", name);
+		List<RightTableItemVo> vos = Collections.emptyList();
+		if(!ListUtil.isEmpty(items)) {
+			vos = new TransList<RightTableItemVo, RightTableItem>(items) {
+
+				@Override
+				protected RightTableItemVo trans(RightTableItem src) {
+					return RightTableItemVo.valueOf(src);
+				}
+			};
+		}
+		invokeObj.putParam("items", vos);
+		Response resp = invoke(invokeObj);
+		FriendlyObject result = checkResponse(resp);
+		RightTableVo vo = result.getObject("content", RightTableVo.class, m_Mappers);
+		return openRightTable(vo);
+	}
 
 	@Override
 	public TrafficTable getTrafficTable(String name) {
@@ -316,8 +339,8 @@ public class HttpKeeper implements Keeper {
 	@Override
 	public TrafficTable appendTrafficRule(String name, TrafficTableItem item) {
 		RequestInvokeObject invokeObj = new RequestInvokeObject("append_traffic_rule", m_Mappers);
-		invokeObj.putParam("item", TrafficTableItemVo.valueOf(item));
 		invokeObj.putParam("name", name);
+		invokeObj.putParam("item", TrafficTableItemVo.valueOf(item));
 		Response resp = invoke(invokeObj);
 		FriendlyObject result = checkResponse(resp);
 		TrafficTableVo vo = result.getObject("content", TrafficTableVo.class, m_Mappers);
@@ -364,6 +387,27 @@ public class HttpKeeper implements Keeper {
 		RequestInvokeObject invokeObj = new RequestInvokeObject("move_traffic_rule");
 		invokeObj.putParams(RequestInvokeParam.valueOf("name", name), RequestInvokeParam.valueOf("from", from),
 				RequestInvokeParam.valueOf("to", to));
+		Response resp = invoke(invokeObj);
+		FriendlyObject result = checkResponse(resp);
+		TrafficTableVo vo = result.getObject("content", TrafficTableVo.class, m_Mappers);
+		return openTrafficTable(vo);
+	}
+	
+	@Override
+	public TrafficTable setTrafficRules(String name, List<TrafficTableItem> items) {
+		RequestInvokeObject invokeObj = new RequestInvokeObject("set_traffic_rules", m_Mappers);
+		invokeObj.putParam("name", name);
+		List<TrafficTableItemVo> vos = Collections.emptyList();
+		if(!ListUtil.isEmpty(items)) {
+			vos = new TransList<TrafficTableItemVo, TrafficTableItem>(items) {
+
+				@Override
+				protected TrafficTableItemVo trans(TrafficTableItem src) {
+					return TrafficTableItemVo.valueOf(src);
+				}
+			};
+		}
+		invokeObj.putParam("items", vos);
 		Response resp = invoke(invokeObj);
 		FriendlyObject result = checkResponse(resp);
 		TrafficTableVo vo = result.getObject("content", TrafficTableVo.class, m_Mappers);

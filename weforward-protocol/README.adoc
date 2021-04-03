@@ -230,7 +230,7 @@ wf_req标识表。 +
 		"wf_code": 0,
 		"wf_msg": "",
 		"res_url":"https://xxxx/"
-	}
+	},
 	"result": {
 		"code":0,
 		"msg":"",
@@ -417,15 +417,30 @@ wf_resp标识表。 +
 }
 ----
 
-响应体无 `result` 节点
+响应体示例如下：
 
 [source,json]
 ----
 {
 	"wf_resp": {
 		"wf_code": 0,
-		"wf_msg": "",
-		"res_url":"https://xxxx/"
+		"wf_msg": ""
+	},
+	"result": {
+		"code": 0,
+		"msg": "",
+		"content": [
+			{
+				"name": "service_name1",
+				"err": "",
+				"receives": 1
+			},
+			{
+				"name": "service_name2",
+				"err": "",
+				"receives": 2
+			}
+		]
 	}
 }
 ----
