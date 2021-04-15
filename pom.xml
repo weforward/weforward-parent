@@ -31,8 +31,8 @@
 	</properties>
 
 	<scm>
-		<url>git@codeup.aliyun.com:5faca4d322a8c7ff39350b14/weforward/weforward-parent.git</url>
-		<tag>git@codeup.aliyun.com:5faca4d322a8c7ff39350b14/weforward/weforward-parent.git</tag>
+		<url>https://codeup.aliyun.com/5faca4d322a8c7ff39350b14/weforward/weforward-parent.git</url>
+		<tag>https://codeup.aliyun.com/5faca4d322a8c7ff39350b14/weforward/weforward-parent.git</tag>
 	</scm>
 
 	<modules>
