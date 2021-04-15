@@ -31,6 +31,10 @@ public class NettyHttpHeaders implements HttpHeaders {
 		m_Headers = headers;
 	}
 
+	public io.netty.handler.codec.http.HttpHeaders getHeaders() {
+		return m_Headers;
+	}
+
 	@Override
 	public String get(String name) {
 		return m_Headers.get(name);
@@ -41,11 +45,14 @@ public class NettyHttpHeaders implements HttpHeaders {
 		return m_Headers.get(name);
 	}
 
+	public void setHeader(String name, String value) {
+		m_Headers.set(name, value);
+	}
+
 	@Override
 	public String toString() {
 		StringBuilder builder = StringBuilderPool._8k.poll();
 		try {
-
 			Iterator<Entry<CharSequence, CharSequence>> it = m_Headers.iteratorCharSequence();
 			while (it.hasNext()) {
 				Entry<CharSequence, CharSequence> p = it.next();
@@ -64,8 +71,6 @@ public class NettyHttpHeaders implements HttpHeaders {
 		if (m_Headers.size() == 0) {
 			return Collections.emptyEnumeration();
 		}
-		// final Iterator<Entry<String, String>> it =
-		// m_Headers.iteratorAsString();
 		final Iterator<Entry<CharSequence, CharSequence>> it = m_Headers.iteratorCharSequence();
 		return new Enumeration<String>() {
 			@Override
@@ -79,6 +84,11 @@ public class NettyHttpHeaders implements HttpHeaders {
 				return null == key ? null : key.toString();
 			}
 		};
+	}
+
+	@Override
+	public Enumeration<String> keys() {
+		return names();
 	}
 
 	@Override

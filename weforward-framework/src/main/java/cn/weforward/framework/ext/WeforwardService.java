@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -79,6 +80,7 @@ import cn.weforward.protocol.gateway.ServiceRegister;
 import cn.weforward.protocol.gateway.http.HttpServiceRegister;
 import cn.weforward.protocol.gateway.vo.ServiceVo;
 import cn.weforward.protocol.ops.trace.ServiceTraceToken;
+import cn.weforward.protocol.support.SimpleAccess;
 import cn.weforward.protocol.support.SimpleProducer;
 import cn.weforward.protocol.support.SimpleResponse;
 import cn.weforward.protocol.support.datatype.FriendlyObject;
@@ -99,6 +101,8 @@ public class WeforwardService
 	/** 用于心跳的定时器 */
 	protected final static Timer _Timer = new Timer("WeforwardService-Timer", true);
 
+	/** 我的Access加载器 */
+	protected AccessLoader m_MyAccessLoader;
 	/** Access加载器 */
 	protected AccessLoader m_AccessLoader;
 	/** 访问id */
@@ -169,6 +173,8 @@ public class WeforwardService
 	protected List<ApplicationContextAware> m_ChildAwares = new ArrayList<>();
 	/** UriHandler集合 */
 	protected UriHandlers m_UriHandlers;
+	/** 是否本地模式 */
+	protected boolean m_Local = false;
 
 	/**
 	 * 构造
@@ -249,6 +255,9 @@ public class WeforwardService
 	 * @throws MalformedURLException 链接异常
 	 */
 	public void setMeterRegistryUrl(String url) throws MalformedURLException {
+		if (StringUtil.isEmpty(url)) {
+			return;
+		}
 		RemoteMeterRegistry registry = new RemoteMeterRegistry(url);
 		registry.setServiceName(getName());
 		registry.setServiceNo(getNo());
@@ -276,6 +285,9 @@ public class WeforwardService
 	 * @throws MalformedURLException 链接异常
 	 */
 	public void setTraceRegisterUrl(String url) throws MalformedURLException {
+		if (StringUtil.isEmpty(url)) {
+			return;
+		}
 		RemoteTraceRegistry registry = new RemoteTraceRegistry(url);
 		registry.setServiceName(getName());
 		registry.setServiceNo(getNo());
@@ -322,8 +334,8 @@ public class WeforwardService
 	 */
 	public void setInnerMethodEnabled(boolean enabled) {
 		if (enabled) {
-			aware(new DebugMethod(this));
 			aware(new VersionMethod(this, Arrays.asList(getClass().getName())));
+			aware(new DebugMethod(this));
 			aware(new DocumentMethod(this));
 		}
 	}
@@ -368,8 +380,8 @@ public class WeforwardService
 	 */
 	public void setShowDocEnable(boolean enable) {
 		if (enable) {
-			if(null == m_UriHandlers.find(LocalDocUriHandler.URI)) {
-				m_UriHandlers.add(new LocalDocUriHandler(()->m_RpcEndpoint.getServiceDocument()));
+			if (null == m_UriHandlers.find(LocalDocUriHandler.URI)) {
+				m_UriHandlers.add(new LocalDocUriHandler(() -> m_RpcEndpoint.getServiceDocument()));
 			}
 		} else {
 			m_UriHandlers.remove(LocalDocUriHandler.URI);
@@ -849,6 +861,7 @@ public class WeforwardService
 	 */
 	public void setServicesUrl(String url) {
 		m_ServicesUrl = url;
+		m_Local = isLocal(url);
 	}
 
 	/**
@@ -885,12 +898,25 @@ public class WeforwardService
 		initAccessLoader();
 	}
 
+	/**
+	 * 凭证加载器
+	 * 
+	 * @param loader
+	 */
+	public void setAccessLoader(AccessLoader loader) {
+		m_AccessLoader = loader;
+	}
+
 	@Override
 	public Access getValidAccess(String accessId) {
-		if (null == m_AccessLoader) {
-			return null;
+		Access access = null;
+		if (null != m_MyAccessLoader) {
+			access = m_MyAccessLoader.getValidAccess(accessId);
 		}
-		return m_AccessLoader.getValidAccess(accessId);
+		if (null == access && null != m_AccessLoader) {
+			access = m_AccessLoader.getValidAccess(accessId);
+		}
+		return access;
 	}
 
 	/**
@@ -998,7 +1024,7 @@ public class WeforwardService
 	/* 初始化访问凭证 */
 	private void initAccessLoader() {
 		if (!StringUtil.isEmpty(m_AccessId) && !StringUtil.isEmpty(m_AccessKey)) {
-			m_AccessLoader = new AccessLoader.Single(m_AccessId, m_AccessKey);
+			m_MyAccessLoader = new AccessLoader.Single(m_AccessId, m_AccessKey);
 		}
 	}
 
@@ -1007,8 +1033,8 @@ public class WeforwardService
 	 */
 	protected void register() {
 		if (null == m_ServiceRecorder) {
-			if (StringUtil.isEmpty(m_ServicesUrl) || StringUtil.isEmpty(m_AccessId)
-					|| StringUtil.isEmpty(m_AccessKey)) {
+			if (StringUtil.isEmpty(m_ServicesUrl) || StringUtil.isEmpty(m_AccessId) || StringUtil.isEmpty(m_AccessKey)
+					|| isLocal(m_ServicesUrl)) {
 				return;
 			}
 			m_ServiceRecorder = new HttpServiceRegister(m_ServicesUrl, m_AccessId, m_AccessKey);
@@ -1052,6 +1078,24 @@ public class WeforwardService
 		} catch (Throwable e) {
 			_Logger.warn(this + " 注册异常", e);
 		}
+	}
+
+	private boolean isLocal(String urls) {
+		if (StringUtil.isEmpty(urls)) {
+			return false;
+		}
+		String[] arr = urls.split(";");
+		if (arr.length != 1) {
+			return false;
+		}
+		URI uri = URI.create(arr[0]);
+		if (uri.getPort() != getPort()) {
+			return false;
+		}
+		String myHost = uri.getHost();
+		return StringUtil.eq("localhost", myHost) || StringUtil.eq("127.0.0.1", myHost)
+				|| StringUtil.eq(myHost, getHost());
+
 	}
 
 	/**
@@ -1137,7 +1181,6 @@ public class WeforwardService
 			m_StreamEndpoint.handle(request, response);
 			return;
 		}
-
 		if (null == reqHeader.getAuthType()) {
 			// 非weforward请求
 			UriHandler uriHandler = (null == m_UriHandlers) ? null : m_UriHandlers.find(path);
@@ -1152,6 +1195,11 @@ public class WeforwardService
 		Request wfrequest;
 		try (InputStream content = request.getContent()) {
 			wfrequest = m_Producer.fetchRequest(reqHeader, content);
+			if (m_Local) {
+				SimpleAccess access = new SimpleAccess();
+				access.setAccessId(reqHeader.getAccessId());
+				wfrequest.setAccess(access);
+			}
 		} catch (SerialException | AuthException | IOException e) {
 			_Logger.warn("解析请求异常", e);
 			response.setStatus(RestfulResponse.STATUS_BAD_REQUEST);
@@ -1518,9 +1566,9 @@ public class WeforwardService
 		}
 		return bean;
 	}
-	
+
 	public void setUriHandlers(List<UriHandler> handlers) {
-		if(ListUtil.isEmpty(handlers)) {
+		if (ListUtil.isEmpty(handlers)) {
 			return;
 		}
 		m_UriHandlers.addAll(handlers);

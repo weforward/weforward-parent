@@ -10,6 +10,7 @@
  */
 package cn.weforward.common.sys;
 
+import java.io.File;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
@@ -70,6 +71,16 @@ public class Shutdown {
 	}
 
 	/**
+	 * 指定执行最后处理
+	 * 
+	 * @param finalizer
+	 *            最后执行的处理
+	 */
+	public static void finalizer(Runnable finalizer) {
+		_ShutdownHook.setFinalizer(finalizer);
+	}
+
+	/**
 	 * 顶层的线程组（估计是Main线程的组）
 	 */
 	public static ThreadGroup getRootThreadGroup() {
@@ -82,6 +93,8 @@ public class Shutdown {
 
 	/** 要在shutdown时执行destroy的对象 */
 	private final List<WeakReference<Destroyable>> m_Destroyables;
+	/** 指定执行最后处理 */
+	private Runnable m_Finalizer;
 
 	public Shutdown() {
 		m_Destroyables = new ArrayList<WeakReference<Destroyable>>();
@@ -96,12 +109,28 @@ public class Shutdown {
 				// 清除列表
 				m_Destroyables.clear();
 				_Logger.info("{shutdown-end:" + Hex.toHex(Shutdown.this.hashCode()) + "}");
+				Runnable finalizer = m_Finalizer;
+				if (null != finalizer) {
+					_Logger.info("{shutdown-finality:" + Hex.toHex(Shutdown.this.hashCode())
+							+ ",finalizer:" + finalizer + "}");
+					finalizer.run();
+				}
 			}
 		};
 		hook.setDaemon(false);
 		// hook.setPriority(Thread.MAX_PRIORITY);
 		// 注册在VM终止时执行清理
 		Runtime.getRuntime().addShutdownHook(hook);
+	}
+
+	/**
+	 * 指定执行最后处理
+	 * 
+	 * @param finalizer
+	 *            最后执行的处理
+	 */
+	public void setFinalizer(Runnable finalizer) {
+		m_Finalizer = finalizer;
 	}
 
 	/**
@@ -345,4 +374,30 @@ public class Shutdown {
 		}
 	}
 
+	/**
+	 * 在临时文件目录下写wf-down/进程ID的文件标识终止
+	 */
+	static public final Runnable PID_FILE_FINALIZER = new Runnable() {
+		@Override
+		public void run() {
+			String tmpDir = System.getProperty("java.io.tmpdir", "/tmp") + File.separatorChar
+					+ "wf-down" + File.separatorChar;
+			try {
+				File tmp = new File(tmpDir);
+				tmp.mkdirs();
+				tmp = new File(tmpDir + VmStat.getPid());
+				if (tmp.createNewFile()) {
+					tmp.deleteOnExit();
+					synchronized (this) {
+						while (tmp.exists()) {
+							this.wait(5000);
+						}
+					}
+				}
+				_Logger.info("halt");
+			} catch (Exception e) {
+				_Logger.warn("PID_FILE_FINALIZER", e);
+			}
+		}
+	};
 }

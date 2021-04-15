@@ -51,20 +51,18 @@ public class CloudLoader {
 	String m_AccessId;
 	/** 访问凭证key */
 	String m_AccessKey;
-	/** 是否禁用云功能 */
-	boolean m_DisableCloud = false;
-	/** 项目名key */
-	private final static String PROJECT_NAME_KEY = "project_name";
 	/** 服务名Key */
 	private final static String CLOUD_CONFIG_SERVICENAME_KEY = "cloud.config.servicename";
 	/** 方法名Key */
 	private final static String CLOUD_CONFIG_METHODNAME_KEY = "cloud.config.methodname";
+	/** 项目名key */
+	public final static String PROJECT_NAME_KEY = "project_name";
 	/** 访问地址key */
-	private final static String APIURL_KEY = "weforward.apiUrl";
+	public final static String APIURL_KEY = "weforward.apiUrl";
 	/** 访问凭证id的key */
-	private final static String ACCESSID_KEY = "weforward.service.accessId";
+	public final static String ACCESSID_KEY = "weforward.service.accessId";
 	/** 访问凭证id的key */
-	private final static String ACCESSKEY_KEY = "weforward.service.accessKey";
+	public final static String ACCESSKEY_KEY = "weforward.service.accessKey";
 
 	public CloudLoader() {
 		m_Serverid = System.getProperty(AbstractSpringApp.SERVERID_KEY);
@@ -102,14 +100,12 @@ public class CloudLoader {
 		if (StringUtil.isEmpty(m_AccessKey)) {
 			m_AccessKey = result.getProperty(ACCESSKEY_KEY);
 		}
-		if (!m_DisableCloud) {
-			ServiceInvoker invoker = getInvoker();
-			if (null != invoker) {
-				try {
-					result = load(result, invoker, m_ProjectName, m_Serverid);
-				} catch (Throwable e) {
-					throw new IllegalArgumentException("获取配置失败:" + e.getMessage(), e);
-				}
+		ServiceInvoker invoker = getInvoker();
+		if (null != invoker) {
+			try {
+				result = load(result, invoker, m_ProjectName, m_Serverid);
+			} catch (Throwable e) {
+				throw new IllegalArgumentException("获取配置失败:" + e.getMessage(), e);
 			}
 		}
 		return result;

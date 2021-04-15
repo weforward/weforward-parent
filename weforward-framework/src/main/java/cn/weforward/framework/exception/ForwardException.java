@@ -64,8 +64,23 @@ public class ForwardException extends RuntimeException {
 	 * @throws ForwardException 转发异常
 	 */
 	public static void forwardToIfNeed(Object object) throws ForwardException {
-		if (object instanceof DistributedObject) {
+		forwardToIfNeed(object, true);
+	}
+
+	/**
+	 * 转发请求
+	 * 
+	 * @param object      分布式对象 <code>
+	 *  if (object instanceof DistributedObject) {
 			forwardToIfNeed((DistributedObject) (object));
+		}
+	 * </code>
+	 * @param autoDriveIt 是否自动接管实例
+	 * @throws ForwardException 转发异常
+	 */
+	public static void forwardToIfNeed(Object object, boolean autoDriveIt) throws ForwardException {
+		if (object instanceof DistributedObject) {
+			forwardToIfNeed((DistributedObject) (object), autoDriveIt);
 		}
 	}
 
@@ -76,8 +91,22 @@ public class ForwardException extends RuntimeException {
 	 * @throws ForwardException 转发异常
 	 */
 	public static void forwardToIfNeed(DistributedObject object) throws ForwardException {
+		forwardToIfNeed(object, true);
+	}
+
+	/**
+	 * 转发请求
+	 * 
+	 * @param object 分布式对象
+	 * @throws ForwardException 转发异常
+	 */
+	public static void forwardToIfNeed(DistributedObject object, boolean autoDriveIt) throws ForwardException {
 		if (!WeforwardSession.TLS.isSupportForward()) {
-			object.tryDriveIt();
+			if (autoDriveIt) {
+				object.tryDriveIt();
+			} else {
+				return;
+			}
 		}
 		if (!object.iDo()) {
 			throw new ForwardException(object.getDriveIt());

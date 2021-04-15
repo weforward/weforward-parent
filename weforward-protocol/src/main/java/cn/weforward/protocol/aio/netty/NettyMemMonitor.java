@@ -10,13 +10,9 @@
  */
 package cn.weforward.protocol.aio.netty;
 
-import java.lang.reflect.Field;
-import java.util.concurrent.atomic.AtomicLong;
-
 import org.slf4j.LoggerFactory;
 
 import cn.weforward.common.GcCleanable;
-import cn.weforward.common.sys.GcCleaner;
 import cn.weforward.common.util.Bytes;
 import io.netty.util.internal.PlatformDependent;
 
@@ -27,28 +23,29 @@ import io.netty.util.internal.PlatformDependent;
  *
  */
 public class NettyMemMonitor implements GcCleanable {
-	/** PlatformDependent.DIRECT_MEMORY_COUNTER */
-	AtomicLong m_DirectMemoryCounter;
+//	/** PlatformDependent.DIRECT_MEMORY_COUNTER */
+//	AtomicLong m_DirectMemoryCounter;
 
 	private NettyMemMonitor() {
-		// 反射获取PlatformDependent.DIRECT_MEMORY_COUNTER
-		try {
-			Field field = PlatformDependent.class.getDeclaredField("DIRECT_MEMORY_COUNTER");
-			field.setAccessible(true);
-			m_DirectMemoryCounter = (AtomicLong) field.get(null);
-			GcCleaner.register(this);
-		} catch (Exception e) {
-			// 获取失败
-			m_DirectMemoryCounter = null;
-			LoggerFactory.getLogger(NettyMemMonitor.class)
-					.warn("reflect 'PlatformDependent.DIRECT_MEMORY_COUNTER' fail!");
-		}
+//		// 反射获取PlatformDependent.DIRECT_MEMORY_COUNTER
+//		try {
+//			Field field = PlatformDependent.class.getDeclaredField("DIRECT_MEMORY_COUNTER");
+//			field.setAccessible(true);
+//			m_DirectMemoryCounter = (AtomicLong) field.get(null);
+//			GcCleaner.register(this);
+//		} catch (Exception e) {
+//			// 获取失败
+//			m_DirectMemoryCounter = null;
+//			LoggerFactory.getLogger(NettyMemMonitor.class)
+//					.warn("reflect 'PlatformDependent.DIRECT_MEMORY_COUNTER' fail!");
+//		}
 	}
 
 	public void log() {
 		StringBuilder builder = new StringBuilder(64);
 		builder.append("netty direct memory: ");
-		Bytes.formatHumanReadable(builder, m_DirectMemoryCounter.get());
+		// Bytes.formatHumanReadable(builder, m_DirectMemoryCounter.get());
+		Bytes.formatHumanReadable(builder, PlatformDependent.usedDirectMemory());
 		LoggerFactory.getLogger(NettyMemMonitor.class).info(builder.toString());
 	}
 

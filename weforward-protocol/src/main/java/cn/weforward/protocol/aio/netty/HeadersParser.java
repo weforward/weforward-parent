@@ -20,16 +20,22 @@ public class HeadersParser implements ByteProcessor {
 	/** 名称池 */
 	public static StringPool _NamePool = new StringPool(128);
 
+	/** HTTP消息头默认最大长度（8K） */
+	public static final int HEADER_LENGTH_MAX = 8 * 1024;
+
 	protected final AppendableCharSequence m_Line;
 	protected final int m_MaxLength;
 	protected int m_Size;
 	protected CharSequence m_Name;
 	protected CharSequence m_Value;
 
+	public HeadersParser() {
+		this(HEADER_LENGTH_MAX);
+	}
+
 	public HeadersParser(int maxLength) {
 		this.m_Line = new AppendableCharSequence(1024);
 		m_MaxLength = maxLength;
-		// this.headers = new DefaultHttpHeaders(false);
 	}
 
 	public void reset() {

@@ -1,6 +1,6 @@
 package cn.weforward.protocol.aio.netty.websocket;
 
-import cn.weforward.protocol.aio.http.HttpHeaders;
+import cn.weforward.protocol.aio.netty.NettyHttpHeaders;
 
 /**
  * Websocket下的响应封装
@@ -10,9 +10,7 @@ import cn.weforward.protocol.aio.http.HttpHeaders;
  */
 public class WebSocketResponse extends WebSocketMessage {
 
-	public WebSocketResponse(WebSocketSession invoke, HttpHeaders headers) {
-		super(invoke, headers);
-		// TODO Auto-generated constructor stub
+	public WebSocketResponse(WebSocketSession session, NettyHttpHeaders headers) {
+		super(session, headers);
 	}
-
 }

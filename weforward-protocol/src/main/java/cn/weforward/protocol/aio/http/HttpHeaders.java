@@ -13,6 +13,7 @@ package cn.weforward.protocol.aio.http;
 import java.util.Collections;
 import java.util.Enumeration;
 
+import cn.weforward.common.DictionaryExt;
 import cn.weforward.protocol.aio.Headers;
 
 /**
@@ -21,7 +22,7 @@ import cn.weforward.protocol.aio.Headers;
  * @author liangyi
  * 
  */
-public interface HttpHeaders extends Headers {
+public interface HttpHeaders extends Headers, DictionaryExt<String, String> {
 
 	/**
 	 * 取得指定名称的原生（未urldecode）头信息
@@ -62,6 +63,11 @@ public interface HttpHeaders extends Headers {
 
 		@Override
 		public Enumeration<String> names() {
+			return Collections.emptyEnumeration();
+		}
+
+		@Override
+		public Enumeration<String> keys() {
 			return Collections.emptyEnumeration();
 		}
 	};

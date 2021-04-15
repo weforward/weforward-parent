@@ -28,11 +28,14 @@ import cn.weforward.protocol.aio.ClientHandler;
 import cn.weforward.protocol.aio.ServerHandler;
 import cn.weforward.protocol.aio.ServerHandlerFactory;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.CompositeByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.PingWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.PongWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 
@@ -98,21 +101,35 @@ public class WebSocketContext extends ChannelInboundHandlerAdapter {
 			// _Logger.trace("[" + ctx.hashCode() + "]" + msg);
 			// }
 			if (msg instanceof WebSocketFrame) {
-				// XXX
-				_Logger.info(msg.toString());
 				WebSocketFrame wsframe = (WebSocketFrame) msg;
 				if (wsframe instanceof BinaryWebSocketFrame
 						|| wsframe instanceof TextWebSocketFrame) {
+					if (_Logger.isTraceEnabled()) {
+						_Logger.trace(msg.toString());
+					}
 					readable(wsframe);
 					// 略过除了BinaryWebSocketFrame的其它类型的帧
 					return;
-				} else if (isDebugEnabled()) {
+				}
+				if (wsframe instanceof PingWebSocketFrame) {
+					if (_Logger.isTraceEnabled()) {
+						_Logger.trace(formatMessage("ping " + msg));
+					}
+					PongWebSocketFrame pong = new PongWebSocketFrame(wsframe.content().retain());
+					ctx.channel().writeAndFlush(pong);
+					return;
+				}
+				if (isDebugEnabled()) {
 					_Logger.warn(formatMessage("未知帧类型？" + msg));
 				}
 			}
 		} finally {
 			super.channelRead(ctx, msg);
 		}
+	}
+
+	public String getRemoteAddr() {
+		return m_RemoteAddr;
 	}
 
 	/**
@@ -123,29 +140,43 @@ public class WebSocketContext extends ChannelInboundHandlerAdapter {
 		return 'w';
 	}
 
-	/**
-	 * 生成请求序号
-	 */
-	public String genRequestSequence() {
-		StringBuilder builder = StringBuilderPool._128.poll();
-		try {
-			builder.append('P');
-			builder.append(getSideMarker());
-			Hex.toHex(m_Sequencer.incrementAndGet(), builder);
-			return builder.toString();
-		} finally {
-			StringBuilderPool._128.offer(builder);
-		}
-	}
+	// /**
+	// * 生成请求序号
+	// */
+	// public String genRequestSequence() {
+	// StringBuilder builder = StringBuilderPool._128.poll();
+	// try {
+	// builder.append('P');
+	// builder.append(getSideMarker());
+	// Hex.toHex(m_Sequencer.incrementAndGet(), builder);
+	// return builder.toString();
+	// } finally {
+	// StringBuilderPool._128.offer(builder);
+	// }
+	// }
+	//
+	// /**
+	// * 生成响应序号
+	// */
+	// public String genResponseSequence(String seq) {
+	// StringBuilder builder = StringBuilderPool._128.poll();
+	// try {
+	// builder.append('R');
+	// builder.append(seq, 1, seq.length());
+	// return builder.toString();
+	// } finally {
+	// StringBuilderPool._128.offer(builder);
+	// }
+	// }
 
 	/**
-	 * 生成响应序号
+	 * 生成序号
 	 */
-	public String genResponseSequence(String seq) {
+	public String genSequence() {
 		StringBuilder builder = StringBuilderPool._128.poll();
 		try {
-			builder.append('R');
-			builder.append(seq, 1, seq.length());
+			builder.append(getSideMarker());
+			Hex.toHex(m_Sequencer.incrementAndGet(), builder);
 			return builder.toString();
 		} finally {
 			StringBuilderPool._128.offer(builder);
@@ -158,7 +189,7 @@ public class WebSocketContext extends ChannelInboundHandlerAdapter {
 		 * 对数据包进行二次封装：
 		 * 1. 加上请求/响应序号用于多路复用，序号由一个用于标识请求（P）或响应（R）的字符加流水号组成，在连接中必须保持唯一<br/>
 		 *     流水号由请求生成，对应的响应匹配此序号，序号最大长度不超过128字节<br/>
-		 *     websocket服务端发起的请求流水号首个字符为w，客户端为z，即：服务端为“Pw*”，客户端为“Rz*”<br/>
+		 *     websocket服务端发起的请求流水号首个字符为w，客户端为z，即：服务端为“Pw*”或“Rw*”，客户端为“Pz*”或“Rz*”<br/>
 		 * 2. 类似HTTP协议，把数据包封装为head及body ，head使用HTTP head规范，同样使用两个换行符表示head结束<br/>
 		 * 3. 把请求/响应序号放在head，方便业务层读取，标识为：WS-RPC-ID
 		 * 4. 使用Binary或Text帧，每个帧Payload由序号部分与head或body部分组成，包含head的帧必须完整在一个帧内，不允许分帧，Payload格式如下：
@@ -174,7 +205,7 @@ public class WebSocketContext extends ChannelInboundHandlerAdapter {
 		try {
 			for (int i = 0; i < seqBuf.length && payload.isReadable(); i++) {
 				seqBuf[i] = payload.readByte();
-				if ('\n' == seqBuf[i]) {
+				if (WebSocketSession.PACKET_LF == seqBuf[i]) {
 					// 碰到换行符，序号已完成
 					if (WebSocketSession.PACKET_PREAMBLE_REQUEST == seqBuf[0]) {
 						// 这是请求，那就按server处理
@@ -277,7 +308,11 @@ public class WebSocketContext extends ChannelInboundHandlerAdapter {
 	}
 
 	protected CompositeByteBuf compositeBuffer() {
-		return m_Ctx.alloc().compositeBuffer();
+		ChannelHandlerContext ctx = m_Ctx;
+		if (null != ctx) {
+			return ctx.alloc().compositeBuffer();
+		}
+		return ByteBufAllocator.DEFAULT.compositeBuffer();
 	}
 
 	public boolean isDebugEnabled() {
@@ -305,8 +340,8 @@ public class WebSocketContext extends ChannelInboundHandlerAdapter {
 	 * @throws IOException
 	 */
 	public ClientContext request(ClientHandler handler, String uri) throws IOException {
-		String seq = genRequestSequence();
-		WebSocketSession session = openSession(seq.substring(1));
+		String seq = genSequence();
+		WebSocketSession session = openSession(seq);
 		session.openRequest(handler, uri);
 		return session.getClientContext();
 	}

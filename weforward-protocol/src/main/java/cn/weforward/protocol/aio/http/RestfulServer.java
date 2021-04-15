@@ -13,7 +13,6 @@ package cn.weforward.protocol.aio.http;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Enumeration;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
 
@@ -249,26 +248,7 @@ public class RestfulServer implements ServerHandlerFactory {
 
 		@Override
 		public DictionaryExt<String, String> getHeaders() {
-			final HttpHeaders headers = m_Context.getRequestHeaders();
-			return new DictionaryExt<String, String>() {
-
-				@Override
-				public String get(String key) {
-					return headers.get(key);
-				}
-
-				@Override
-				public int size() {
-					return headers.size();
-				}
-
-				@Override
-				public Enumeration<String> keys() {
-					return headers.names();
-				}
-
-			};
-
+			return m_Context.getRequestHeaders();
 		}
 
 		@Override
