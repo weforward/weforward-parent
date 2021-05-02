@@ -45,8 +45,7 @@ public class SpecificationChecker {
 		}
 		for (int i = 0; i < name.length(); i++) {
 			char ch = name.charAt(i);
-			if ((ch >= 'a' && ch <= 'z') || '_' == ch || (ch >= '0' && ch <= '9') || '_' == ch
-					|| '.' == ch) {
+			if ((ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') || '_' == ch || '.' == ch) {
 				continue;
 			}
 			return "名称只能包含[a-z|0-9|_|.]";
