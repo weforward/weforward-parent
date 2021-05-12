@@ -50,8 +50,8 @@ public class StringBuilderPool extends RingBuffer<StringBuilder> {
 
 	@Override
 	public boolean offer(StringBuilder item) {
-		if (null == item || (item.capacity() << 1) > m_InitialCapacity) {
-			// 容量不合适，不归池
+		if (null == item || (item.capacity() >> 1) >= m_InitialCapacity) {
+			// 容量不合适（比初始容量大一倍或以上），不归池
 			return false;
 		}
 		return super.offer(item);
