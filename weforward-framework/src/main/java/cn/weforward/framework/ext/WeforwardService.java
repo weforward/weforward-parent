@@ -43,6 +43,7 @@ import cn.weforward.common.sys.Shutdown;
 import cn.weforward.common.sys.VmStat;
 import cn.weforward.common.util.ClassUtil;
 import cn.weforward.common.util.ListUtil;
+import cn.weforward.common.util.NumberUtil;
 import cn.weforward.common.util.StringUtil;
 import cn.weforward.common.util.ThreadPool;
 import cn.weforward.framework.ApiException;
@@ -101,6 +102,13 @@ public class WeforwardService implements TopicHub, AccessLoader, RestfulService,
 	protected static final Logger _Logger = LoggerFactory.getLogger(WeforwardService.class);
 	/** 用于心跳的定时器 */
 	protected final static Timer _Timer = new Timer("WeforwardService-Timer", true);
+
+	/** 业务线程队列超时值（毫秒），默认1000ms，EXECUTOR_QUEUE_MULTIPLE>=2时有效 */
+	public static int EXECUTOR_QUEUE_TIMEOUT = NumberUtil
+			.toInt(System.getProperty("WeforwardService.EXECUTOR_QUEUE_TIMEOUT"), 1000);
+	/** 业务线程队列倍数，默认5倍 */
+	public static int EXECUTOR_QUEUE_MULTIPLE = NumberUtil
+			.toInt(System.getProperty("WeforwardService.EXECUTOR_QUEUE_MULTIPLE"), 5);
 
 	/** 我的Access加载器 */
 	protected AccessLoader m_MyAccessLoader;
@@ -233,7 +241,12 @@ public class WeforwardService implements TopicHub, AccessLoader, RestfulService,
 		m_HttpServer.setHandlerFactory(m_RestfulServer);
 		m_UriHandlers = new UriHandlers();
 		if (threads > 0) {
-			setExecutor(new ThreadPool(threads, name));
+			ThreadPool tp = new ThreadPool(threads, name);
+			if (EXECUTOR_QUEUE_MULTIPLE > 1) {
+				tp.setQueueLengthMax(threads * EXECUTOR_QUEUE_MULTIPLE);
+				tp.setQueueTimeout(EXECUTOR_QUEUE_TIMEOUT);
+			}
+			setExecutor(tp);
 		}
 		setElapseTime(10000);
 		onInit();
