@@ -10,6 +10,7 @@
  */
 package cn.weforward.framework.ext;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -94,8 +95,8 @@ import io.micrometer.core.instrument.MeterRegistry;
  * @author daibo
  *
  */
-public class WeforwardService
-		implements TopicHub, AccessLoader, RestfulService, Destroyable, ApplicationContextAware, BeanPostProcessor {
+public class WeforwardService implements TopicHub, AccessLoader, RestfulService, Destroyable,
+		ApplicationContextAware, BeanPostProcessor {
 	/** 日志 */
 	protected static final Logger _Logger = LoggerFactory.getLogger(WeforwardService.class);
 	/** 用于心跳的定时器 */
@@ -204,14 +205,21 @@ public class WeforwardService
 	/**
 	 * 构建
 	 * 
-	 * @param name    服务名
-	 * @param host    主机域名
-	 * @param port    端口
-	 * @param path    项目基本路径
-	 * @param threads 业务处理线程数
-	 * @throws Exception 异常
+	 * @param name
+	 *            服务名
+	 * @param host
+	 *            主机域名
+	 * @param port
+	 *            端口
+	 * @param path
+	 *            项目基本路径
+	 * @param threads
+	 *            业务处理线程数
+	 * @throws Exception
+	 *             异常
 	 */
-	public WeforwardService(String name, String host, int port, String path, int threads) throws Exception {
+	public WeforwardService(String name, String host, int port, String path, int threads)
+			throws Exception {
 		m_HttpServer = new NettyHttpServer(port);
 		m_HttpServer.setName(name);
 		m_HttpServer.setGzipEnabled(true);
@@ -251,8 +259,10 @@ public class WeforwardService
 	/**
 	 * 设置指标监控链接
 	 * 
-	 * @param url 链接
-	 * @throws MalformedURLException 链接异常
+	 * @param url
+	 *            链接
+	 * @throws MalformedURLException
+	 *             链接异常
 	 */
 	public void setMeterRegistryUrl(String url) throws MalformedURLException {
 		if (StringUtil.isEmpty(url)) {
@@ -267,7 +277,8 @@ public class WeforwardService
 	/**
 	 * 设置指标监控
 	 * 
-	 * @param registry 注册表
+	 * @param registry
+	 *            注册表
 	 */
 	public void setMeterRegistry(MeterRegistry registry) {
 		MeterRegistry old = m_RpcEndpoint.getMeterRegistry();
@@ -281,8 +292,10 @@ public class WeforwardService
 	/**
 	 * 设置追踪监控链接
 	 * 
-	 * @param url 链接
-	 * @throws MalformedURLException 链接异常
+	 * @param url
+	 *            链接
+	 * @throws MalformedURLException
+	 *             链接异常
 	 */
 	public void setTraceRegisterUrl(String url) throws MalformedURLException {
 		if (StringUtil.isEmpty(url)) {
@@ -297,7 +310,8 @@ public class WeforwardService
 	/**
 	 * 设置追踪监控
 	 * 
-	 * @param registry 注册表
+	 * @param registry
+	 *            注册表
 	 */
 	public void setTraceRegister(TraceRegistry registry) {
 		TraceRegistry old = m_RpcEndpoint.getTraceRegistry();
@@ -310,7 +324,8 @@ public class WeforwardService
 	/**
 	 * 开启更快（调用请求数据未接收完）进入业务处理，这同时需要指定独立的业务线程池才会生效
 	 * 
-	 * @param enabled 是否开启
+	 * @param enabled
+	 *            是否开启
 	 */
 	public void setQuickHandle(boolean enabled) {
 		m_RestfulServer.setQuickHandle(enabled);
@@ -319,7 +334,8 @@ public class WeforwardService
 	/**
 	 * 开启调试模式
 	 * 
-	 * @param enabled 是否开启
+	 * @param enabled
+	 *            是否开启
 	 */
 	public void setDebugEnabled(boolean enabled) {
 		if (null != m_HttpServer) {
@@ -330,7 +346,8 @@ public class WeforwardService
 	/**
 	 * 开启内置方法
 	 * 
-	 * @param enabled 是否开启
+	 * @param enabled
+	 *            是否开启
 	 */
 	public void setInnerMethodEnabled(boolean enabled) {
 		if (enabled) {
@@ -356,7 +373,8 @@ public class WeforwardService
 	/**
 	 * 设置最大的http内容大小
 	 * 
-	 * @param maxHttpSize http内容大小
+	 * @param maxHttpSize
+	 *            http内容大小
 	 */
 	public void setMaxHttpSize(int maxHttpSize) {
 		if (null != m_HttpServer) {
@@ -367,7 +385,8 @@ public class WeforwardService
 	/**
 	 * 设置记录超过最大消耗时间的请求
 	 * 
-	 * @param mills 毫秒数
+	 * @param mills
+	 *            毫秒数
 	 */
 	public void setElapseTime(int mills) {
 		m_ElapseTime = mills;
@@ -376,7 +395,8 @@ public class WeforwardService
 	/**
 	 * 是否启用显示文档
 	 * 
-	 * @param enable 开启/关闭
+	 * @param enable
+	 *            开启/关闭
 	 */
 	public void setShowDocEnable(boolean enable) {
 		if (enable) {
@@ -391,7 +411,8 @@ public class WeforwardService
 	/**
 	 * 是否启用转换发
 	 * 
-	 * @param enable 开启/关闭
+	 * @param enable
+	 *            开启/关闭
 	 */
 	public void setForwardEnable(boolean enable) {
 		m_ForwardEnable = enable;
@@ -400,7 +421,8 @@ public class WeforwardService
 	/**
 	 * 请求内容的最大字节数
 	 * 
-	 * @param max 字节数
+	 * @param max
+	 *            字节数
 	 */
 	public void setRequestMaxSize(int max) {
 		m_RequestMaxSize = max;
@@ -409,7 +431,8 @@ public class WeforwardService
 	/**
 	 * 是否启用Gzip压缩
 	 * 
-	 * @param enabled 开启/关闭
+	 * @param enabled
+	 *            开启/关闭
 	 */
 	public void setGzipEnabled(boolean enabled) {
 		if (null != m_HttpServer) {
@@ -442,7 +465,8 @@ public class WeforwardService
 	/**
 	 * 设置心跳间隔
 	 * 
-	 * @param seconds 间隔时间（秒）
+	 * @param seconds
+	 *            间隔时间（秒）
 	 */
 	public void setHeartbeatPeriod(int seconds) {
 		m_HeartbeatPeriod = seconds;
@@ -535,7 +559,8 @@ public class WeforwardService
 	/**
 	 * 设置编号
 	 * 
-	 * @param no 编号
+	 * @param no
+	 *            编号
 	 */
 	public void setNo(String no) {
 		m_No = no;
@@ -556,7 +581,8 @@ public class WeforwardService
 	/**
 	 * 设置版本
 	 * 
-	 * @param v 版本
+	 * @param v
+	 *            版本
 	 */
 	public void setVersion(String v) {
 		m_Version = v;
@@ -585,7 +611,8 @@ public class WeforwardService
 	/**
 	 * 设置兼容版本
 	 * 
-	 * @param version 版本
+	 * @param version
+	 *            版本
 	 */
 	public void setCompatibleVersion(String version) {
 		m_CompatibleVersion = version;
@@ -641,7 +668,8 @@ public class WeforwardService
 	/**
 	 * 设置描述
 	 * 
-	 * @param desc 描述
+	 * @param desc
+	 *            描述
 	 */
 	public void setDescription(String desc) {
 		m_Description = desc;
@@ -659,7 +687,8 @@ public class WeforwardService
 	/**
 	 * 设置修改路径
 	 * 
-	 * @param path 修改路径
+	 * @param path
+	 *            修改路径
 	 */
 	public void setModifyPath(String path) {
 		m_ModifyPath = path;
@@ -677,7 +706,8 @@ public class WeforwardService
 	/**
 	 * 设置实例id
 	 * 
-	 * @param id 实例id
+	 * @param id
+	 *            实例id
 	 */
 	public void setRunningId(String id) {
 		m_RunningId = id;
@@ -695,7 +725,8 @@ public class WeforwardService
 	/**
 	 * 设置对象列表
 	 * 
-	 * @param classes 对象列表
+	 * @param classes
+	 *            对象列表
 	 */
 	public void setObjectNameList(List<String> classes) {
 		List<Class<?>> list = new ArrayList<>(classes.size());
@@ -724,7 +755,8 @@ public class WeforwardService
 	/**
 	 * 对象所在包路径
 	 * 
-	 * @param list 对象所在包路径列表
+	 * @param list
+	 *            对象所在包路径列表
 	 */
 	public void setObjectPackages(List<String> list) {
 		m_ObjectPackages = list;
@@ -745,7 +777,8 @@ public class WeforwardService
 	/**
 	 * 状态类
 	 * 
-	 * @param className 类名
+	 * @param className
+	 *            类名
 	 */
 	public void setStatusCodeClassName(String className) {
 		try {
@@ -758,7 +791,8 @@ public class WeforwardService
 	/**
 	 * 状态类
 	 * 
-	 * @param clazz 类
+	 * @param clazz
+	 *            类
 	 */
 	public void setStatusCodeClass(Class<?> clazz) {
 		m_StatusCodeClasses = Collections.singletonList(clazz);
@@ -767,7 +801,8 @@ public class WeforwardService
 	/**
 	 * 添加状态类
 	 * 
-	 * @param clazz 类
+	 * @param clazz
+	 *            类
 	 */
 	public void addStatusCodeClass(Class<?> clazz) {
 		m_StatusCodeClasses.add(clazz);
@@ -803,7 +838,8 @@ public class WeforwardService
 	/**
 	 * 添加特殊名词
 	 * 
-	 * @param word 特殊名词
+	 * @param word
+	 *            特殊名词
 	 */
 	public void addDocSpecialWord(DocSpecialWord word) {
 		m_DocSpecialWords.add(word);
@@ -812,7 +848,8 @@ public class WeforwardService
 	/**
 	 * 设置特殊名词
 	 * 
-	 * @param words 特殊名词
+	 * @param words
+	 *            特殊名词
 	 */
 	public void setDocSpecialWords(List<DocSpecialWord> words) {
 		m_DocSpecialWords = words;
@@ -830,7 +867,8 @@ public class WeforwardService
 	/**
 	 * 设置未有凭证的验证器
 	 * 
-	 * @param authorizer 验证器
+	 * @param authorizer
+	 *            验证器
 	 */
 	public void setNoneAuthorizer(Authorizer authorizer) {
 		m_RpcEndpoint.register("", authorizer);
@@ -839,7 +877,8 @@ public class WeforwardService
 	/**
 	 * 设置用户验证器
 	 * 
-	 * @param authorizer 验证器
+	 * @param authorizer
+	 *            验证器
 	 */
 	public void setUserAuthorizer(Authorizer authorizer) {
 		m_RpcEndpoint.register(Access.KIND_USER, authorizer);
@@ -848,7 +887,8 @@ public class WeforwardService
 	/**
 	 * 设置服务验证器
 	 * 
-	 * @param authorizer 验证器
+	 * @param authorizer
+	 *            验证器
 	 */
 	public void setServiceAuthorizer(Authorizer authorizer) {
 		m_RpcEndpoint.register(Access.KIND_SERVICE, authorizer);
@@ -857,7 +897,8 @@ public class WeforwardService
 	/**
 	 * 设置网关链接
 	 * 
-	 * @param url 链接
+	 * @param url
+	 *            链接
 	 */
 	public void setServicesUrl(String url) {
 		m_ServicesUrl = url;
@@ -867,7 +908,8 @@ public class WeforwardService
 	/**
 	 * 设置话题监听器
 	 * 
-	 * @param ls 话题监听
+	 * @param ls
+	 *            话题监听
 	 */
 	public void setTopicListeners(List<TopicListener<?>> ls) {
 		if (null == ls) {
@@ -881,7 +923,8 @@ public class WeforwardService
 	/**
 	 * 设置访问凭证
 	 * 
-	 * @param aid 凭证
+	 * @param aid
+	 *            凭证
 	 */
 	public void setAccessId(String aid) {
 		m_AccessId = aid;
@@ -891,7 +934,8 @@ public class WeforwardService
 	/**
 	 * 设置访问凭证
 	 * 
-	 * @param akey 凭证
+	 * @param akey
+	 *            凭证
 	 */
 	public void setAccessKey(String akey) {
 		m_AccessKey = akey;
@@ -922,7 +966,8 @@ public class WeforwardService
 	/**
 	 * 注册方法
 	 * 
-	 * @param method 方法名
+	 * @param method
+	 *            方法名
 	 */
 	public void registerMethod(ApiMethod method) {
 		m_RpcEndpoint.register(method);
@@ -931,7 +976,8 @@ public class WeforwardService
 	/**
 	 * 注册文档对象
 	 * 
-	 * @param o 对象
+	 * @param o
+	 *            对象
 	 */
 	public void registerObject(DocObject o) {
 		m_Objects.add(o);
@@ -940,7 +986,8 @@ public class WeforwardService
 	/**
 	 * 注册文档对象供应商
 	 * 
-	 * @param p 供应商
+	 * @param p
+	 *            供应商
 	 */
 	public void registerObjectProvider(DocObjectProvider p) {
 		m_ObjectProviders.add(p);
@@ -949,7 +996,8 @@ public class WeforwardService
 	/**
 	 * 注册资源
 	 * 
-	 * @param handler 处理者
+	 * @param handler
+	 *            处理者
 	 */
 	public void registerResources(ResourceHandler handler) {
 		m_StreamEndpoint.register(handler);
@@ -958,7 +1006,8 @@ public class WeforwardService
 	/**
 	 * 注册资源
 	 * 
-	 * @param downloader 下载者
+	 * @param downloader
+	 *            下载者
 	 */
 	public void registerResources(ResourceDownloader downloader) {
 		m_StreamEndpoint.register(downloader);
@@ -967,7 +1016,8 @@ public class WeforwardService
 	/**
 	 * 注册资源
 	 * 
-	 * @param uploader 上传者
+	 * @param uploader
+	 *            上传者
 	 */
 	public void registerResources(ResourceUploader uploader) {
 		m_StreamEndpoint.register(uploader);
@@ -976,7 +1026,8 @@ public class WeforwardService
 	/**
 	 * 生成主机
 	 * 
-	 * @param host 主机
+	 * @param host
+	 *            主机
 	 * @return 主机地址
 	 */
 	public static String genHost(String host) {
@@ -1033,8 +1084,8 @@ public class WeforwardService
 	 */
 	protected void register() {
 		if (null == m_ServiceRecorder) {
-			if (StringUtil.isEmpty(m_ServicesUrl) || StringUtil.isEmpty(m_AccessId) || StringUtil.isEmpty(m_AccessKey)
-					|| isLocal(m_ServicesUrl)) {
+			if (StringUtil.isEmpty(m_ServicesUrl) || StringUtil.isEmpty(m_AccessId)
+					|| StringUtil.isEmpty(m_AccessKey) || isLocal(m_ServicesUrl)) {
 				return;
 			}
 			m_ServiceRecorder = new HttpServiceRegister(m_ServicesUrl, m_AccessId, m_AccessKey);
@@ -1073,7 +1124,8 @@ public class WeforwardService
 			runtime.upTime = getUpTime();
 			m_ServiceRecorder.registerService(info, runtime);
 			if (_Logger.isTraceEnabled()) {
-				_Logger.trace("心跳:" + this + ",ver:" + getVersion() + ",build-ver:" + getImplementationVersion());
+				_Logger.trace("心跳:" + this + ",ver:" + getVersion() + ",build-ver:"
+						+ getImplementationVersion());
 			}
 		} catch (Throwable e) {
 			_Logger.warn(this + " 注册异常", e);
@@ -1301,8 +1353,8 @@ public class WeforwardService
 	 * @return
 	 */
 	private static String getLogDetail(Header header) {
-		return "{s:" + header.getService() + ",acc:" + header.getAccessId() + ",at:" + header.getAuthType() + ",t:"
-				+ ServiceTraceToken.TTT.get() + "}";
+		return "{s:" + header.getService() + ",acc:" + header.getAccessId() + ",at:"
+				+ header.getAuthType() + ",t:" + ServiceTraceToken.TTT.get() + "}";
 	}
 
 	@Override
@@ -1352,7 +1404,8 @@ public class WeforwardService
 	 * @author liangyi
 	 *
 	 */
-	protected class WeResponse extends SimpleResponse implements AsyncResponse, Producer.Output, HttpHeaderOutput {
+	protected class WeResponse extends SimpleResponse
+			implements AsyncResponse, Producer.Output, HttpHeaderOutput {
 		protected RestfulResponse m_RestfulResponse;
 		protected boolean m_Async;
 		protected int m_ResponseTimeout;
@@ -1400,8 +1453,12 @@ public class WeforwardService
 
 		@Override
 		public void complete() throws IOException {
+			RestfulResponse rsp = m_RestfulResponse;
+			if (null == rsp) {
+				throw new EOFException(toString());
+			}
 			// 先使用暂留缓存输出序列化内容
-			OutputStream out = OutputStreamStay.Wrap.wrap(m_RestfulResponse.openOutput());
+			OutputStream out = OutputStreamStay.Wrap.wrap(rsp.openOutput());
 			try {
 				((OutputStreamStay) out).stay();
 				m_Producer.make(this, out);
@@ -1412,7 +1469,7 @@ public class WeforwardService
 			} catch (Throwable e) {
 				// 居然在输出的时候出错，尴尬了
 				// 只能直接关闭（取消）响应
-				m_RestfulResponse.close();
+				rsp.close();
 				out = null;
 				if (e instanceof IOException) {
 					throw (IOException) e;
@@ -1554,12 +1611,14 @@ public class WeforwardService
 	}
 
 	@Override
-	public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
+	public Object postProcessBeforeInitialization(Object bean, String beanName)
+			throws BeansException {
 		return bean;
 	}
 
 	@Override
-	public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
+	public Object postProcessAfterInitialization(Object bean, String beanName)
+			throws BeansException {
 		MethodsRegister r = m_MethodsRegister;
 		if (null != r) {
 			r.register(bean);
