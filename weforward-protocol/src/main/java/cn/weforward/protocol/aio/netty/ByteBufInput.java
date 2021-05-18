@@ -278,9 +278,12 @@ public class ByteBufInput extends InputStream implements InputStreamNio, ByteBuf
 	};
 
 	/**
-	 * 标记已完整
+	 * 用于标记状态
 	 */
-	static public ByteBufInput _completed = new ByteBufInput(Unpooled.buffer(0), true) {
+	public static class Closed extends ByteBufInput {
+		public Closed(boolean completed) {
+			super(Unpooled.buffer(0), completed);
+		}
 
 		@Override
 		public void readable() {
@@ -296,6 +299,16 @@ public class ByteBufInput extends InputStream implements InputStreamNio, ByteBuf
 
 		@Override
 		public String toString() {
+			return "_closed";
+		}
+	}
+
+	/**
+	 * 标记已完整
+	 */
+	static public ByteBufInput _completed = new Closed(true) {
+		@Override
+		public String toString() {
 			return "_completed";
 		}
 	};
@@ -303,20 +316,7 @@ public class ByteBufInput extends InputStream implements InputStreamNio, ByteBuf
 	/**
 	 * 标记中止
 	 */
-	static public ByteBufInput _aborted = new ByteBufInput(Unpooled.buffer(0), false) {
-
-		@Override
-		public void readable() {
-		}
-
-		@Override
-		public void completed() {
-		}
-
-		@Override
-		public void end() {
-		}
-
+	static public ByteBufInput _aborted = new Closed(false) {
 		@Override
 		public String toString() {
 			return "_aborted";

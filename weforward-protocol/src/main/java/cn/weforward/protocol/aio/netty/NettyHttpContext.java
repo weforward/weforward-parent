@@ -110,6 +110,14 @@ public class NettyHttpContext implements HttpContext {
 	 */
 	protected void request(ServerHandler handler) {
 		m_Handler = handler;
+		ByteBufStream body = m_RequestBody;
+		if (null != body && !(body instanceof ByteBufInput.Closed)) {
+			// requestBody非空？
+			if (isDebugEnabled()) {
+				_Logger.info(formatMessage("已有请求体？" + body));
+			}
+			body.abort();
+		}
 		m_RequestBody = new CompositeByteBufStream(m_HttpHandler.compositeBuffer());
 		handler.requestHeader();
 	}
@@ -172,8 +180,9 @@ public class NettyHttpContext implements HttpContext {
 		if (isDebugEnabled()) {
 			_Logger.info(formatMessage("abortRequest"));
 		}
-		if (null != m_RequestBody) {
-			m_RequestBody.abort();
+		ByteBufStream body = m_RequestBody;
+		if (null != body) {
+			body.abort();
 		}
 		m_RequestBody = ByteBufInput._aborted;
 
@@ -225,7 +234,8 @@ public class NettyHttpContext implements HttpContext {
 		if (isClosed() || isResponded()) {
 			throw new ResponseEndException("已响应/关闭");
 		}
-		if (null == m_RequestBody || !m_RequestBody.isCompleted()) {
+		ByteBufStream body = m_RequestBody;
+		if (null == body || !body.isCompleted()) {
 			// 请求内容未接收完整就响应了，只好取消请求流
 			abortRequest();
 		}
@@ -303,19 +313,19 @@ public class NettyHttpContext implements HttpContext {
 	 * 响应结束
 	 */
 	private void end() {
-		if (isDebugEnabled()) {
-			_Logger.info(formatMessage("end"));
-		}
 		ServerHandler handler;
-		synchronized (this) {
-			handler = m_Handler;
-			if (null == handler) {
-				// 一切都结束了
-				return;
-			}
-			m_Handler = null;
-		}
 		try {
+			if (isDebugEnabled()) {
+				_Logger.info(formatMessage("end"));
+			}
+			synchronized (this) {
+				handler = m_Handler;
+				if (null == handler) {
+					// 一切都结束了
+					return;
+				}
+				m_Handler = null;
+			}
 			if (isResponded()) {
 				// 已完成响应，回调responseCompleted
 				handler.responseCompleted();
@@ -331,22 +341,23 @@ public class NettyHttpContext implements HttpContext {
 		}
 	}
 
-	synchronized private void cleanup() {
+	synchronized protected void cleanup() {
 		m_Handler = null;
 		if (null != m_MirrorRequestBody) {
 			m_MirrorRequestBody = null;
 		}
-		if (null != m_RequestBody) {
-			m_RequestBody.abort();
+		ByteBufStream body = m_RequestBody;
+		if (null != body) {
+			body.abort();
 			m_RequestBody = null;
 		}
 
 		NettyOutputStream out = m_ResponseWriter;
-		if (null != out && NettyOutputStream._end != out) {
+		if (null != out) {
 			try {
 				m_ResponseWriter = null;
 				out.cancel();
-			} catch (IOException e) {
+			} catch (Exception e) {
 				_Logger.warn(String.valueOf(out), e);
 			}
 		}
@@ -355,7 +366,7 @@ public class NettyHttpContext implements HttpContext {
 			try {
 				m_RequestTransferTo = null;
 				out.cancel();
-			} catch (IOException e) {
+			} catch (Exception e) {
 				_Logger.warn(String.valueOf(out), e);
 			}
 		}
@@ -524,14 +535,13 @@ public class NettyHttpContext implements HttpContext {
 		}
 		// 包装转传器
 		m_RequestTransferTo = NettyOutputStream.wrap(writer);
-		if (bufStream.isCompleted()) {
-			m_RequestBody = ByteBufInput._completed;
-		}
 		// 写入已接收到缓冲区的数据
 		ByteBuf buf = bufStream.detach();
 		if (null != buf) {
 			try {
-				if (ByteBufInput._completed != m_RequestBody) {
+				if (m_RequestBody.isCompleted()) {
+					m_RequestBody = ByteBufInput._completed;
+				} else {
 					m_RequestBody = null;
 				}
 				forwardRequest(buf);
@@ -543,7 +553,8 @@ public class NettyHttpContext implements HttpContext {
 
 	synchronized public InputStream mirrorRequestStream(int skipBytes) throws IOException {
 		ensureRequestStream();
-		if (!(m_RequestBody instanceof CompositeByteBufStream)) {
+		ByteBufStream body = m_RequestBody;
+		if (!(body instanceof CompositeByteBufStream)) {
 			throw new IOException("只能在getRequestStream前调用mirrorRequestStream");
 		}
 		if (null != m_MirrorRequestBody) {
@@ -552,31 +563,31 @@ public class NettyHttpContext implements HttpContext {
 			}
 			return m_MirrorRequestBody;
 		}
-		CompositeByteBufStream bufStream = (CompositeByteBufStream) m_RequestBody;
-		m_MirrorRequestBody = bufStream.toStream(skipBytes);
+		m_MirrorRequestBody = ((CompositeByteBufStream) body).toStream(skipBytes);
 		return m_MirrorRequestBody;
 	}
 
 	@Override
 	synchronized public InputStream getRequestStream() throws IOException {
 		ensureRequestStream();
-		if (m_RequestBody instanceof CompositeByteBufStream) {
-			CompositeByteBufStream bufStream = (CompositeByteBufStream) m_RequestBody;
+		ByteBufStream body = m_RequestBody;
+		if (body instanceof CompositeByteBufStream) {
+			CompositeByteBufStream bufStream = (CompositeByteBufStream) body;
 			ByteBufInput stream = bufStream.detachToStream();
 			m_RequestBody = stream;
 			return stream;
 		}
-		return (ByteBufInput) m_RequestBody;
+		return (ByteBufInput) body;
 	}
 
 	synchronized public InputStream duplicateRequestStream() throws IOException {
 		ensureRequestStream();
-		if (!(m_RequestBody instanceof CompositeByteBufStream)) {
+		ByteBufStream body = m_RequestBody;
+		if (!(body instanceof CompositeByteBufStream)) {
 			throw new IOException("只能在getRequestStream前使用");
 			// return null;
 		}
-		CompositeByteBufStream bufStream = (CompositeByteBufStream) m_RequestBody;
-		return bufStream.snapshot();
+		return ((CompositeByteBufStream) body).snapshot();
 	}
 
 	public boolean isRequestCompleted() {

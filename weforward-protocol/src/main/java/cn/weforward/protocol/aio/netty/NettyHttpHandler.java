@@ -102,13 +102,13 @@ public class NettyHttpHandler extends ChannelInboundHandlerAdapter {
 			}
 
 			NettyHttpContext hc = m_HttpContext;
-			if (null != m_HttpContext && msg instanceof HttpContent) {
+			if (null != hc && msg instanceof HttpContent) {
 				// 请求体数据片段
-				m_HttpContext.readable(((HttpContent) msg).content());
+				hc.readable(((HttpContent) msg).content());
 			}
-			if (null != m_HttpContext && msg instanceof LastHttpContent) {
+			if (null != hc && msg instanceof LastHttpContent) {
 				// 请求已完整
-				m_HttpContext.requestCompleted();
+				hc.requestCompleted();
 			}
 			if (isDebugEnabled() && null == hc) {
 				_Logger.warn(formatMessage("调用提前结束/响应？" + msg));
@@ -176,15 +176,13 @@ public class NettyHttpHandler extends ChannelInboundHandlerAdapter {
 		}
 		HttpHeaders headers = request.headers();
 		int max = getMaxHttpSize();// m_Server.getMaxHttpSize();
-		if (max > 0) {
-			if (null != headers) {
-				int length = NumberUtil.toInt(headers.get(HttpConstants.CONTENT_LENGTH), 0);
-				if (length > max) {
-					_Logger.warn(formatMessage("请求体太大：" + length + ">" + max));
-					// 请求体太大
-					responseAndClose(HttpResponseStatus.REQUEST_ENTITY_TOO_LARGE, null);
-					return false;
-				}
+		if (max > 0 && null != headers) {
+			int length = NumberUtil.toInt(headers.get(HttpConstants.CONTENT_LENGTH), 0);
+			if (length > max) {
+				_Logger.warn(formatMessage("请求体太大：" + length + ">" + max));
+				// 请求体太大
+				responseAndClose(HttpResponseStatus.REQUEST_ENTITY_TOO_LARGE, null);
+				return false;
 			}
 		}
 
@@ -230,11 +228,15 @@ public class NettyHttpHandler extends ChannelInboundHandlerAdapter {
 			}
 		}
 		// m_TransferTimepoint = System.currentTimeMillis();
-		NettyHttpContext hc = new NettyHttpContext(this, request);
-		m_HttpContext = hc;
+		// NettyHttpContext old = m_HttpContext;
+		// if (null != old) {
+		// // 上个调用未处理完成？
+		// old.inactive();
+		// }
+		m_HttpContext = new NettyHttpContext(this, request);
 		ServerHandler handler = null;
 		try {
-			handler = m_Server.handle(hc);
+			handler = m_Server.handle(m_HttpContext);
 		} finally {
 			if (null == handler) {
 				if (isRespond()) {
@@ -246,7 +248,7 @@ public class NettyHttpHandler extends ChannelInboundHandlerAdapter {
 				return false;
 			}
 		}
-		hc.request(handler);
+		m_HttpContext.request(handler);
 		return true;
 	}
 
@@ -324,25 +326,32 @@ public class NettyHttpHandler extends ChannelInboundHandlerAdapter {
 	 */
 	private void responseAndClose(HttpResponseStatus status, HttpVersion httpVersion,
 			HttpHeaders responseHeaders) {
-		m_HttpContext = null;
-		FullHttpResponse msg;
-		if (null == responseHeaders) {
-			msg = new DefaultFullHttpResponse(httpVersion, status);
-		} else {
-			msg = new DefaultFullHttpResponse(httpVersion, status, Unpooled.buffer(0),
-					responseHeaders, EmptyHttpHeaders.INSTANCE);
-		}
-		io.netty.handler.codec.http.HttpHeaders headers = msg.headers();
-		headers.set(HttpHeaderNames.CONTENT_LENGTH, HttpHeaderValues.ZERO);
-		m_Ctx.writeAndFlush(msg).addListener(new ChannelFutureListener() {
-			@Override
-			public void operationComplete(ChannelFuture future) throws Exception {
-				ChannelHandlerContext ctx = m_Ctx;
-				if (null != ctx) {
-					ctx.close();
-				}
+		NettyHttpContext hc = m_HttpContext;
+		try {
+			m_HttpContext = null;
+			FullHttpResponse msg;
+			if (null == responseHeaders) {
+				msg = new DefaultFullHttpResponse(httpVersion, status);
+			} else {
+				msg = new DefaultFullHttpResponse(httpVersion, status, Unpooled.buffer(0),
+						responseHeaders, EmptyHttpHeaders.INSTANCE);
 			}
-		});
+			io.netty.handler.codec.http.HttpHeaders headers = msg.headers();
+			headers.set(HttpHeaderNames.CONTENT_LENGTH, HttpHeaderValues.ZERO);
+			m_Ctx.writeAndFlush(msg).addListener(new ChannelFutureListener() {
+				@Override
+				public void operationComplete(ChannelFuture future) throws Exception {
+					ChannelHandlerContext ctx = m_Ctx;
+					if (null != ctx) {
+						ctx.close();
+					}
+				}
+			});
+		} finally {
+			if (null != hc) {
+				hc.cleanup();
+			}
+		}
 	}
 
 	/**
