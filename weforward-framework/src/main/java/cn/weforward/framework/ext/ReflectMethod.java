@@ -206,7 +206,7 @@ public class ReflectMethod extends AbstractApiMethod {
 		if (returnVal instanceof ResultPage<?>) {
 			ResultPage<?> rp = (ResultPage<?>) returnVal;
 			Integer pageSize = DocPageParams.tryGetInteger(params, "page_size");
-			if (null != pageSize) {
+			if (null != pageSize && pageSize > 0) {
 				rp.setPageSize(pageSize);
 			}
 			Integer page = DocPageParams.tryGetInteger(params, "page");
