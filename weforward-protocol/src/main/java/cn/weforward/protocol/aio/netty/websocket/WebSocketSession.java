@@ -10,6 +10,7 @@
  */
 package cn.weforward.protocol.aio.netty.websocket;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -20,6 +21,7 @@ import cn.weforward.protocol.aio.ClientHandler;
 import cn.weforward.protocol.aio.Headers;
 import cn.weforward.protocol.aio.ServerContext;
 import cn.weforward.protocol.aio.ServerHandler;
+import cn.weforward.protocol.aio.http.HttpConstants;
 import cn.weforward.protocol.aio.netty.HeadersParser;
 import cn.weforward.protocol.aio.netty.NettyHttpHeaders;
 import cn.weforward.protocol.aio.netty.NettyOutputStream;
@@ -28,7 +30,6 @@ import io.netty.buffer.CompositeByteBuf;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
-import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.util.concurrent.ScheduledFuture;
 
 /**
@@ -58,6 +59,9 @@ public class WebSocketSession {
 
 	public final static String HEADER_URI = "URI";
 	public final static String HEADER_WS_RPC_ID = "WS-RPC-ID";
+	public final static String HEADER_STATUS = "Status";
+	public static final String STATUS_NOT_IMPLEMENTED = HttpConstants.NOT_IMPLEMENTED
+			+ " Not Implemented";
 
 	protected String m_Id;
 	protected WebSocketContext m_Context;
@@ -167,11 +171,13 @@ public class WebSocketSession {
 		handler.established();
 	}
 
-	synchronized WebSocketResponse openResponse() {
+	synchronized WebSocketResponse openResponse() throws IOException {
 		if (null == m_Response) {
 			io.netty.handler.codec.http.HttpHeaders headers = new DefaultHttpHeaders();
 			// headers.set(HEADER_WS_RPC_ID, getId());
 			m_Response = new WebSocketResponse(this, new NettyHttpHeaders(headers));
+		} else if (m_Response.isCompleted()) {
+			throw new EOFException("已响应");
 		}
 		return m_Response;
 	}
@@ -181,9 +187,12 @@ public class WebSocketSession {
 		return null != rsp && rsp.isCompleted();
 	}
 
-	public void response(HttpResponseStatus status) {
-		// TODO Auto-generated method stub
-
+	public void response(String status) throws IOException {
+		WebSocketResponse rsp = openResponse();
+		if (null != status) {
+			rsp.setHeader(HEADER_STATUS, status);
+		}
+		rsp.flush(null);
 	}
 
 	protected void onRequest(ServerHandler handler) {
@@ -323,6 +332,25 @@ public class WebSocketSession {
 		}
 		if (message == m_Response) {
 			m_ServerHandler.errorRequestTransferTo(e, data, out);
+		}
+	}
+
+	void messageCompleted(WebSocketMessage message) {
+		if (message == m_Request) {
+			m_ClientHandler.requestCompleted();
+			return;
+		}
+		if (message == m_Response) {
+			m_ServerHandler.responseCompleted();
+			return;
+		}
+	}
+
+	void messageAbort(WebSocketMessage message) {
+		if (message == m_Request) {
+			// m_ServerHandler.requestAbort();
+			m_ClientHandler.requestAbort();
+			return;
 		}
 	}
 

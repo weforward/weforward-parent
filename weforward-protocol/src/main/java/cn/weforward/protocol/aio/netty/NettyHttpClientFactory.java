@@ -46,6 +46,8 @@ import io.netty.handler.codec.http.HttpRequestEncoder;
 import io.netty.handler.codec.http.HttpResponseDecoder;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
+import io.netty.util.Attribute;
+import io.netty.util.AttributeKey;
 import io.netty.util.NettyRuntime;
 import io.netty.util.concurrent.DefaultThreadFactory;
 import io.netty.util.concurrent.ScheduledFuture;
@@ -77,6 +79,12 @@ public class NettyHttpClientFactory {
 	/** 尽量控制的每组并发连接数（若指定） */
 	protected int m_FineConnections = NumberUtil
 			.toInt(System.getProperty("cn.weforward.protocol.aio.netty.FINE_CONNECTIONS"), 100);
+	/** 控制长连接重用次数（若指定） */
+	protected int m_KeepaliveRequests = NumberUtil
+			.toInt(System.getProperty("cn.weforward.protocol.aio.netty.KEEPALIVE_REQUESTS"), 0);
+
+	private static final AttributeKey<ServiceChannel> KEEPALIVE_REQUESTS_KEY = AttributeKey
+			.newInstance("WF.KEEPALIVE_REQUESTS");
 
 	public NettyHttpClientFactory() {
 		m_Services = new HashMap<String, Service>();
@@ -100,6 +108,10 @@ public class NettyHttpClientFactory {
 
 	public void setFineConnections(int max) {
 		m_FineConnections = max;
+	}
+
+	public void setKeepaliveRequests(int max) {
+		m_KeepaliveRequests = max;
 	}
 
 	/**
@@ -132,18 +144,6 @@ public class NettyHttpClientFactory {
 		}
 		return service;
 	}
-
-	// private Channel getIdelChannel(String host, int port) {
-	// String key = genKey(host, port);
-	// Service service;
-	// synchronized (m_Services) {
-	// service = m_Services.get(key);
-	// if (null != service) {
-	// return service.get();
-	// }
-	// }
-	// return null;
-	// }
 
 	/**
 	 * 创建异步HTTP客户端
@@ -193,6 +193,7 @@ public class NettyHttpClientFactory {
 						}
 						pipeline.addLast("service", service);
 						pipeline.addLast("client", client);
+						service.establish(channel);
 						service.trace("已连接", channel);
 					} else {
 						// 连接失败？
@@ -289,6 +290,7 @@ public class NettyHttpClientFactory {
 			m_Bootstrap.channel(NioSocketChannel.class);
 			m_Bootstrap.option(ChannelOption.SO_KEEPALIVE, true);
 			m_Bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000);
+//			m_Bootstrap.option(ChannelOption.SO_LINGER, 1);
 			m_Bootstrap.handler(new ChannelInitializer<SocketChannel>() {
 				@Override
 				public void initChannel(SocketChannel ch) throws Exception {
@@ -313,10 +315,13 @@ public class NettyHttpClientFactory {
 		final Service m_Service;
 		final Channel m_Channel;
 		ScheduledFuture<?> m_IdleTask;
+		/** 请求计数 */
+		int m_Requests;
 
 		ServiceChannel(Service service, Channel channel) {
 			m_Service = service;
 			m_Channel = channel;
+			m_Requests = 1;
 			startIdleTask();
 		}
 
@@ -326,9 +331,14 @@ public class NettyHttpClientFactory {
 				m_IdleTask = null;
 			}
 			if (m_Channel.isActive() && m_Channel.isOpen()) {
+				++m_Requests;
 				return m_Channel;
 			}
 			return null;
+		}
+
+		public int getRequests() {
+			return m_Requests;
 		}
 
 		@Override
@@ -360,14 +370,14 @@ public class NettyHttpClientFactory {
 		class IdleChecker implements Runnable {
 			@Override
 			public void run() {
-				boolean ret;
-				ret = m_Service.remove(ServiceChannel.this);
-				if (ret) {
-					m_Service.trace("Idle", m_Channel);
+				if (m_Service.remove(ServiceChannel.this)) {
 					// 关闭
 					m_Channel.close();
-				} else {
-					m_Service.trace("not free", m_Channel);
+					if (_Logger.isTraceEnabled()) {
+						m_Service.trace("Idle[" + getRequests() + "]", m_Channel);
+					}
+				} else if (_Logger.isTraceEnabled()) {
+					m_Service.trace("not free[" + getRequests() + "]", m_Channel);
 				}
 			}
 		}
@@ -385,13 +395,19 @@ public class NettyHttpClientFactory {
 		List<ServiceChannel> m_Channels;
 		/** 连接中或处理中的连接数 */
 		int m_Pending;
-		/** 连接重用计数 */
-		int m_Reuses;
+		/** 重用计数 */
+		long m_Reuses;
+		/** 总请求计数 */
+		long m_Requests;
 		// final String m_Name;
 
 		Service(String name) {
 			// m_Name = name;
 			m_Channels = new LinkedList<ServiceChannel>();
+		}
+
+		synchronized public void establish(Channel channel) {
+			++m_Requests;
 		}
 
 		synchronized void fin() {
@@ -440,6 +456,7 @@ public class NettyHttpClientFactory {
 				if (null != sc) {
 					++m_Pending;
 					++m_Reuses;
+					++m_Requests;
 					return sc.take();
 				}
 			}
@@ -447,7 +464,28 @@ public class NettyHttpClientFactory {
 		}
 
 		synchronized public void free(Channel channel) {
-			m_Channels.add(new ServiceChannel(this, channel));
+			ServiceChannel sc = null;
+			Attribute<ServiceChannel> attribute = null;
+			if (m_KeepaliveRequests > 0) {
+				attribute = channel.attr(KEEPALIVE_REQUESTS_KEY);
+				sc = attribute.get();
+				if (null != sc && sc.getRequests() >= m_KeepaliveRequests) {
+					// 超过keepalive requests，关闭吧
+					channel.close();
+					if (_Logger.isTraceEnabled()) {
+						trace("over keepalive requests[" + sc.getRequests() + "]", channel);
+					}
+					return;
+				}
+			}
+			if (null == sc) {
+				sc = new ServiceChannel(this, channel);
+				if (null != attribute) {
+					attribute.set(sc);
+				}
+			}
+			// 放回池复用
+			m_Channels.add(sc);
 			--m_Pending;
 		}
 

@@ -299,6 +299,7 @@ public class NettyHttpServer {
 				.childHandler(new Initializer()).option(ChannelOption.SO_REUSEADDR, true)
 				.childOption(ChannelOption.SO_KEEPALIVE, true)
 				.childOption(ChannelOption.TCP_NODELAY, true);
+//		b.option(ChannelOption.SO_LINGER, 1);
 		if (m_Backlog > 0) {
 			// 指定Backlog
 			b.option(ChannelOption.SO_BACKLOG, m_Backlog);

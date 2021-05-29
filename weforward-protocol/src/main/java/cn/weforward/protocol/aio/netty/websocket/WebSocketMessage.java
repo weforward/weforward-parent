@@ -41,6 +41,8 @@ public abstract class WebSocketMessage {
 	ByteBufStream m_Body;
 	/** 直接转传（收到即转传） */
 	NettyOutputStream m_TransferTo;
+	/** 消息输出 */
+	Output m_Output;
 
 	public WebSocketMessage(WebSocketSession session, NettyHttpHeaders headers) {
 		m_Headers = headers;
@@ -105,9 +107,26 @@ public abstract class WebSocketMessage {
 		m_Headers.setHeader(name, value);
 	}
 
-	public OutputStream openWriter() {
-		// TODO Auto-generated method stub
-		return null;
+	synchronized public Output openWriter() {
+		if (null == m_Output) {
+			m_Output = new Output();
+		}
+		return m_Output;
+	}
+
+	/**
+	 * 直接输出消息
+	 * 
+	 * @param body
+	 *            消息体（可为空）
+	 * @throws IOException
+	 */
+	public void flush(ByteBuf body) throws IOException {
+		Output out = openWriter();
+		if (null != body) {
+			out.write(body);
+		}
+		out.close();
 	}
 
 	public Headers getHeaders() {
@@ -145,13 +164,12 @@ public abstract class WebSocketMessage {
 		}
 	}
 
-	protected void completed() {
-		// TODO Auto-generated method stub
-	}
-
 	public boolean isCompleted() {
-		// TODO Auto-generated method stub
-		return false;
+		Output out = m_Output;
+		if (null != out) {
+			return !out.isOpen();
+		}
+		return (null == m_Body) ? false : m_Body.isCompleted();
 	}
 
 	protected CompositeByteBuf compositeBuffer() {
@@ -386,10 +404,10 @@ public abstract class WebSocketMessage {
 					public void operationComplete(Future<Void> future) throws Exception {
 						if (future.isSuccess()) {
 							// 已经提交完请求
-							completed();
+							success();
 						} else {
 							// 失败了:(
-							abort();
+							fail();
 						}
 					}
 				});
@@ -408,6 +426,14 @@ public abstract class WebSocketMessage {
 		synchronized public void cancel() throws IOException {
 			super.cancel();
 			disconnect();
+		}
+
+		protected void success() {
+			m_Session.messageCompleted(WebSocketMessage.this);
+		}
+
+		protected void fail() {
+			m_Session.messageAbort(WebSocketMessage.this);
 		}
 	}
 

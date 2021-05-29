@@ -32,7 +32,6 @@ import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.CompositeByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.PingWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.PongWebSocketFrame;
@@ -139,35 +138,6 @@ public class WebSocketContext extends ChannelInboundHandlerAdapter {
 		// 服务端
 		return 'w';
 	}
-
-	// /**
-	// * 生成请求序号
-	// */
-	// public String genRequestSequence() {
-	// StringBuilder builder = StringBuilderPool._128.poll();
-	// try {
-	// builder.append('P');
-	// builder.append(getSideMarker());
-	// Hex.toHex(m_Sequencer.incrementAndGet(), builder);
-	// return builder.toString();
-	// } finally {
-	// StringBuilderPool._128.offer(builder);
-	// }
-	// }
-	//
-	// /**
-	// * 生成响应序号
-	// */
-	// public String genResponseSequence(String seq) {
-	// StringBuilder builder = StringBuilderPool._128.poll();
-	// try {
-	// builder.append('R');
-	// builder.append(seq, 1, seq.length());
-	// return builder.toString();
-	// } finally {
-	// StringBuilderPool._128.offer(builder);
-	// }
-	// }
 
 	/**
 	 * 生成序号
@@ -362,7 +332,7 @@ public class WebSocketContext extends ChannelInboundHandlerAdapter {
 					return;
 				}
 				// 没有业务处理，直接返回501，且主动关闭
-				session.response(HttpResponseStatus.NOT_IMPLEMENTED);
+				session.response(WebSocketSession.STATUS_NOT_IMPLEMENTED);
 				return;
 			}
 		}
@@ -381,7 +351,11 @@ public class WebSocketContext extends ChannelInboundHandlerAdapter {
 
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder(128);
-		return toString(sb).toString();
+		StringBuilder builder = StringBuilderPool._128.poll();
+		try {
+			return toString(builder).toString();
+		} finally {
+			StringBuilderPool._128.offer(builder);
+		}
 	}
 }
