@@ -12,7 +12,8 @@ package cn.weforward.protocol.aio.netty;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.concurrent.ThreadFactory;
 
 import javax.net.ssl.SSLException;
@@ -21,13 +22,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import cn.weforward.common.util.StringBuilderPool;
+import cn.weforward.common.util.StringUtil;
 import cn.weforward.protocol.aio.ServerHandlerFactory;
+import cn.weforward.protocol.aio.netty.websocket.WebSocketChannel;
 import cn.weforward.protocol.aio.netty.websocket.WebSocketContext;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelInitializer;
@@ -37,16 +39,18 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.http.DefaultHttpHeaders;
+import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpClientCodec;
 import io.netty.handler.codec.http.HttpObjectAggregator;
-import io.netty.handler.codec.http.HttpRequestEncoder;
-import io.netty.handler.codec.http.HttpResponseDecoder;
+import io.netty.handler.codec.http.websocketx.WebSocketClientHandshaker;
+import io.netty.handler.codec.http.websocketx.WebSocketClientHandshakerFactory;
+import io.netty.handler.codec.http.websocketx.WebSocketVersion;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
+import io.netty.util.CharsetUtil;
 import io.netty.util.NettyRuntime;
 import io.netty.util.concurrent.DefaultThreadFactory;
-import io.netty.util.concurrent.ScheduledFuture;
-import io.netty.util.internal.OutOfDirectMemoryError;
 
 /**
  * Netty Websocket 工厂
@@ -65,8 +69,8 @@ public class NettyWebsocketFactory {
 	String m_Name;
 	/** 工作线程数 */
 	int m_Threads;
-	/** 空闲超时值（毫秒） */
-	protected int m_IdleMillis = 10 * 60 * 1000;
+//	/** 空闲超时值（毫秒） */
+//	protected int m_IdleMillis = 10 * 60 * 1000;
 	/** 是否debug模式 */
 	protected boolean m_DebugEnabled = false;
 
@@ -89,48 +93,49 @@ public class NettyWebsocketFactory {
 		m_Threads = threads;
 	}
 
-	/**
-	 * 空闲超时值（秒），默认10分钟
-	 * 
-	 * @param secs 空闲秒数
-	 */
-	public void setIdle(int secs) {
-		m_IdleMillis = secs * 1000;
-	}
+//	/**
+//	 * 空闲超时值（秒），默认10分钟
+//	 * 
+//	 * @param secs 空闲秒数
+//	 */
+//	public void setIdle(int secs) {
+//		m_IdleMillis = secs * 1000;
+//	}
+//
+//	public int getIdleMillis() {
+//		return m_IdleMillis;
+//	}
 
-	public int getIdleMillis() {
-		return m_IdleMillis;
-	}
-
-//	public WebSocketContext open(ServerHandlerFactory factory,String url) throws IOException {
-	public void open(ServerHandlerFactory factory, String url) throws IOException {
-		URL uri = new URL(url);
+	public WebSocketChannel connect(ServerHandlerFactory factory, String url) throws IOException {
+		final URI uri;
+		try {
+			uri = new URI(url);
+		} catch (URISyntaxException e) {
+			throw new IOException(e);
+		}
 		int port = uri.getPort();
-		String protocol = uri.getProtocol().toLowerCase();
-		boolean ssl = false;
+		String protocol = uri.getScheme().toLowerCase();
+		final boolean ssl;
 		if ("ws".equals(protocol)) {
 			if (port < 1) {
 				port = 80;
 			}
+			ssl = false;
 		} else if ("wss".equals(protocol)) {
 			if (port < 1) {
 				port = 443;
-				ssl = true;
+			}
+			ssl = true;
+			if (ssl && null == m_SslContext) {
+				throw new SSLException("不支持");
 			}
 		} else {
-			throw new MalformedURLException("不支持的协议" + uri.getProtocol());
+			throw new MalformedURLException("不支持的协议：" + protocol);
 		}
-		connect(factory, uri.getHost(), port, ssl);
-	}
-
-	public void connect(final ServerHandlerFactory factory, String host, int port, final boolean ssl)
-			throws IOException {
-		if (ssl && null == m_SslContext) {
-			throw new SSLException("不支持");
-		}
-		ChannelFuture future = null;
-
-		future = open().connect(host, port);
+		ChannelFuture future;
+		future = open().connect(uri.getHost(), port);
+		final WebSocketContext handler = new WebSocketContext();
+		handler.setServerHandlerFactory(factory);
 		future.addListener(new ChannelFutureListener() {
 			@Override
 			public void operationComplete(ChannelFuture future) throws Exception {
@@ -140,22 +145,23 @@ public class NettyWebsocketFactory {
 					if (ssl) {
 						pipeline.addFirst("ssl", m_SslContext.newHandler(channel.alloc()));
 					}
+					WebSocketClientHandshaker handshaker = WebSocketClientHandshakerFactory.newHandshaker(uri,
+							WebSocketVersion.V13, null, false, new DefaultHttpHeaders());
 					pipeline.addLast(new HttpClientCodec(), new HttpObjectAggregator(8 * 1024),
-							new WebSocketClientHandler());
-					WebSocketContext handler = new WebSocketContext();
-					handler.setServerHandlerFactory(factory);
-					pipeline.addLast("ws-ctx", handler);
-//						service.trace("已连接", channel);
+							new Handshaker(handshaker, handler));
+					trace("已连接", channel);
+					handshaker.handshake(channel);
 				} else {
 					// 连接失败？
 //						service.fin();
 					// _Logger.error(future.toString(), future.cause());
 //					client.connectFail(future.cause());
 					channel.close();
+					handler.connectFail(future.cause());
 				}
 			}
 		});
-
+		return handler;
 	}
 
 	/**
@@ -227,9 +233,7 @@ public class NettyWebsocketFactory {
 			m_Bootstrap.handler(new ChannelInitializer<SocketChannel>() {
 				@Override
 				public void initChannel(SocketChannel ch) throws Exception {
-					ChannelPipeline pipeline = ch.pipeline();
-					pipeline.addLast("c-encoder", new HttpRequestEncoder());
-					pipeline.addLast("c-decoder", new HttpResponseDecoder());
+//					ChannelPipeline pipeline = ch.pipeline();
 				}
 			});
 			m_EventLoopGroup = eventLoop;
@@ -238,94 +242,85 @@ public class NettyWebsocketFactory {
 		return m_Bootstrap;
 	}
 
-	/**
-	 * 由host+port标识的一组连接
-	 * 
-	 * @author liangyi
-	 *
-	 */
-	@Sharable
-	class WebSocketClientHandler extends ChannelInboundHandlerAdapter {
-
-		// @Override
-		// public void channelActive(ChannelHandlerContext ctx) throws Exception
-		// {
-		// super.channelActive(ctx);
-		// }
-
-		@Override
-		public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-			Channel channel = ctx.channel();
-			super.channelInactive(ctx);
-			trace("断开", channel);
+	private void trace(String msg, Channel channel) {
+		if (!_Logger.isTraceEnabled()) {
+			return;
 		}
-
-		@Override
-		public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-			if (cause instanceof OutOfDirectMemoryError) {
-				ctx.close();
+		StringBuilder builder = StringBuilderPool._128.poll();
+		String content;
+		try {
+			if (null != msg) {
+				builder.append(msg);
+				builder.append(",");
 			}
-			super.exceptionCaught(ctx, cause);
-		}
-
-		public void trace(String msg, Channel channel) {
-			if (!_Logger.isTraceEnabled()) {
-				return;
-			}
-			StringBuilder builder = StringBuilderPool._128.poll();
-			String content;
-			try {
-				if (null != msg) {
-					builder.append(msg);
-					builder.append(",");
-				}
-				// builder.append(m_Name);
-//				builder.append("{idle:").append(size());
-//				if (m_Reuses > 0) {
-//					builder.append(",reuses:").append(m_Reuses);
-//				}
-//				if (m_Pending > 0) {
-//					builder.append(",pending:").append(m_Pending);
-//				}
-//				builder.append("}");
-				if (null != channel) {
-					builder.append(channel.toString());
-				}
-				content = builder.toString();
-			} finally {
-				StringBuilderPool._128.offer(builder);
-			}
-			_Logger.trace(content);
-		}
-
-		ScheduledFuture<?> m_IdleTask;
-
-		private void startIdleTask() {
-//			int timeout = m_Service.getIdleMillis();
-//			if (timeout > 0 && null != m_Channel && m_Channel.isActive()) {
-//				// 启动空闲检查任务
-//				m_IdleTask = m_Channel.eventLoop().schedule(new IdleChecker(), timeout, TimeUnit.MILLISECONDS);
+			// builder.append(m_Name);
+//			builder.append("{idle:").append(size());
+//			if (m_Reuses > 0) {
+//				builder.append(",reuses:").append(m_Reuses);
 //			}
+//			if (m_Pending > 0) {
+//				builder.append(",pending:").append(m_Pending);
+//			}
+//			builder.append("}");
+			if (null != channel) {
+				builder.append(channel.toString());
+			}
+			content = builder.toString();
+		} finally {
+			StringBuilderPool._128.offer(builder);
+		}
+		_Logger.trace(content);
+	}
+
+	class Handshaker extends ChannelInboundHandlerAdapter {
+		WebSocketClientHandshaker m_Handshaker;
+		WebSocketContext m_Context;
+
+		Handshaker(WebSocketClientHandshaker handshaker, WebSocketContext context) {
+			m_Handshaker = handshaker;
+			m_Context = context;
 		}
 
-		/**
-		 * 空闲超时检查
-		 * 
-		 * @author liangyi
-		 *
-		 */
-		class IdleChecker implements Runnable {
-			@Override
-			public void run() {
-//				if (m_Service.remove(ServiceChannel.this)) {
-//					// 关闭
-//					m_Channel.close();
-//					if (_Logger.isTraceEnabled()) {
-//						m_Service.trace("Idle[" + getRequests() + "]", m_Channel);
-//					}
-//				} else if (_Logger.isTraceEnabled()) {
-//					m_Service.trace("not free[" + getRequests() + "]", m_Channel);
-//				}
+//		@Override
+//		public void channelActive(ChannelHandlerContext ctx) throws Exception {
+//			super.channelActive(ctx);
+//		}
+//
+//		@Override
+//		public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+//			Channel channel = ctx.channel();
+//			super.channelInactive(ctx);
+//			trace("断开", channel);
+//		}
+//
+//		@Override
+//		public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+//			if (cause instanceof OutOfDirectMemoryError) {
+//				ctx.close();
+//			}
+//			super.exceptionCaught(ctx, cause);
+//		}
+
+		@Override
+		public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+			try {
+				if (msg instanceof FullHttpResponse) {
+					FullHttpResponse response = (FullHttpResponse) msg;
+					if (!m_Handshaker.isHandshakeComplete()) {
+						// 握手协议返回，设置结束握手
+						m_Handshaker.finishHandshake(ctx.channel(), response);
+//						m_Handshaker.setSuccess();
+						ChannelPipeline pipeline = ctx.channel().pipeline();
+						pipeline.addLast("ws-ctx", m_Context);
+						pipeline.remove(this);
+						trace("finishHandshake.", ctx.channel());
+						return;
+					}
+					throw new IllegalStateException("Unexpected FullHttpResponse {status:" + response.status()
+							+ ",body:" + StringUtil.limit(response.content().toString(CharsetUtil.UTF_8), 200) + '}');
+				}
+			} finally {
+				super.channelRead(ctx, msg);
 			}
 		}
 	}

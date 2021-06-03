@@ -215,7 +215,7 @@ public class NettyHttpHandler extends ChannelInboundHandlerAdapter {
 						WebSocketContext handler = new WebSocketContext();
 						handler.setServerHandlerFactory(m_Server.getWebSocketHandlerFactory());
 						pl.addLast("ws-ctx", handler);
-						// 在pipe移除当前的NettyHttpContext
+						// 在pipe移除当前的NettyHttpHandler
 						pl.remove(NettyHttpHandler.this);
 						// // XXX 测试
 						// for (java.util.Map.Entry<String, ChannelHandler> e :

@@ -216,8 +216,7 @@ public class NettyHttpClient extends ChannelInboundHandlerAdapter implements Htt
 		if (null == ctx || millis < 1) {
 			return;
 		}
-		m_TimeoutTask = ctx.executor().schedule(new TimeoutChecker(), millis,
-				TimeUnit.MILLISECONDS);
+		m_TimeoutTask = ctx.executor().schedule(new TimeoutChecker(), millis, TimeUnit.MILLISECONDS);
 	}
 
 	public int getReadTimeout() {
@@ -241,8 +240,7 @@ public class NettyHttpClient extends ChannelInboundHandlerAdapter implements Htt
 		while (null == m_Ctx) {
 			mills = timeout - (int) (System.currentTimeMillis() - ts);
 			if (mills <= 0) {
-				throw new TransportException(TransportException.TYPE_ERROR_CONNECT_TIMEOUT, "超时",
-						null);
+				throw new TransportException(TransportException.TYPE_ERROR_CONNECT_TIMEOUT, "超时", null);
 			}
 			try {
 				this.wait(mills);
@@ -262,8 +260,7 @@ public class NettyHttpClient extends ChannelInboundHandlerAdapter implements Htt
 		while (!isResponseCompleted()) {
 			mills = timeout - (int) (System.currentTimeMillis() - ts);
 			if (mills <= 0) {
-				throw new TransportException(TransportException.TYPE_ERROR_READ_TIMEOUT, "超时",
-						null);
+				throw new TransportException(TransportException.TYPE_ERROR_READ_TIMEOUT, "超时", null);
 			}
 			try {
 				this.wait(mills);
@@ -359,8 +356,7 @@ public class NettyHttpClient extends ChannelInboundHandlerAdapter implements Htt
 		m_BodyLength += data.readableBytes();
 		calcBsp();
 		if (_Logger.isTraceEnabled()) {
-			_Logger.trace("{收到:" + data.readableBytes() + ",total:" + m_BodyLength + ",bps:" + m_Bps
-					+ "}");
+			_Logger.trace("{收到:" + data.readableBytes() + ",total:" + m_BodyLength + ",bps:" + m_Bps + "}");
 		}
 		// XXX 需要控制响应内容的大小吗？
 
@@ -423,8 +419,7 @@ public class NettyHttpClient extends ChannelInboundHandlerAdapter implements Htt
 	/**
 	 * 转发请求体
 	 * 
-	 * @param data
-	 *            请求体数据片段
+	 * @param data 请求体数据片段
 	 */
 	boolean forwardResponse(ByteBuf data) {
 		NettyOutputStream out = m_ResponseTransferTo;
@@ -523,8 +518,8 @@ public class NettyHttpClient extends ChannelInboundHandlerAdapter implements Htt
 		} else if ("https".equals(protocol)) {
 			if (port < 1) {
 				port = 443;
-				ssl = true;
 			}
+			ssl = true;
 		} else {
 			throw new MalformedURLException("不支持的协议" + uri.getProtocol());
 		}
@@ -549,16 +544,14 @@ public class NettyHttpClient extends ChannelInboundHandlerAdapter implements Htt
 			if (HttpMethod.GET.equals(httpMethod) || HttpMethod.HEAD.equals(httpMethod)) {
 				// GET请求，直接构造完整的无内容请求
 				headers.set(HttpHeaderNames.CONTENT_LENGTH, HttpHeaderValues.ZERO);
-				m_Request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, httpMethod,
-						uri.getFile(), Unpooled.buffer(0), m_RequestHeaders,
-						EmptyHttpHeaders.INSTANCE);
+				m_Request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, httpMethod, uri.getFile(),
+						Unpooled.buffer(0), m_RequestHeaders, EmptyHttpHeaders.INSTANCE);
 			} else {
 				// if (!headers.contains(HttpHeaderNames.CONTENT_LENGTH)) {
 				// headers.set(HttpHeaderNames.TRANSFER_ENCODING,
 				// HttpHeaderValues.CHUNKED);
 				// }
-				m_Request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, httpMethod, uri.getFile(),
-						m_RequestHeaders);
+				m_Request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, httpMethod, uri.getFile(), m_RequestHeaders);
 			}
 		}
 		m_Factory.connect(this, uri.getHost(), port, ssl);
@@ -628,8 +621,7 @@ public class NettyHttpClient extends ChannelInboundHandlerAdapter implements Htt
 	}
 
 	@Override
-	synchronized public void responseTransferTo(OutputStream writer, int skipBytes)
-			throws IOException {
+	synchronized public void responseTransferTo(OutputStream writer, int skipBytes) throws IOException {
 		ensureResponseStream();
 		// if (null != m_ResponseInput && ByteBufInput._completed !=
 		// m_ResponseInput) {
@@ -945,15 +937,12 @@ public class NettyHttpClient extends ChannelInboundHandlerAdapter implements Htt
 					if (null == m_Last) {
 						// 无内容
 						headers.set(HttpHeaderNames.CONTENT_LENGTH, HttpHeaderValues.ZERO);
-						content = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1,
-								m_Request.method(), m_Request.uri(), Unpooled.buffer(0), headers,
-								EmptyHttpHeaders.INSTANCE);
+						content = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, m_Request.method(), m_Request.uri(),
+								Unpooled.buffer(0), headers, EmptyHttpHeaders.INSTANCE);
 					} else {
-						headers.set(HttpHeaderNames.CONTENT_LENGTH,
-								String.valueOf(m_Last.readableBytes()));
-						content = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1,
-								m_Request.method(), m_Request.uri(), m_Last, headers,
-								EmptyHttpHeaders.INSTANCE);
+						headers.set(HttpHeaderNames.CONTENT_LENGTH, String.valueOf(m_Last.readableBytes()));
+						content = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, m_Request.method(), m_Request.uri(),
+								m_Last, headers, EmptyHttpHeaders.INSTANCE);
 					}
 				} else {
 					if (null != m_Last) {

@@ -15,6 +15,7 @@ import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
@@ -37,6 +38,8 @@ import io.netty.handler.codec.http.websocketx.PingWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.PongWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
+import io.netty.util.concurrent.ScheduledFuture;
+import io.netty.util.internal.OutOfDirectMemoryError;
 
 /**
  * 切换到WebSocket下的处理
@@ -44,7 +47,7 @@ import io.netty.handler.codec.http.websocketx.WebSocketFrame;
  * @author liangyi
  *
  */
-public class WebSocketContext extends ChannelInboundHandlerAdapter {
+public class WebSocketContext extends ChannelInboundHandlerAdapter implements WebSocketChannel {
 	static final Logger _Logger = LoggerFactory.getLogger(WebSocketContext.class);
 
 	/** 业务处理器工厂 */
@@ -57,6 +60,7 @@ public class WebSocketContext extends ChannelInboundHandlerAdapter {
 	protected Map<String, WebSocketSession> m_Multiplex;
 	/** 请求序号生成器 */
 	protected AtomicLong m_Sequencer;
+	protected ScheduledFuture<?> m_PingTask;
 
 	public WebSocketContext() {
 		m_Multiplex = new HashMap<String, WebSocketSession>();
@@ -65,6 +69,14 @@ public class WebSocketContext extends ChannelInboundHandlerAdapter {
 
 	public void setServerHandlerFactory(ServerHandlerFactory factory) {
 		m_HandlerFactory = factory;
+	}
+
+	@Override
+	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+		if (cause instanceof OutOfDirectMemoryError || cause.getCause() instanceof OutOfDirectMemoryError) {
+			ctx.close();
+		}
+		super.exceptionCaught(ctx, cause);
 	}
 
 	@Override
@@ -101,8 +113,7 @@ public class WebSocketContext extends ChannelInboundHandlerAdapter {
 			// }
 			if (msg instanceof WebSocketFrame) {
 				WebSocketFrame wsframe = (WebSocketFrame) msg;
-				if (wsframe instanceof BinaryWebSocketFrame
-						|| wsframe instanceof TextWebSocketFrame) {
+				if (wsframe instanceof BinaryWebSocketFrame || wsframe instanceof TextWebSocketFrame) {
 					if (_Logger.isTraceEnabled()) {
 						_Logger.trace(msg.toString());
 					}
@@ -111,6 +122,7 @@ public class WebSocketContext extends ChannelInboundHandlerAdapter {
 					return;
 				}
 				if (wsframe instanceof PingWebSocketFrame) {
+					// PING响应PONG
 					if (_Logger.isTraceEnabled()) {
 						_Logger.trace(formatMessage("ping " + msg));
 					}
@@ -125,6 +137,30 @@ public class WebSocketContext extends ChannelInboundHandlerAdapter {
 		} finally {
 			super.channelRead(ctx, msg);
 		}
+	}
+
+	/**
+	 * 启动PING->PONG心跳保持（一般由TCP服务端发送PING）
+	 * 
+	 * @param millis 心跳间隔（毫秒），Firefox,Chrome等浏览器超过30秒会断开
+	 */
+	synchronized public void setKeepalive(int millis) {
+		if (null != m_PingTask) {
+			m_PingTask.cancel(false);
+			m_PingTask = null;
+		}
+		if (millis < 1) {
+			return;
+		}
+		Runnable worker = new Runnable() {
+			@Override
+			public void run() {
+				PingWebSocketFrame ping = new PingWebSocketFrame();
+				m_Ctx.channel().writeAndFlush(ping);
+				return;
+			}
+		};
+		m_PingTask = m_Ctx.executor().scheduleWithFixedDelay(worker, millis, millis, TimeUnit.MILLISECONDS);
 	}
 
 	public String getRemoteAddr() {
@@ -212,8 +248,7 @@ public class WebSocketContext extends ChannelInboundHandlerAdapter {
 			// 是请求消息
 			session = openSession(seq);
 			packetState = session.readable(payload, packetState);
-			if (WebSocketSession.PACKET_MARK_HEADER == (WebSocketSession.PACKET_MARK_HEADER
-					& packetState)) {
+			if (WebSocketSession.PACKET_MARK_HEADER == (WebSocketSession.PACKET_MARK_HEADER & packetState)) {
 				// 请求开始
 				requestHeader(session);
 			}
@@ -227,8 +262,7 @@ public class WebSocketContext extends ChannelInboundHandlerAdapter {
 			return;
 		}
 		session.readable(payload, packetState);
-		if (WebSocketSession.PACKET_MARK_FINAL == (WebSocketSession.PACKET_MARK_FINAL
-				& packetState)) {
+		if (WebSocketSession.PACKET_MARK_FINAL == (WebSocketSession.PACKET_MARK_FINAL & packetState)) {
 			// 响应结束，移除session
 			removeSession(seq);
 		}
@@ -299,16 +333,6 @@ public class WebSocketContext extends ChannelInboundHandlerAdapter {
 		return sb.toString();
 	}
 
-	/**
-	 * 发起调用请求
-	 * 
-	 * @param handler
-	 *            客户端处理器
-	 * @param uri
-	 *            请求路径
-	 * @return 客户端上下文
-	 * @throws IOException
-	 */
 	public ClientContext request(ClientHandler handler, String uri) throws IOException {
 		String seq = genSequence();
 		WebSocketSession session = openSession(seq);
@@ -339,14 +363,14 @@ public class WebSocketContext extends ChannelInboundHandlerAdapter {
 		session.onRequest(handler);
 	}
 
-	public StringBuilder toString(StringBuilder sb) {
-		sb.append("{ip:");
+	public StringBuilder toString(StringBuilder builder) {
+		builder.append("{ip:");
 		if (null != m_RemoteAddr) {
-			sb.append(m_RemoteAddr);
+			builder.append(m_RemoteAddr);
 		}
-		sb.append(",mul:").append(m_Multiplex.size());
-		sb.append("}");
-		return sb;
+		builder.append(",mul:").append(m_Multiplex.size());
+		builder.append("}");
+		return builder;
 	}
 
 	@Override
@@ -357,5 +381,10 @@ public class WebSocketContext extends ChannelInboundHandlerAdapter {
 		} finally {
 			StringBuilderPool._128.offer(builder);
 		}
+	}
+
+	public void connectFail(Throwable cause) {
+		// TODO Auto-generated method stub
+
 	}
 }
