@@ -11,12 +11,14 @@
 package cn.weforward.aio;
 
 import java.io.BufferedReader;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 
 import cn.weforward.protocol.aio.ClientContext;
 import cn.weforward.protocol.aio.ClientHandler;
+import cn.weforward.protocol.aio.ConnectionListener;
 import cn.weforward.protocol.aio.ServerContext;
 import cn.weforward.protocol.aio.ServerHandler;
 import cn.weforward.protocol.aio.ServerHandlerFactory;
@@ -46,7 +48,26 @@ public class Test_NettyWebsocket {
 			public ServerHandler handle(ServerContext context) throws IOException {
 				return new Service(context);
 			}
-		}, url);
+		}, url, new ConnectionListener() {
+
+			@Override
+			public void lost(Closeable context) {
+				System.out.println("lost:" + context);
+			}
+
+			@Override
+			public void fail(String url, Throwable cause) {
+				System.out.println("fail:" + url);
+				if (null != cause) {
+					cause.printStackTrace();
+				}
+			}
+
+			@Override
+			public void establish(Closeable context) {
+				System.out.println("establish:" + context);
+			}
+		});
 		return channel;
 	}
 

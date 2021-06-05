@@ -10,35 +10,57 @@
  */
 package cn.weforward.protocol.aio;
 
-import java.io.IOException;
+import java.io.Closeable;
 
 /**
- * 业务处理器的工厂
+ * 连接的事件监听器
  * 
  * @author liangyi
  *
  */
-public interface ServerHandlerFactory {
+public interface ConnectionListener {
 	/**
-	 * 创建/指定处理的服务端业务处理器
+	 * 连接已就绪
 	 * 
-	 * @param context 服务端上下文
-	 * @return 业务处理器
+	 * @param context 相关的上下文
 	 */
-	ServerHandler handle(ServerContext context) throws IOException;
+	void establish(Closeable context);
+
+	/**
+	 * 连接失败
+	 * 
+	 * @param url   要连接的URL
+	 * @param cause 原因
+	 */
+	void fail(String url, Throwable cause);
+
+	/**
+	 * 连接断开
+	 * 
+	 * @param context 相关的上下文
+	 */
+	void lost(Closeable context);
 
 	/**
 	 * 未指定前占位用
 	 */
-	static ServerHandlerFactory _unassigned = new ServerHandlerFactory() {
-		@Override
-		public ServerHandler handle(ServerContext context) {
-			return null;
-		}
-
+	static ConnectionListener _unassigned = new ConnectionListener() {
 		@Override
 		public String toString() {
 			return "_unassigned";
 		}
+
+		@Override
+		public void establish(Closeable context) {
+		}
+
+		@Override
+		public void fail(String url, Throwable cause) {
+		}
+
+		@Override
+		public void lost(Closeable context) {
+		}
+
 	};
 }

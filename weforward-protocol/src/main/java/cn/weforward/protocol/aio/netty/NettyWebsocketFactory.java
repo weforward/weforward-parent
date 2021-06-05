@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import cn.weforward.common.util.StringBuilderPool;
 import cn.weforward.common.util.StringUtil;
+import cn.weforward.protocol.aio.ConnectionListener;
 import cn.weforward.protocol.aio.ServerHandlerFactory;
 import cn.weforward.protocol.aio.netty.websocket.WebSocketChannel;
 import cn.weforward.protocol.aio.netty.websocket.WebSocketContext;
@@ -106,7 +107,8 @@ public class NettyWebsocketFactory {
 //		return m_IdleMillis;
 //	}
 
-	public WebSocketChannel connect(ServerHandlerFactory factory, String url) throws IOException {
+	public WebSocketChannel connect(ServerHandlerFactory factory, final String url, final ConnectionListener listener)
+			throws IOException {
 		final URI uri;
 		try {
 			uri = new URI(url);
@@ -132,35 +134,44 @@ public class NettyWebsocketFactory {
 		} else {
 			throw new MalformedURLException("不支持的协议：" + protocol);
 		}
-		ChannelFuture future;
-		future = open().connect(uri.getHost(), port);
+		ChannelFuture future = null;
 		final WebSocketContext handler = new WebSocketContext();
+		handler.setConnectionListener(listener);
 		handler.setServerHandlerFactory(factory);
-		future.addListener(new ChannelFutureListener() {
-			@Override
-			public void operationComplete(ChannelFuture future) throws Exception {
-				Channel channel = future.channel();
-				if (future.isSuccess()) {
-					ChannelPipeline pipeline = channel.pipeline();
-					if (ssl) {
-						pipeline.addFirst("ssl", m_SslContext.newHandler(channel.alloc()));
+		try {
+			future = open().connect(uri.getHost(), port);
+			future.addListener(new ChannelFutureListener() {
+				@Override
+				public void operationComplete(ChannelFuture future) throws Exception {
+					Channel channel = future.channel();
+					if (future.isSuccess()) {
+						ChannelPipeline pipeline = channel.pipeline();
+						if (ssl) {
+							pipeline.addFirst("ssl", m_SslContext.newHandler(channel.alloc()));
+						}
+						WebSocketClientHandshaker handshaker = WebSocketClientHandshakerFactory.newHandshaker(uri,
+								WebSocketVersion.V13, null, false, new DefaultHttpHeaders());
+						pipeline.addLast(new HttpClientCodec(), new HttpObjectAggregator(8 * 1024),
+								new Handshaker(handshaker, handler));
+						trace("已连接", channel);
+						handshaker.handshake(channel);
+					} else {
+						// 连接失败？
+						channel.close();
+						if (null != listener) {
+							listener.fail(url, future.cause());
+						}
 					}
-					WebSocketClientHandshaker handshaker = WebSocketClientHandshakerFactory.newHandshaker(uri,
-							WebSocketVersion.V13, null, false, new DefaultHttpHeaders());
-					pipeline.addLast(new HttpClientCodec(), new HttpObjectAggregator(8 * 1024),
-							new Handshaker(handshaker, handler));
-					trace("已连接", channel);
-					handshaker.handshake(channel);
-				} else {
-					// 连接失败？
-//						service.fin();
-					// _Logger.error(future.toString(), future.cause());
-//					client.connectFail(future.cause());
-					channel.close();
-					handler.connectFail(future.cause());
+				}
+			});
+			future = null;
+		} finally {
+			if (null != future) {
+				if (null != listener) {
+					listener.fail(url, null);
 				}
 			}
-		});
+		}
 		return handler;
 	}
 
@@ -285,14 +296,19 @@ public class NettyWebsocketFactory {
 //		public void channelActive(ChannelHandlerContext ctx) throws Exception {
 //			super.channelActive(ctx);
 //		}
-//
-//		@Override
-//		public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+
+		@Override
+		public void channelInactive(ChannelHandlerContext ctx) throws Exception {
 //			Channel channel = ctx.channel();
 //			super.channelInactive(ctx);
 //			trace("断开", channel);
-//		}
-//
+			try {
+				m_Context.lost(ctx);
+			} finally {
+				super.channelInactive(ctx);
+			}
+		}
+
 //		@Override
 //		public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
 //			if (cause instanceof OutOfDirectMemoryError) {
@@ -308,12 +324,18 @@ public class NettyWebsocketFactory {
 					FullHttpResponse response = (FullHttpResponse) msg;
 					if (!m_Handshaker.isHandshakeComplete()) {
 						// 握手协议返回，设置结束握手
-						m_Handshaker.finishHandshake(ctx.channel(), response);
-//						m_Handshaker.setSuccess();
-						ChannelPipeline pipeline = ctx.channel().pipeline();
-						pipeline.addLast("ws-ctx", m_Context);
-						pipeline.remove(this);
-						trace("finishHandshake.", ctx.channel());
+						try {
+							m_Handshaker.finishHandshake(ctx.channel(), response);
+							ChannelPipeline pipeline = ctx.channel().pipeline();
+							pipeline.addLast("ws-ctx", m_Context);
+							pipeline.remove(this);
+							m_Context.getConnectionListener().establish(m_Context);
+							trace("finishHandshake.", ctx.channel());
+						} catch (Exception e) {
+							_Logger.error("websock handshake error " + ctx.channel(), e);
+							m_Context.getConnectionListener().fail(m_Handshaker.uri().toString(), e);
+							ctx.close();
+						}
 						return;
 					}
 					throw new IllegalStateException("Unexpected FullHttpResponse {status:" + response.status()
