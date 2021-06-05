@@ -14,6 +14,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import cn.weforward.common.DictionaryExt;
+
 /**
  * 服务端处理上下文
  * 
@@ -32,6 +34,16 @@ public interface ServerContext {
 	String getRemoteAddr();
 
 	/**
+	 * 动作，如：GET/POST/PUT/DELETE/HEAD...
+	 */
+	String getVerb();
+
+	/**
+	 * 附加参数
+	 */
+	DictionaryExt<String, String> getParams();
+
+	/**
 	 * 获取请求头
 	 */
 	Headers getRequestHeaders();
@@ -39,10 +51,8 @@ public interface ServerContext {
 	/**
 	 * 建立传输管道直接输出请求内容
 	 * 
-	 * @param writer
-	 *            输出请求内容的流
-	 * @param skipBytes
-	 *            >0则跳过已在缓冲区的部分内容
+	 * @param writer    输出请求内容的流
+	 * @param skipBytes >0则跳过已在缓冲区的部分内容
 	 */
 	void requestTransferTo(OutputStream writer, int skipBytes) throws IOException;
 
@@ -54,27 +64,53 @@ public interface ServerContext {
 	InputStream getRequestStream() throws IOException;
 
 	/**
+	 * 请求是否已（接收）完整
+	 */
+	boolean isRequestCompleted();
+
+	/**
 	 * 设置响应超时值
 	 * 
-	 * @param millis
-	 *            超时值（毫秒），若=Integer.MAX_VALUE则使用空闲超时值
+	 * @param millis 超时值（毫秒），若=Integer.MAX_VALUE则使用空闲超时值
 	 */
 	public void setResponseTimeout(int millis);
 
 	/**
 	 * 设置响应头
 	 * 
-	 * @param name
-	 *            名称
-	 * @param value
-	 *            值（若为null则移除该项）
+	 * @param name  名称
+	 * @param value 值（若为null则移除该项）
 	 */
 	void setResponseHeader(String name, String value) throws IOException;
 
 	/**
 	 * 打开响应输出
 	 * 
+	 * @param statusCode   状态码
+	 * @param reasonPhrase 原因简述
+	 * 
 	 * @return 响应输出流
 	 */
-	OutputStream openResponseWriter() throws IOException;
+	OutputStream openResponseWriter(int statusCode, String reasonPhrase) throws IOException;
+
+	/**
+	 * 快速输出响应
+	 * 
+	 * @param statusCode HTTP状态码
+	 * @param content    内容（可为null），若为RESPONSE_AND_CLOSE则指示无内容响应及关闭连接
+	 */
+	void response(int statusCode, byte[] content) throws IOException;
+
+	/**
+	 * 是否（正在/已经）响应
+	 */
+	boolean isRespond();
+
+	/**
+	 * 断开连接
+	 */
+	void disconnect();
+
+	/** 标识无内容响应后关闭连接 */
+	public static final byte[] RESPONSE_AND_CLOSE = new byte[0];
 }

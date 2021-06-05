@@ -19,13 +19,14 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import cn.weforward.common.DictionaryExt;
 import cn.weforward.common.io.OutputStreamStay;
 import cn.weforward.common.io.StayException;
 import cn.weforward.common.util.StringBuilderPool;
 import cn.weforward.protocol.aio.ServerHandler;
-import cn.weforward.protocol.aio.http.HttpConstants;
 import cn.weforward.protocol.aio.http.HttpContext;
 import cn.weforward.protocol.aio.http.HttpHeaders;
+import cn.weforward.protocol.aio.http.QueryStringParser;
 import cn.weforward.protocol.aio.http.ResponseEndException;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.CompositeByteBuf;
@@ -56,45 +57,46 @@ public class NettyHttpContext implements HttpContext {
 	static final Logger _Logger = LoggerFactory.getLogger(NettyHttpContext.class);
 
 	/** HTTP Handler */
-	NettyHttpHandler m_HttpHandler;
+	protected NettyHttpHandler m_HttpHandler;
 	/** 收到的请求 */
-	final HttpRequest m_Request;
+	protected final HttpRequest m_Request;
 	/** 不带参数的URI */
 	protected String m_Uri;
 	/** 在URL中的参数(?xxx=xxx...部分) */
 	protected String m_QueryString;
+	protected DictionaryExt<String, String> m_Params;
 	/** 收到的请求头 */
-	NettyHttpHeaders m_RequestHeaders;
+	protected NettyHttpHeaders m_RequestHeaders;
 	/** 请求内容 */
-	ByteBufStream m_RequestBody;
+	protected ByteBufStream m_RequestBody;
 	/** 镜像的请求内容流 */
-	ByteBufInput m_MirrorRequestBody;
+	protected ByteBufInput m_MirrorRequestBody;
 
 	/** 服务端业务处理器 */
-	ServerHandler m_Handler;
+	protected ServerHandler m_Handler;
 	/** 直接转传请求的内容（收到即转传） */
-	NettyOutputStream m_RequestTransferTo;
+	protected NettyOutputStream m_RequestTransferTo;
 
 	/** 响应状态 */
-	HttpResponseStatus m_ResponseStatus;
+	protected HttpResponseStatus m_ResponseStatus;
 	/** 响应头 */
-	io.netty.handler.codec.http.HttpHeaders m_ResponseHeaders;
+	protected io.netty.handler.codec.http.HttpHeaders m_ResponseHeaders;
 	/** 响应输出 */
-	NettyOutputStream m_ResponseWriter;
+	protected NettyOutputStream m_ResponseWriter;
 
 	/** 收到的请求或发送的响应体总长度 */
-	long m_BodyLength;
+	protected long m_BodyLength;
 	/** 请求/响应传输的时间点（传输完请求头或响应头后） */
-	long m_TransferTimepoint;
+	protected long m_TransferTimepoint;
 	/** 估算的传输速率（每秒字节数） */
-	int m_Bps;
+	protected int m_Bps;
 
 	/** 响应超时检查任务 */
-	ScheduledFuture<?> m_ResponseTimeoutTask;
+	protected ScheduledFuture<?> m_ResponseTimeoutTask;
 	/** 响应超时值（毫秒） */
-	int m_ResponseTimeout;
+	protected int m_ResponseTimeout;
 	/** 收到HTTP请求的最大字节数 */
-	int m_MaxHttpSize;
+	protected int m_MaxHttpSize;
 
 	public NettyHttpContext(NettyHttpHandler httpHandler, HttpRequest request) {
 		m_HttpHandler = httpHandler;
@@ -105,8 +107,7 @@ public class NettyHttpContext implements HttpContext {
 	/**
 	 * 调用开始
 	 * 
-	 * @param handler
-	 *            业务处理器
+	 * @param handler 业务处理器
 	 */
 	protected void request(ServerHandler handler) {
 		m_Handler = handler;
@@ -125,8 +126,7 @@ public class NettyHttpContext implements HttpContext {
 	/**
 	 * 收到调用请求的数据体
 	 * 
-	 * @param data
-	 *            请求体数据
+	 * @param data 请求体数据
 	 * @throws IOException
 	 */
 	protected void readable(ByteBuf data) throws IOException {
@@ -136,8 +136,7 @@ public class NettyHttpContext implements HttpContext {
 		m_BodyLength += data.readableBytes();
 		calcBsp();
 		if (_Logger.isTraceEnabled()) {
-			_Logger.trace("{len:" + data.readableBytes() + ",total:" + m_BodyLength + ",bps:"
-					+ m_Bps + "}");
+			_Logger.trace("{len:" + data.readableBytes() + ",total:" + m_BodyLength + ",bps:" + m_Bps + "}");
 		}
 		int max = getMaxHttpSize();
 		if (max > 0 && m_BodyLength > max) {
@@ -383,8 +382,7 @@ public class NettyHttpContext implements HttpContext {
 	 * 调用是否已响应或开始响应
 	 */
 	public boolean isRespond() {
-		return (NettyOutputStream._pending == m_ResponseWriter
-				|| NettyOutputStream._end == m_ResponseWriter);
+		return (NettyOutputStream._pending == m_ResponseWriter || NettyOutputStream._end == m_ResponseWriter);
 	}
 
 	/**
@@ -421,8 +419,7 @@ public class NettyHttpContext implements HttpContext {
 	/**
 	 * 转传输入的请求内容
 	 * 
-	 * @param data
-	 *            请求内容数据片段
+	 * @param data 请求内容数据片段
 	 */
 	private boolean forwardRequest(ByteBuf data) {
 		NettyOutputStream out = m_RequestTransferTo;
@@ -476,6 +473,32 @@ public class NettyHttpContext implements HttpContext {
 	}
 
 	@Override
+	public String getVerb() {
+		return getMethod();
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public DictionaryExt<String, String> getParams() {
+		if (null != m_Params) {
+			return m_Params;
+		}
+		String queryString = getQueryString();
+		if (null == queryString || 0 == queryString.length()) {
+			m_Params = (DictionaryExt<String, String>) DictionaryExt._Empty;
+		} else {
+			QueryStringParser parser = QueryStringParser._Pool.poll();
+			try {
+				m_Params = new DictionaryExt.WrapMap<String, String>(
+						parser.parse(queryString, 0, QueryStringParser.UTF_8, 50));
+			} finally {
+				QueryStringParser._Pool.offer(parser);
+			}
+		}
+		return m_Params;
+	}
+
+	@Override
 	public String getUri() {
 		String uri = m_Uri;
 		if (null == uri) {
@@ -518,8 +541,7 @@ public class NettyHttpContext implements HttpContext {
 	}
 
 	@Override
-	synchronized public void requestTransferTo(OutputStream writer, int skipBytes)
-			throws IOException {
+	synchronized public void requestTransferTo(OutputStream writer, int skipBytes) throws IOException {
 		ensureRequestStream();
 		if (!(m_RequestBody instanceof CompositeByteBufStream)) {
 			throw new IOException("只能在getRequestStream前使用");
@@ -609,8 +631,7 @@ public class NettyHttpContext implements HttpContext {
 		}
 		m_ResponseTimeout = millis;
 		if (null != m_HttpHandler && millis > 0) {
-			m_ResponseTimeoutTask = m_HttpHandler.schedule(new ResponseTimeoutChecker(), millis,
-					TimeUnit.MILLISECONDS);
+			m_ResponseTimeoutTask = m_HttpHandler.schedule(new ResponseTimeoutChecker(), millis, TimeUnit.MILLISECONDS);
 		}
 	}
 
@@ -637,14 +658,13 @@ public class NettyHttpContext implements HttpContext {
 		}
 	}
 
-	@Override
-	public OutputStream openResponseWriter() throws IOException {
-		return openResponseWriter(HttpConstants.OK, null);
-	}
+//	@Override
+//	public OutputStream openResponseWriter() throws IOException {
+//		return openResponseWriter(HttpConstants.OK, null);
+//	}
 
 	@Override
-	synchronized public OutputStream openResponseWriter(int statusCode, String reasonPhrase)
-			throws IOException {
+	synchronized public OutputStream openResponseWriter(int statusCode, String reasonPhrase) throws IOException {
 		if (isClosed()) {
 			throw new ResponseEndException("已关闭");
 		}
@@ -713,14 +733,13 @@ public class NettyHttpContext implements HttpContext {
 		io.netty.handler.codec.http.HttpHeaders headers = openResponseHeaders();
 		responding();
 		if (null != content) {
-			headers.set(HttpHeaderNames.CONTENT_LENGTH.toString(),
-					String.valueOf(content.readableBytes()));
-			msg = new DefaultFullHttpResponse(httpVersion, m_ResponseStatus, content.retain(),
-					headers, EmptyHttpHeaders.INSTANCE);
+			headers.set(HttpHeaderNames.CONTENT_LENGTH.toString(), String.valueOf(content.readableBytes()));
+			msg = new DefaultFullHttpResponse(httpVersion, m_ResponseStatus, content.retain(), headers,
+					EmptyHttpHeaders.INSTANCE);
 		} else {
 			headers.set(HttpHeaderNames.CONTENT_LENGTH, HttpHeaderValues.ZERO);
-			msg = new DefaultFullHttpResponse(httpVersion, m_ResponseStatus, Unpooled.buffer(0),
-					headers, EmptyHttpHeaders.INSTANCE);
+			msg = new DefaultFullHttpResponse(httpVersion, m_ResponseStatus, Unpooled.buffer(0), headers,
+					EmptyHttpHeaders.INSTANCE);
 		}
 		respond(msg);
 	}
@@ -866,8 +885,8 @@ public class NettyHttpContext implements HttpContext {
 		//// Channel ////
 		@Override
 		public boolean isOpen() {
-			return (null != m_HttpHandler && (this == m_ResponseWriter
-					|| NettyOutputStream._pending == m_ResponseWriter));
+			return (null != m_HttpHandler
+					&& (this == m_ResponseWriter || NettyOutputStream._pending == m_ResponseWriter));
 		}
 
 		//// NettyOutputStream ////

@@ -14,4 +14,8 @@ public class WebSocketRequest extends WebSocketMessage {
 		super(session, headers);
 	}
 
+	@Override
+	protected int getPacketPreamble() {
+		return PACKET_PREAMBLE_REQUEST;
+	}
 }

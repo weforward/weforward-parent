@@ -18,10 +18,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import cn.weforward.common.io.OutputStreamNio;
+import cn.weforward.protocol.aio.ServerContext;
 import cn.weforward.protocol.aio.ServerHandler;
+import cn.weforward.protocol.aio.ServerHandlerFactory;
 import cn.weforward.protocol.aio.http.HttpContext;
 import cn.weforward.protocol.aio.http.HttpHeaders;
-import cn.weforward.protocol.aio.http.ServerHandlerFactory;
 import cn.weforward.protocol.aio.netty.NettyHttpServer;
 import cn.weforward.protocol.aio.netty.NettyOutputStream;
 import io.netty.buffer.ByteBuf;
@@ -48,9 +49,10 @@ public class Test_NettyHttpServer {
 		server.setGzipMinSize(10);
 		server.setDebugEnabled(true);
 		server.setHandlerFactory(new ServerHandlerFactory() {
+
 			@Override
-			public ServerHandler handle(HttpContext httpContext) {
-				return new Handler(httpContext);
+			public ServerHandler handle(ServerContext context) throws IOException {
+				return new Handler((HttpContext) context);
 			}
 		});
 	}
@@ -105,8 +107,7 @@ public class Test_NettyHttpServer {
 					// ok.\"}}".getBytes());
 					Handler.this.ctx.setResponseHeader("Content-Type", "application/json");
 					OutputStream writer = Handler.this.ctx.openResponseWriter(200, null);
-					byte[] result = "{\"hy_resp\":{\"hy_code\": 0,\"hy_msg\": \"test ok.\"}}"
-							.getBytes();
+					byte[] result = "{\"hy_resp\":{\"hy_code\": 0,\"hy_msg\": \"test ok.\"}}".getBytes();
 					writer.write(result, 0, result.length);
 					writer.close();
 				}
@@ -129,7 +130,7 @@ public class Test_NettyHttpServer {
 				@Override
 				protected void ensureOpen() throws IOException {
 					// TODO Auto-generated method stub
-					
+
 				}
 			};
 		}
@@ -182,8 +183,7 @@ public class Test_NettyHttpServer {
 			}
 			// 不匹配
 			this.state = STATE_FAIL;
-			ctx.response(200, "{\"hy_resp\":{\"hy_code\": 1001,\"hy_msg\":\"Access Id invaild\"}}"
-					.getBytes());
+			ctx.response(200, "{\"hy_resp\":{\"hy_code\": 1001,\"hy_msg\":\"Access Id invaild\"}}".getBytes());
 			// ctx.setResponseTimeout(20 * 1000);
 			return false;
 		}
@@ -274,8 +274,7 @@ public class Test_NettyHttpServer {
 					// responseFail();
 					return;
 				}
-				if (STATE_VERIFY_HEADER != (STATE_VERIFY_HEADER & state)
-						&& !verifyHeader(ctx.getRequestHeaders())) {
+				if (STATE_VERIFY_HEADER != (STATE_VERIFY_HEADER & state) && !verifyHeader(ctx.getRequestHeaders())) {
 					// responseFail();
 					return;
 				}

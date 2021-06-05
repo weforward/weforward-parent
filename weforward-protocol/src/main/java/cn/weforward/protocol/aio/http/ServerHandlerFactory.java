@@ -10,33 +10,31 @@
  */
 package cn.weforward.protocol.aio.http;
 
-import java.io.IOException;
-
-import cn.weforward.protocol.aio.ServerHandler;
-
 /**
  * 创建业务处理器的工厂
  * 
  * @author liangyi
  *
+ * @deprecated
+ * @see cn.weforward.protocol.aio.ServerHandlerFactory
  */
-public interface ServerHandlerFactory {
-	/**
-	 * 创建/指定处理HTTP请求的业务处理器
-	 * 
-	 * @param httpContext
-	 *            HTTP服务端上下文
-	 * @return 业务处理器
-	 */
-	ServerHandler handle(HttpContext httpContext) throws IOException;
-
-	/**
-	 * 未指定前占位用
-	 */
-	static ServerHandlerFactory _unassigned = new ServerHandlerFactory() {
-		@Override
-		public ServerHandler handle(HttpContext httpContext) {
-			return null;
-		}
-	};
+public interface ServerHandlerFactory extends cn.weforward.protocol.aio.ServerHandlerFactory {
+//	/**
+//	 * 创建/指定处理HTTP请求的业务处理器
+//	 * 
+//	 * @param httpContext
+//	 *            HTTP服务端上下文
+//	 * @return 业务处理器
+//	 */
+//	ServerHandler handle(HttpContext httpContext) throws IOException;
+//
+//	/**
+//	 * 未指定前占位用
+//	 */
+//	static ServerHandlerFactory _unassigned = new ServerHandlerFactory() {
+//		@Override
+//		public ServerHandler handle(HttpContext httpContext) {
+//			return null;
+//		}
+//	};
 }

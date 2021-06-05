@@ -10,35 +10,57 @@
  */
 package cn.weforward.protocol.aio;
 
-import java.util.Enumeration;
-
-import cn.weforward.common.DictionaryExt;
+import java.io.Closeable;
 
 /**
- * 请求/响应头信息
+ * 连接的事件监听器
  * 
  * @author liangyi
- * 
+ *
  */
-public interface Headers extends DictionaryExt<String, String> {
-
+public interface ConnectionListener {
 	/**
-	 * 取得指定名称的原生（未urldecode）头信息
+	 * 连接已就绪
 	 * 
-	 * @param name 名称
-	 * @return 相应的值
+	 * @param context 相关的上下文
 	 */
-	public String getHeaderRaw(String name);
+	void establish(Closeable context);
 
 	/**
-	 * HTTP头的个数
+	 * 连接失败
 	 * 
-	 * @return 个数
+	 * @param url   要连接的URL
+	 * @param cause 原因
 	 */
-	public int size();
+	void fail(String url, Throwable cause);
 
 	/**
-	 * HTTP头名称列表
+	 * 连接断开
+	 * 
+	 * @param context 相关的上下文
 	 */
-	public Enumeration<String> names();
+	void lost(Closeable context);
+
+	/**
+	 * 未指定前占位用
+	 */
+	static ConnectionListener _unassigned = new ConnectionListener() {
+		@Override
+		public String toString() {
+			return "_unassigned";
+		}
+
+		@Override
+		public void establish(Closeable context) {
+		}
+
+		@Override
+		public void fail(String url, Throwable cause) {
+		}
+
+		@Override
+		public void lost(Closeable context) {
+		}
+
+	};
 }

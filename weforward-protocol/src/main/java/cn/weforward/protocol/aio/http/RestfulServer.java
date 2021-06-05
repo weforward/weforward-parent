@@ -25,15 +25,17 @@ import cn.weforward.common.restful.RestfulResponse;
 import cn.weforward.common.restful.RestfulService;
 import cn.weforward.common.util.IpRanges;
 import cn.weforward.common.util.StringUtil;
+import cn.weforward.protocol.aio.Headers;
+import cn.weforward.protocol.aio.ServerContext;
 import cn.weforward.protocol.aio.ServerHandler;
 
 /**
- * 提供RestfulService接入HTTP server的支持
+ * 提供RestfulService接入HTTP/websocket server的支持
  * 
  * @author liangyi
  *
  */
-public class RestfulServer implements ServerHandlerFactory {
+public class RestfulServer implements cn.weforward.protocol.aio.ServerHandlerFactory {
 	public static final Logger _Logger = LoggerFactory.getLogger(RestfulServer.class);
 
 	/** RESTful服务 */
@@ -54,8 +56,7 @@ public class RestfulServer implements ServerHandlerFactory {
 	/**
 	 * 指定业务线程池
 	 * 
-	 * @param executor
-	 *            业务线程池
+	 * @param executor 业务线程池
 	 */
 	public void setExecutor(Executor executor) {
 		m_Executor = executor;
@@ -64,8 +65,7 @@ public class RestfulServer implements ServerHandlerFactory {
 	/**
 	 * 设置允许匿名访问的IP（段）列表
 	 * 
-	 * @param ipList
-	 *            IP（段）列表，每IP（段）项以分号分隔，如：“127.0.0.1;192.168.0.0-192.168.0.100”
+	 * @param ipList IP（段）列表，每IP（段）项以分号分隔，如：“127.0.0.1;192.168.0.0-192.168.0.100”
 	 */
 	public void setAllowIps(String ipList) {
 		if (StringUtil.isEmpty(ipList)) {
@@ -83,8 +83,7 @@ public class RestfulServer implements ServerHandlerFactory {
 	/**
 	 * 设置可信的前端代理IP段
 	 * 
-	 * @param ipList
-	 *            IP（段）列表，每IP（段）项以分号分隔，如：“127.0.0.1;192.168.0.0-192.168.0.100”
+	 * @param ipList IP（段）列表，每IP（段）项以分号分隔，如：“127.0.0.1;192.168.0.0-192.168.0.100”
 	 */
 	public void setProxyIps(String ipList) {
 		if (StringUtil.isEmpty(ipList)) {
@@ -105,14 +104,14 @@ public class RestfulServer implements ServerHandlerFactory {
 	}
 
 	@Override
-	public ServerHandler handle(HttpContext httpContext) throws IOException {
-		if (isDeny(httpContext)) {
+	public ServerHandler handle(ServerContext context) throws IOException {
+		if (isDeny(context)) {
 			return null;
 		}
 		if (isQuickHandle() && null != m_Executor) {
-			return new QuickHandler(httpContext);
+			return new QuickHandler(context);
 		}
-		return new Handler(httpContext);
+		return new Handler(context);
 	}
 
 	/**
@@ -125,23 +124,21 @@ public class RestfulServer implements ServerHandlerFactory {
 	/**
 	 * 开启更快（调用请求数据未接收完）进入业务处理，这同时需要指定独立的业务线程池才会生效
 	 * 
-	 * @param enabled
-	 *            是否开启
+	 * @param enabled 是否开启
 	 */
 	public void setQuickHandle(boolean enabled) {
 		m_QuickHandle = enabled;
 	}
 
 	/* 是否拒绝 */
-	protected boolean isDeny(HttpContext httpContext) throws IOException {
+	protected boolean isDeny(ServerContext context) throws IOException {
 		if (null != m_AllowIps) {
-			String ip = getRealIp(httpContext);
+			String ip = getRealIp(context);
 			if (null == m_AllowIps.find(ip)) {
 				// 不在允许IP列表，拒绝掉
 				_Logger.warn("deny-ip: " + ip);
 				// 不在允许IP列表，拒绝掉
-				httpContext.response(RestfulResponse.STATUS_FORBIDDEN,
-						HttpContext.RESPONSE_AND_CLOSE);
+				context.response(RestfulResponse.STATUS_FORBIDDEN, ServerContext.RESPONSE_AND_CLOSE);
 				return true;
 			}
 		}
@@ -151,13 +148,12 @@ public class RestfulServer implements ServerHandlerFactory {
 	/**
 	 * 取得真实的IP，当服务可能运行于代理后面时，需要通过X-Forwarded-For 获取
 	 * 
-	 * @param httpContext
-	 *            HTTP服务端处理上下文
+	 * @param context 服务端处理上下文
 	 * 
 	 * @return 访问者的真实IP
 	 */
-	public String getRealIp(HttpContext httpContext) {
-		String ip = httpContext.getRemoteAddr();
+	public String getRealIp(ServerContext context) {
+		String ip = context.getRemoteAddr();
 		if (null == ip || ip.length() < 7) {
 			return ip;
 		}
@@ -168,7 +164,7 @@ public class RestfulServer implements ServerHandlerFactory {
 		}
 		if (null != m_ProxyIps && null != m_ProxyIps.find(ip)) {
 			// 经过了代理服务器的地址，由X-Forwarded-For取得
-			HttpHeaders headers = httpContext.getRequestHeaders();
+			Headers headers = context.getRequestHeaders();
 			if (null != headers) {
 				String fip = headers.get("X-Forwarded-For");
 				if (null != fip && fip.length() > 0) {
@@ -188,15 +184,12 @@ public class RestfulServer implements ServerHandlerFactory {
 	/**
 	 * 用于封装响应输出流
 	 * 
-	 * @param context
-	 *            HTTP服务端处理上下文
-	 * @param out
-	 *            要封装的响应输出流
+	 * @param context 服务端处理上下文
+	 * @param out     要封装的响应输出流
 	 * @return 封装后或不封装的响应输出流
 	 * @throws IOException
 	 */
-	protected OutputStream wrapResponseOutput(HttpContext context, OutputStream out)
-			throws IOException {
+	protected OutputStream wrapResponseOutput(ServerContext context, OutputStream out) throws IOException {
 		return out;
 	}
 
@@ -208,17 +201,17 @@ public class RestfulServer implements ServerHandlerFactory {
 	 */
 	static class Request implements RestfulRequest {
 		final RestfulServer m_Server;
-		final HttpContext m_Context;
-		DictionaryExt<String, String> m_Params;
+		final ServerContext m_Context;
+//		DictionaryExt<String, String> m_Params;
 
-		Request(HttpContext ctx, RestfulServer server) {
+		Request(ServerContext ctx, RestfulServer server) {
 			m_Context = ctx;
 			m_Server = server;
 		}
 
 		@Override
 		public String getVerb() {
-			return m_Context.getMethod();
+			return m_Context.getVerb();
 		}
 
 		@Override
@@ -226,24 +219,24 @@ public class RestfulServer implements ServerHandlerFactory {
 			return m_Context.getUri();
 		}
 
-		@SuppressWarnings("unchecked")
 		@Override
 		public DictionaryExt<String, String> getParams() {
-			if (null == m_Params) {
-				String queryString = m_Context.getQueryString();
-				if (null == queryString || 0 == queryString.length()) {
-					m_Params = (DictionaryExt<String, String>) DictionaryExt._Empty;
-				} else {
-					QueryStringParser parser = QueryStringParser._Pool.poll();
-					try {
-						m_Params = new DictionaryExt.WrapMap<String, String>(
-								parser.parse(queryString, 0, QueryStringParser.UTF_8, 50));
-					} finally {
-						QueryStringParser._Pool.offer(parser);
-					}
-				}
-			}
-			return m_Params;
+//			if (null == m_Params) {
+//				String queryString = m_Context.getQueryString();
+//				if (null == queryString || 0 == queryString.length()) {
+//					m_Params = (DictionaryExt<String, String>) DictionaryExt._Empty;
+//				} else {
+//					QueryStringParser parser = QueryStringParser._Pool.poll();
+//					try {
+//						m_Params = new DictionaryExt.WrapMap<String, String>(
+//								parser.parse(queryString, 0, QueryStringParser.UTF_8, 50));
+//					} finally {
+//						QueryStringParser._Pool.offer(parser);
+//					}
+//				}
+//			}
+//			return m_Params;
+			return m_Context.getParams();
 		}
 
 		@Override
@@ -270,10 +263,10 @@ public class RestfulServer implements ServerHandlerFactory {
 	 */
 	static class Response implements RestfulResponse {
 		final RestfulServer m_Server;
-		final HttpContext m_Context;
+		final ServerContext m_Context;
 		int m_Status;
 
-		Response(HttpContext ctx, RestfulServer server) {
+		Response(ServerContext ctx, RestfulServer server) {
 			this.m_Context = ctx;
 			m_Server = server;
 		}
@@ -295,8 +288,7 @@ public class RestfulServer implements ServerHandlerFactory {
 
 		@Override
 		public OutputStream openOutput() throws IOException {
-			return m_Server.wrapResponseOutput(m_Context,
-					m_Context.openResponseWriter(m_Status, null));
+			return m_Server.wrapResponseOutput(m_Context, m_Context.openResponseWriter(m_Status, null));
 		}
 
 		@Override
@@ -317,11 +309,11 @@ public class RestfulServer implements ServerHandlerFactory {
 	 *
 	 */
 	class Handler implements ServerHandler, Runnable {
-		HttpContext m_Context;
+		ServerContext m_Context;
 		Request m_Request;
 		Response m_Response;
 
-		Handler(HttpContext ctx) {
+		Handler(ServerContext ctx) {
 			this.m_Context = ctx;
 		}
 
@@ -398,8 +390,7 @@ public class RestfulServer implements ServerHandlerFactory {
 			} catch (RejectedExecutionException e) {
 				// 线程池忙？有两种选择：1.直接返回忙，2.在当前线程执行
 				try {
-					m_Context.response(RestfulResponse.STATUS_TOO_MANY_REQUESTS,
-							HttpContext.RESPONSE_AND_CLOSE);
+					m_Context.response(RestfulResponse.STATUS_TOO_MANY_REQUESTS, ServerContext.RESPONSE_AND_CLOSE);
 					_Logger.warn(String.valueOf(e), e);
 				} catch (IOException ee) {
 					_Logger.error(String.valueOf(e), ee);
@@ -449,7 +440,7 @@ public class RestfulServer implements ServerHandlerFactory {
 	class QuickHandler extends Handler {
 		boolean runing;
 
-		QuickHandler(HttpContext ctx) {
+		QuickHandler(ServerContext ctx) {
 			super(ctx);
 			// runing = false;
 		}

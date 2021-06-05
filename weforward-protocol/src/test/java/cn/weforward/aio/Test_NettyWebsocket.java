@@ -11,12 +11,16 @@
 package cn.weforward.aio;
 
 import java.io.BufferedReader;
+import java.io.Closeable;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 
+import cn.weforward.common.io.CachedInputStream;
 import cn.weforward.protocol.aio.ClientContext;
 import cn.weforward.protocol.aio.ClientHandler;
+import cn.weforward.protocol.aio.ConnectionListener;
 import cn.weforward.protocol.aio.ServerContext;
 import cn.weforward.protocol.aio.ServerHandler;
 import cn.weforward.protocol.aio.ServerHandlerFactory;
@@ -46,7 +50,26 @@ public class Test_NettyWebsocket {
 			public ServerHandler handle(ServerContext context) throws IOException {
 				return new Service(context);
 			}
-		}, url);
+		}, url, new ConnectionListener() {
+
+			@Override
+			public void lost(Closeable context) {
+				System.out.println("lost:" + context);
+			}
+
+			@Override
+			public void fail(String url, Throwable cause) {
+				System.out.println("fail:" + url);
+				if (null != cause) {
+					cause.printStackTrace();
+				}
+			}
+
+			@Override
+			public void establish(Closeable context) {
+				System.out.println("establish:" + context);
+			}
+		});
 		return channel;
 	}
 
@@ -74,7 +97,13 @@ public class Test_NettyWebsocket {
 				test.connect("ws://127.0.0.1:8080/");
 			} else if ('r' == ch) {
 				// 请求测试
-				ClientContext cc = test.channel.request(new Client(), "/mymethod");
+				Client c = new Client();
+				ClientContext cc = test.channel.request(c, "/mymethod");
+				c.setContext(cc);
+				cc.setRequestHeader("Content-Type", "application/json");
+				OutputStream out = cc.openRequestWriter();
+				out.write("{\"ask\":\"who are you\"}".getBytes("UTF-8"));
+				out.close();
 			} else if ('t' == ch) {
 			}
 		}
@@ -83,57 +112,65 @@ public class Test_NettyWebsocket {
 	}
 
 	static class Client implements ClientHandler {
+		ClientContext m_Context;
+
 		@Override
 		public void connectFail() {
-			// TODO Auto-generated method stub
+			System.out.println("connectFail " + m_Context);
+		}
 
+		public void setContext(ClientContext cc) {
+			m_Context = cc;
 		}
 
 		@Override
 		public void established() {
-			// TODO Auto-generated method stub
-
+			System.out.println("established " + m_Context);
 		}
 
 		@Override
 		public void requestCompleted() {
-			// TODO Auto-generated method stub
-
+			System.out.println("requestCompleted " + m_Context);
 		}
 
 		@Override
 		public void requestAbort() {
-			// TODO Auto-generated method stub
-
+			System.out.println("requestAbort " + m_Context);
 		}
 
 		@Override
 		public void responseHeader() {
-			// TODO Auto-generated method stub
-
+			System.out.println("responseHeader " + m_Context);
 		}
 
 		@Override
 		public void prepared(int available) {
-			// TODO Auto-generated method stub
-
+			System.out.println("prepared " + available);
 		}
 
 		@Override
 		public void responseCompleted() {
-			// TODO Auto-generated method stub
-
+			System.out.println("responseCompleted " + m_Context);
+			try (InputStream in = m_Context.getResponseStream()) {
+				System.out.println(m_Context.getResponseHeaders());
+				System.out.print("msg:");
+				System.out.println(CachedInputStream.readString(in, 0, null));
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 
 		@Override
 		public void responseTimeout() {
-			// TODO Auto-generated method stub
-
+			System.out.println("responseTimeout " + m_Context);
 		}
 
 		@Override
 		public void errorResponseTransferTo(IOException e, Object msg, OutputStream writer) {
-			// TODO Auto-generated method stub
+			System.err.println("error " + m_Context);
+			if (null != e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
@@ -149,37 +186,40 @@ public class Test_NettyWebsocket {
 
 		@Override
 		public void requestHeader() {
-			System.err.println("requestHeader " + context);
+			System.out.println("requestHeader " + context);
 		}
 
 		@Override
 		public void prepared(int available) {
-			System.err.println("prepared[" + available + "] " + context);
+			System.out.println("prepared[" + available + "] " + context);
 		}
 
 		@Override
 		public void requestAbort() {
-			System.err.println("requestAbort " + context);
+			System.out.println("requestAbort " + context);
 		}
 
 		@Override
 		public void requestCompleted() {
-			System.err.println("requestCompleted " + context);
+			System.out.println("requestCompleted " + context);
 		}
 
 		@Override
 		public void responseTimeout() {
-			System.err.println("responseTimeout " + context);
+			System.out.println("responseTimeout " + context);
 		}
 
 		@Override
 		public void responseCompleted() {
-			System.err.println("responseCompleted " + context);
+			System.out.println("responseCompleted " + context);
 		}
 
 		@Override
 		public void errorRequestTransferTo(IOException e, Object msg, OutputStream writer) {
 			System.err.println("err " + e + " " + context);
+			if (null != e) {
+				e.printStackTrace();
+			}
 		}
 	}
 

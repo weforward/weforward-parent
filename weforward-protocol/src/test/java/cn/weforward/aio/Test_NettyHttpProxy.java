@@ -19,11 +19,12 @@ import org.slf4j.LoggerFactory;
 
 import cn.weforward.common.io.OutputStreamNio;
 import cn.weforward.protocol.aio.ClientHandler;
+import cn.weforward.protocol.aio.ServerContext;
 import cn.weforward.protocol.aio.ServerHandler;
+import cn.weforward.protocol.aio.ServerHandlerFactory;
 import cn.weforward.protocol.aio.http.HttpClient;
 import cn.weforward.protocol.aio.http.HttpContext;
 import cn.weforward.protocol.aio.http.HttpHeaders;
-import cn.weforward.protocol.aio.http.ServerHandlerFactory;
 import cn.weforward.protocol.aio.netty.NettyHttpClientFactory;
 import cn.weforward.protocol.aio.netty.NettyHttpServer;
 import io.netty.handler.codec.http.HttpHeaderNames;
@@ -46,8 +47,8 @@ public class Test_NettyHttpProxy {
 		server.setMaxHttpSize(100 * 1024 * 1024);
 		server.setHandlerFactory(new ServerHandlerFactory() {
 			@Override
-			public ServerHandler handle(HttpContext httpContext) {
-				return new Handler(httpContext);
+			public ServerHandler handle(ServerContext context) throws IOException {
+				return new Handler((HttpContext) context);
 			}
 		});
 		factory = new NettyHttpClientFactory();
@@ -88,13 +89,13 @@ public class Test_NettyHttpProxy {
 		OutputStream forwardResponse;
 
 		class Proxy implements ClientHandler {
-			
+
 			@Override
 			public void connectFail() {
 				// TODO Auto-generated method stub
-				
+
 			}
-			
+
 			@Override
 			public void established() {
 				try {
@@ -158,13 +159,13 @@ public class Test_NettyHttpProxy {
 			@Override
 			public void responseTimeout() {
 				// TODO Auto-generated method stub
-				
+
 			}
 
 			@Override
 			public void requestCompleted() {
 				// TODO Auto-generated method stub
-				
+
 			}
 		}
 
@@ -182,8 +183,7 @@ public class Test_NettyHttpProxy {
 			}
 			// 不匹配
 			this.state = STATE_FAIL;
-			ctx.response(200, "{\"hy_resp\":{\"hy_code\": 1001,\"hy_msg\": \"Access Id invaild\"}}"
-					.getBytes());
+			ctx.response(200, "{\"hy_resp\":{\"hy_code\": 1001,\"hy_msg\": \"Access Id invaild\"}}".getBytes());
 			return false;
 		}
 
@@ -271,8 +271,7 @@ public class Test_NettyHttpProxy {
 					// responseFail();
 					return;
 				}
-				if (STATE_VERIFY_HEADER != (STATE_VERIFY_HEADER & state)
-						&& !verifyHeader(ctx.getRequestHeaders())) {
+				if (STATE_VERIFY_HEADER != (STATE_VERIFY_HEADER & state) && !verifyHeader(ctx.getRequestHeaders())) {
 					// responseFail();
 					return;
 				}
@@ -313,7 +312,7 @@ public class Test_NettyHttpProxy {
 		@Override
 		public void responseTimeout() {
 			// TODO Auto-generated method stub
-			
+
 		}
 	}
 

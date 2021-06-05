@@ -26,8 +26,7 @@ public interface Dictionary<K, V> {
 	/**
 	 * 取集合中指定键的项
 	 * 
-	 * @param key
-	 *            项的标识键
+	 * @param key 项的标识键
 	 * @return 相应的项
 	 */
 	V get(K key);
@@ -72,6 +71,11 @@ public interface Dictionary<K, V> {
 		@Override
 		public Object get(Object key) {
 			return null;
+		}
+
+		@Override
+		public String toString() {
+			return "<empty>";
 		}
 	};
 

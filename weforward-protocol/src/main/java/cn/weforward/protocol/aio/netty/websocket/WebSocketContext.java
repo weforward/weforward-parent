@@ -26,11 +26,12 @@ import cn.weforward.common.util.Bytes;
 import cn.weforward.common.util.StringBuilderPool;
 import cn.weforward.protocol.aio.ClientContext;
 import cn.weforward.protocol.aio.ClientHandler;
-import cn.weforward.protocol.aio.ServerHandler;
+import cn.weforward.protocol.aio.ConnectionListener;
 import cn.weforward.protocol.aio.ServerHandlerFactory;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.CompositeByteBuf;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
@@ -42,7 +43,7 @@ import io.netty.util.concurrent.ScheduledFuture;
 import io.netty.util.internal.OutOfDirectMemoryError;
 
 /**
- * 切换到WebSocket下的处理
+ * 切换到WebSocket下的处理器
  * 
  * @author liangyi
  *
@@ -61,6 +62,8 @@ public class WebSocketContext extends ChannelInboundHandlerAdapter implements We
 	/** 请求序号生成器 */
 	protected AtomicLong m_Sequencer;
 	protected ScheduledFuture<?> m_PingTask;
+	/** 连接的事件监听器 */
+	protected ConnectionListener m_ConnectionListener = ConnectionListener._unassigned;
 
 	public WebSocketContext() {
 		m_Multiplex = new HashMap<String, WebSocketSession>();
@@ -69,6 +72,32 @@ public class WebSocketContext extends ChannelInboundHandlerAdapter implements We
 
 	public void setServerHandlerFactory(ServerHandlerFactory factory) {
 		m_HandlerFactory = factory;
+	}
+
+	public void setConnectionListener(ConnectionListener listener) {
+		m_ConnectionListener = listener;
+	}
+
+	public ConnectionListener getConnectionListener() {
+		return m_ConnectionListener;
+	}
+
+	public void lost(ChannelHandlerContext ctx) {
+		if (null != ctx) {
+			initRemoteAddr(ctx.channel());
+		}
+		m_ConnectionListener.lost(this);
+	}
+
+	protected void initRemoteAddr(Channel channel) {
+		if (null != m_RemoteAddr) {
+			return;
+		}
+		// 获取调用端信息（IP+端口）
+		InetSocketAddress ip = (InetSocketAddress) channel.remoteAddress();
+		if (null != ip) {
+			m_RemoteAddr = ip.getAddress().getHostAddress() + ':' + ip.getPort();
+		}
 	}
 
 	@Override
@@ -80,24 +109,38 @@ public class WebSocketContext extends ChannelInboundHandlerAdapter implements We
 	}
 
 	@Override
-	public void channelActive(ChannelHandlerContext ctx) throws Exception {
+	public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
+		super.handlerAdded(ctx);
 		m_Ctx = ctx;
-		// 获取调用端信息（IP+端口）
-		InetSocketAddress ip = (InetSocketAddress) ctx.channel().remoteAddress();
-		m_RemoteAddr = ip.getAddress().getHostAddress() + ':' + ip.getPort();
 		if (isDebugEnabled()) {
-			_Logger.info(formatMessage("channelActive"));
+			_Logger.info(formatMessage("handlerAdded"));
 		}
-		super.channelActive(ctx);
+		initRemoteAddr(ctx.channel());
+//		m_ConnectionListener.establish(this);
 	}
+
+//	@Override
+//	public void channelActive(ChannelHandlerContext ctx) throws Exception {
+//		super.channelActive(ctx);
+//		if (isDebugEnabled()) {
+//			_Logger.info(formatMessage("channelActive"));
+//		}
+//		m_Ctx = ctx;
+//		initRemoteAddr(ctx.channel());
+//		m_ConnectionListener.establish(this);
+//	}
 
 	@Override
 	public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-		if (isDebugEnabled()) {
-			_Logger.info(formatMessage("channelInactive"));
+		try {
+			if (isDebugEnabled()) {
+				_Logger.info(formatMessage("channelInactive"));
+			}
+			cleanup();
+			lost(ctx);
+		} finally {
+			super.channelInactive(ctx);
 		}
-		super.channelInactive(ctx);
-		cleanup();
 	}
 
 	@Override
@@ -211,21 +254,21 @@ public class WebSocketContext extends ChannelInboundHandlerAdapter implements We
 		try {
 			for (int i = 0; i < seqBuf.length && payload.isReadable(); i++) {
 				seqBuf[i] = payload.readByte();
-				if (WebSocketSession.PACKET_LF == seqBuf[i]) {
+				if (WebSocketMessage.PACKET_LF == seqBuf[i]) {
 					// 碰到换行符，序号已完成
-					if (WebSocketSession.PACKET_PREAMBLE_REQUEST == seqBuf[0]) {
+					if (WebSocketMessage.PACKET_PREAMBLE_REQUEST == seqBuf[0]) {
 						// 这是请求，那就按server处理
-						packetState = WebSocketSession.PACKET_REQUEST;
-					} else if (WebSocketSession.PACKET_PREAMBLE_RESPONSE == seqBuf[0]) {
+						packetState = WebSocketMessage.PACKET_REQUEST;
+					} else if (WebSocketMessage.PACKET_PREAMBLE_RESPONSE == seqBuf[0]) {
 						// 这是响应，那就是按client处理
-						packetState = WebSocketSession.PACKET_RESPONSE;
+						packetState = WebSocketMessage.PACKET_RESPONSE;
 					} else {
 						// 标识有误
 						_Logger.error("帧格式异常，序号标识错误：" + Hex.encode(seqBuf, 0, i));
 						close();
 						return;
 					}
-					seq = new String(seqBuf, 1, i, "UTF-8");
+					seq = new String(seqBuf, 1, i - 1, "UTF-8");
 					break;
 				}
 			}
@@ -241,17 +284,18 @@ public class WebSocketContext extends ChannelInboundHandlerAdapter implements We
 		seqBuf = null;
 		if (wsframe.isFinalFragment()) {
 			// 是最后的帧
-			packetState |= WebSocketSession.PACKET_MARK_FINAL;
+			packetState |= WebSocketMessage.PACKET_MARK_FINAL;
 		}
 		WebSocketSession session;
-		if (WebSocketSession.PACKET_REQUEST == (WebSocketSession.PACKET_REQUEST & packetState)) {
+		if (WebSocketMessage.PACKET_REQUEST == (WebSocketMessage.PACKET_REQUEST & packetState)) {
 			// 是请求消息
 			session = openSession(seq);
-			packetState = session.readable(payload, packetState);
-			if (WebSocketSession.PACKET_MARK_HEADER == (WebSocketSession.PACKET_MARK_HEADER & packetState)) {
-				// 请求开始
-				requestHeader(session);
-			}
+//			packetState = session.readable(payload, packetState);
+//			if (WebSocketMessage.PACKET_MARK_HEADER == (WebSocketMessage.PACKET_MARK_HEADER & packetState)) {
+//				// 请求开始
+//				requestHeader(session);
+//			}
+			session.readable(payload, packetState);
 			return;
 		}
 		// 是响应消息
@@ -262,7 +306,7 @@ public class WebSocketContext extends ChannelInboundHandlerAdapter implements We
 			return;
 		}
 		session.readable(payload, packetState);
-		if (WebSocketSession.PACKET_MARK_FINAL == (WebSocketSession.PACKET_MARK_FINAL & packetState)) {
+		if (WebSocketMessage.PACKET_MARK_FINAL == (WebSocketMessage.PACKET_MARK_FINAL & packetState)) {
 			// 响应结束，移除session
 			removeSession(seq);
 		}
@@ -319,9 +363,16 @@ public class WebSocketContext extends ChannelInboundHandlerAdapter implements We
 		return ByteBufAllocator.DEFAULT.compositeBuffer();
 	}
 
+	protected ByteBuf allocBuffer(int len) {
+		if (null != m_Ctx) {
+			return m_Ctx.alloc().buffer(len);
+		}
+		return ByteBufAllocator.DEFAULT.buffer(len);
+	}
+
 	public boolean isDebugEnabled() {
 		// TODO
-		return false;
+		return true;
 	}
 
 	private String formatMessage(String caption) {
@@ -336,31 +387,7 @@ public class WebSocketContext extends ChannelInboundHandlerAdapter implements We
 	public ClientContext request(ClientHandler handler, String uri) throws IOException {
 		String seq = genSequence();
 		WebSocketSession session = openSession(seq);
-		session.openRequest(handler, uri);
-		return session.getClientContext();
-	}
-
-	/**
-	 * 接收到调用请求（请求头已接收完）
-	 * 
-	 * @throws IOException
-	 */
-	private void requestHeader(WebSocketSession session) throws IOException {
-		ServerHandler handler = null;
-		try {
-			handler = m_HandlerFactory.handle(session.getServerContext());
-		} finally {
-			if (null == handler) {
-				if (session.isRespond()) {
-					// 已经响应
-					return;
-				}
-				// 没有业务处理，直接返回501，且主动关闭
-				session.response(WebSocketSession.STATUS_NOT_IMPLEMENTED);
-				return;
-			}
-		}
-		session.onRequest(handler);
+		return session.openRequest(handler, uri);
 	}
 
 	public StringBuilder toString(StringBuilder builder) {
@@ -381,10 +408,5 @@ public class WebSocketContext extends ChannelInboundHandlerAdapter implements We
 		} finally {
 			StringBuilderPool._128.offer(builder);
 		}
-	}
-
-	public void connectFail(Throwable cause) {
-		// TODO Auto-generated method stub
-
 	}
 }

@@ -15,10 +15,11 @@ import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import cn.weforward.protocol.aio.ServerContext;
 import cn.weforward.protocol.aio.ServerHandler;
+import cn.weforward.protocol.aio.ServerHandlerFactory;
 import cn.weforward.protocol.aio.http.HttpConstants;
 import cn.weforward.protocol.aio.http.HttpContext;
-import cn.weforward.protocol.aio.http.ServerHandlerFactory;
 import cn.weforward.protocol.aio.netty.NettyHttpClientFactory;
 import cn.weforward.protocol.aio.netty.NettyHttpServer;
 import cn.weforward.proxy.ProxyHandler;
@@ -40,14 +41,17 @@ public class HttpProxy implements ServerHandlerFactory {
 	}
 
 	@Override
-	public ServerHandler handle(HttpContext httpContext) throws IOException {
-		if (!m_Handler.checkFrom(httpContext.getRemoteAddr())) {
+	public ServerHandler handle(ServerContext context) throws IOException {
+		if (!(context instanceof HttpContext)) {
+			throw new IOException("非HTTP请求：" + context);
+		}
+		if (!m_Handler.checkFrom(context.getRemoteAddr())) {
 			// 拒绝此IP访问
-			httpContext.response(HttpConstants.FORBIDDEN, null);
-			httpContext.disconnect();
+			context.response(HttpConstants.FORBIDDEN, null);
+			context.disconnect();
 			return null;
 		}
-		return new HttpTunnel(this, httpContext);
+		return new HttpTunnel(this, (HttpContext) context);
 	}
 
 	public ProxyHandler getHandler() {

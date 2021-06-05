@@ -13,6 +13,7 @@ package cn.weforward.aio;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Random;
 
 import cn.weforward.common.io.CachedInputStream;
 import cn.weforward.common.restful.RestfulRequest;
@@ -53,6 +54,14 @@ public class Test_RestfulService implements RestfulService {
 
 	@Override
 	public void service(RestfulRequest request, RestfulResponse response) throws IOException {
+		Random r = new Random();
+		try {
+			Thread.sleep(r.nextInt(1000 - 10) + 10);
+		} catch (InterruptedException e) {
+		}
+		System.out.println(request.getParams());
+		System.out.println(" ---");
+		System.out.println(request.getHeaders());
 		InputStream content = request.getContent();
 		Bytes bytes = CachedInputStream.toBytes(content);
 		System.out.println(bytes);
@@ -79,6 +88,64 @@ public class Test_RestfulService implements RestfulService {
 		// httpServer.setIdle(30);
 		httpServer.setHandlerFactory(restfulServer);
 		httpServer.setWebSocket("ws://127.0.0.1");
+//		httpServer.setWebSocketHandlerFactory(new cn.weforward.protocol.aio.ServerHandlerFactory() {
+//			@Override
+//			public ServerHandler handle(final ServerContext context) throws IOException {
+//				return new ServerHandler() {
+//					@Override
+//					public void requestHeader() {
+//						System.out.println("requestHeader");
+//					}
+//
+//					@Override
+//					public void prepared(int available) {
+//						System.out.println("prepared " + available);
+//					}
+//
+//					@Override
+//					public void requestAbort() {
+//						System.out.println("requestAbort");
+//					}
+//
+//					@Override
+//					public void requestCompleted() {
+//						System.out.println("requestCompleted");
+//						InputStream content;
+//						try {
+//							System.out.println(context.getRequestHeaders());
+//							content = context.getRequestStream();
+//							Bytes bytes = CachedInputStream.toBytes(content);
+//							System.out.println(bytes);
+//							context.setResponseHeader("status", "200");
+//							context.setResponseHeader("Content-Type", "application/json");
+//							OutputStream out = context.openResponseWriter();
+//							out.write("{\"say\":\"hello world(WS)\"}".getBytes("UTF-8"));
+//							out.close();
+//						} catch (IOException e) {
+//							e.printStackTrace();
+//						}
+//					}
+//
+//					@Override
+//					public void responseTimeout() {
+//						System.out.println("responseTimeout");
+//					}
+//
+//					@Override
+//					public void responseCompleted() {
+//						System.out.println("responseCompleted");
+//					}
+//
+//					@Override
+//					public void errorRequestTransferTo(IOException e, Object msg, OutputStream writer) {
+//						System.err.println("err:" + msg);
+//						if (null != e) {
+//							e.printStackTrace();
+//						}
+//					}
+//				};
+//			}
+//		});
 		httpServer.start();
 		System.out.println("'q' key stop");
 		while ('q' != System.in.read()) {

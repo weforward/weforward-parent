@@ -19,8 +19,8 @@ import org.slf4j.LoggerFactory;
 import cn.weforward.common.util.NumberUtil;
 import cn.weforward.common.util.StringBuilderPool;
 import cn.weforward.protocol.aio.ServerHandler;
+import cn.weforward.protocol.aio.ServerHandlerFactory;
 import cn.weforward.protocol.aio.http.HttpContext;
-import cn.weforward.protocol.aio.http.ServerHandlerFactory;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -76,8 +76,6 @@ public class NettyHttpServer {
 	protected ServerHandlerFactory m_HandlerFactory = ServerHandlerFactory._unassigned;
 	/** 支持WebSocket的Factory（若开启） */
 	protected WebSocketServerHandshakerFactory m_WebSocketFactory;
-	/** WebSocket下的业务处理工厂 */
-	protected cn.weforward.protocol.aio.ServerHandlerFactory m_WebSocketHandlerFactory = cn.weforward.protocol.aio.ServerHandlerFactory._unassigned;
 
 	public NettyHttpServer(int port) {
 		m_Port = port;
@@ -149,8 +147,7 @@ public class NettyHttpServer {
 	 * 指定Keep-Alive头， 如“timeout=300,
 	 * max=200”，表示要求客户端保持300秒长连接、重用次数不超过200，JDK中sun实现的HttpURLConnection支持这个头
 	 * 
-	 * @param keepAlive
-	 *            Keep-Alive头内容
+	 * @param keepAlive Keep-Alive头内容
 	 */
 	public void setKeepAlive(String keepAlive) {
 		m_KeepAlive = (keepAlive);
@@ -176,8 +173,7 @@ public class NettyHttpServer {
 	/**
 	 * 是否允许GZIP压缩输出
 	 * 
-	 * @param enabled
-	 *            是则允许
+	 * @param enabled 是则允许
 	 */
 	public void setGzipEnabled(boolean enabled) {
 		m_GzipEnabled = enabled;
@@ -190,8 +186,7 @@ public class NettyHttpServer {
 	/**
 	 * GZIP的最小输出大小（字节），默认为512字节
 	 * 
-	 * @param minSize
-	 *            最小字节
+	 * @param minSize 最小字节
 	 */
 	public void setGzipMinSize(int minSize) {
 		m_GzipMinSize = minSize;
@@ -215,19 +210,10 @@ public class NettyHttpServer {
 		return m_HandlerFactory;
 	}
 
-	public cn.weforward.protocol.aio.ServerHandlerFactory getWebSocketHandlerFactory() {
-		return m_WebSocketHandlerFactory;
-	}
-
-	public void setWebSocketHandlerFactory(cn.weforward.protocol.aio.ServerHandlerFactory factory) {
-		m_WebSocketHandlerFactory = factory;
-	}
-
 	/**
 	 * 空闲超时值（秒），默认10分钟
 	 * 
-	 * @param secs
-	 *            空闲秒数
+	 * @param secs 空闲秒数
 	 */
 	public void setIdle(int secs) {
 		m_IdleMillis = secs * 1000;
@@ -240,8 +226,7 @@ public class NettyHttpServer {
 	/**
 	 * 启用或禁止WebSocket支持
 	 * 
-	 * @param uri
-	 *            websocket的URI，响应给客户端的sec-websocket-location头，若指定则启用支持，若null或空字串则禁止，如：ws://127.0.0.1
+	 * @param uri websocket的URI，响应给客户端的sec-websocket-location头，若指定则启用支持，若null或空字串则禁止，如：ws://127.0.0.1
 	 * 
 	 */
 	public void setWebSocket(String uri) {
@@ -295,9 +280,8 @@ public class NettyHttpServer {
 		ThreadFactory workThreadFactory = new DefaultThreadFactory(name);
 		workerGroup = new NioEventLoopGroup(m_WorkThreads, workThreadFactory);
 		ServerBootstrap b = new ServerBootstrap();
-		b.group(bossGroup, workerGroup).channel(NioServerSocketChannel.class)
-				.childHandler(new Initializer()).option(ChannelOption.SO_REUSEADDR, true)
-				.childOption(ChannelOption.SO_KEEPALIVE, true)
+		b.group(bossGroup, workerGroup).channel(NioServerSocketChannel.class).childHandler(new Initializer())
+				.option(ChannelOption.SO_REUSEADDR, true).childOption(ChannelOption.SO_KEEPALIVE, true)
 				.childOption(ChannelOption.TCP_NODELAY, true);
 //		b.option(ChannelOption.SO_LINGER, 1);
 		if (m_Backlog > 0) {
@@ -351,8 +335,7 @@ public class NettyHttpServer {
 			if (null != name && name.length() > 0) {
 				sb.append(",name:").append(name);
 			}
-			sb.append(",m-at:").append(m_AcceptThreads).append(",m-wk:").append(m_WorkThreads)
-					.append(",c:");
+			sb.append(",m-at:").append(m_AcceptThreads).append(",m-wk:").append(m_WorkThreads).append(",c:");
 			// if (null != m_Executor) {
 			// sb.append(",executor:").append(m_Executor);
 			// }
@@ -366,8 +349,7 @@ public class NettyHttpServer {
 	/**
 	 * 创建/指定处理HTTP请求的业务处理器
 	 * 
-	 * @param httpContext
-	 *            HTTP服务端上下文
+	 * @param httpContext HTTP服务端上下文
 	 * @return 业务处理器
 	 */
 	public ServerHandler handle(HttpContext httpContext) throws IOException {
@@ -413,8 +395,7 @@ public class NettyHttpServer {
 		@Override
 		protected Result beginEncode(HttpResponse headers, String acceptEncoding) throws Exception {
 			if (m_GzipMinSize > 0) {
-				int length = NumberUtil.toInt(headers.headers().get(HttpHeaderNames.CONTENT_LENGTH),
-						0);
+				int length = NumberUtil.toInt(headers.headers().get(HttpHeaderNames.CONTENT_LENGTH), 0);
 				if (length < m_GzipMinSize) {
 					// 内容太少，不压缩
 					return null;

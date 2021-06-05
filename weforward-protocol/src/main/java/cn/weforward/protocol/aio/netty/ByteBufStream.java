@@ -24,8 +24,7 @@ public interface ByteBufStream {
 	/**
 	 * 有数据进入
 	 * 
-	 * @param data
-	 *            要进入的数据
+	 * @param data 要进入的数据
 	 * @throws IOException
 	 */
 	void readable(ByteBuf data) throws IOException;
@@ -49,33 +48,4 @@ public interface ByteBufStream {
 	 * 是否完整的数据在缓冲区中
 	 */
 	boolean isCompleted();
-
-	// /**
-	// * 标记已完整
-	// */
-	// static public ByteBufStream _completed = new ByteBufStream() {
-	//
-	// @Override
-	// public void readable(ByteBuf data) throws IOException {
-	// throw new EOFException("completed");
-	// }
-	//
-	// @Override
-	// public void completed() {
-	// }
-	//
-	// @Override
-	// public void abort() {
-	// }
-	//
-	// @Override
-	// public int available() throws IOException {
-	// return 0;
-	// }
-	//
-	// @Override
-	// public boolean isCompleted() {
-	// return true;
-	// }
-	// };
 }

@@ -36,10 +36,8 @@ public interface HttpClient extends ClientContext {
 	/**
 	 * 发起请求
 	 * 
-	 * @param url
-	 *            要请求的URL
-	 * @param method
-	 *            方法，如：GET，POST
+	 * @param url    要请求的URL
+	 * @param method 方法，如：GET，POST
 	 * @throws IOException
 	 */
 	void request(String url, String method) throws IOException;
@@ -47,12 +45,9 @@ public interface HttpClient extends ClientContext {
 	/**
 	 * 发起请求
 	 * 
-	 * @param url
-	 *            要请求的URL
-	 * @param method
-	 *            方法，如：GET，POST
-	 * @param timeout
-	 *            超时值（毫秒）
+	 * @param url     要请求的URL
+	 * @param method  方法，如：GET，POST
+	 * @param timeout 超时值（毫秒）
 	 * @throws IOException
 	 */
 	void request(String url, String method, int timeout) throws IOException;
@@ -104,11 +99,11 @@ public interface HttpClient extends ClientContext {
 	 * @throws IOException
 	 */
 	public InputStream duplicateResponseStream() throws IOException;
-
-	/**
-	 * 响应是否已（接收）完整
-	 */
-	boolean isResponseCompleted();
+//
+//	/**
+//	 * 响应是否已（接收）完整
+//	 */
+//	boolean isResponseCompleted();
 
 	/**
 	 * 当前所估算到的传输速率（每秒字节数）
@@ -119,9 +114,9 @@ public interface HttpClient extends ClientContext {
 	 * 关闭客户端（结束当次调用）
 	 */
 	void close();
-
-	/**
-	 * 断开连接
-	 */
-	void disconnect();
+//
+//	/**
+//	 * 断开连接
+//	 */
+//	void disconnect();
 }

@@ -22,8 +22,7 @@ public interface ServerHandlerFactory {
 	/**
 	 * 创建/指定处理的服务端业务处理器
 	 * 
-	 * @param context
-	 *            服务端上下文
+	 * @param context 服务端上下文
 	 * @return 业务处理器
 	 */
 	ServerHandler handle(ServerContext context) throws IOException;
@@ -35,6 +34,11 @@ public interface ServerHandlerFactory {
 		@Override
 		public ServerHandler handle(ServerContext context) {
 			return null;
+		}
+
+		@Override
+		public String toString() {
+			return "_unassigned";
 		}
 	};
 }

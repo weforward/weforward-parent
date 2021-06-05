@@ -12,7 +12,6 @@ package cn.weforward.protocol.aio.http;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 
 import cn.weforward.protocol.aio.ServerContext;
 
@@ -62,8 +61,7 @@ public interface HttpContext extends ServerContext {
 	/**
 	 * 创建请求内容镜像流，当请求接收完整后不受上下文状态影响，也不受requestTransferTo影响，但必须得在requestTransferTo前调用
 	 * 
-	 * @param skipBytes
-	 *            >0则跳过已在缓冲区的部分内容
+	 * @param skipBytes >0则跳过已在缓冲区的部分内容
 	 */
 	public InputStream mirrorRequestStream(int skipBytes) throws IOException;
 
@@ -83,10 +81,10 @@ public interface HttpContext extends ServerContext {
 	 */
 	public InputStream duplicateRequestStream() throws IOException;
 
-	/**
-	 * 请求是否已（接收）完整
-	 */
-	boolean isRequestCompleted();
+//	/**
+//	 * 请求是否已（接收）完整
+//	 */
+//	boolean isRequestCompleted();
 
 	// /**
 	// * 设置响应超时值
@@ -99,8 +97,7 @@ public interface HttpContext extends ServerContext {
 	/**
 	 * 设置收到HTTP请求的最大字节数
 	 * 
-	 * @param size
-	 *            最大字节数
+	 * @param size 最大字节数
 	 */
 	public void setMaxHttpSize(int size);
 
@@ -113,44 +110,42 @@ public interface HttpContext extends ServerContext {
 	// * 值（若为null则移除该项）
 	// */
 	// void setResponseHeader(String name, String value) throws IOException;
-
-	/**
-	 * 打开响应输出
-	 * 
-	 * @param statusCode
-	 *            状态码
-	 * @param reasonPhrase
-	 *            原因简述
-	 * 
-	 * @return 响应输出流
-	 */
-	OutputStream openResponseWriter(int statusCode, String reasonPhrase) throws IOException;
-
-	/**
-	 * 快速输出响应
-	 * 
-	 * @param statusCode
-	 *            HTTP状态码
-	 * @param content
-	 *            内容（可为null），若为RESPONSE_AND_CLOSE则指示无内容响应及关闭连接
-	 */
-	void response(int statusCode, byte[] content) throws IOException;
+//
+//	/**
+//	 * 打开响应输出
+//	 * 
+//	 * @param statusCode   状态码
+//	 * @param reasonPhrase 原因简述
+//	 * 
+//	 * @return 响应输出流
+//	 */
+//	OutputStream openResponseWriter(int statusCode, String reasonPhrase) throws IOException;
+//
+//	/**
+//	 * 快速输出响应
+//	 * 
+//	 * @param statusCode
+//	 *            HTTP状态码
+//	 * @param content
+//	 *            内容（可为null），若为RESPONSE_AND_CLOSE则指示无内容响应及关闭连接
+//	 */
+//	void response(int statusCode, byte[] content) throws IOException;
 
 	/**
 	 * 当前所估算到的传输速率（每秒字节数）
 	 */
 	int bps();
 
-	/**
-	 * 是否（正在/已经）响应
-	 */
-	boolean isRespond();
-
-	/**
-	 * 断开连接
-	 */
-	void disconnect();
-
-	/** 标识无内容响应后关闭连接 */
-	public static final byte[] RESPONSE_AND_CLOSE = new byte[0];
+//	/**
+//	 * 是否（正在/已经）响应
+//	 */
+//	boolean isRespond();
+//
+//	/**
+//	 * 断开连接
+//	 */
+//	void disconnect();
+//
+//	/** 标识无内容响应后关闭连接 */
+//	public static final byte[] RESPONSE_AND_CLOSE = new byte[0];
 }

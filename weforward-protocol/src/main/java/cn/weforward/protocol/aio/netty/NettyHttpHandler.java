@@ -165,8 +165,7 @@ public class NettyHttpHandler extends ChannelInboundHandlerAdapter {
 	/**
 	 * 已收到完整请求头
 	 * 
-	 * @param request
-	 *            调用请求
+	 * @param request 调用请求
 	 * @throws IOException
 	 */
 	private boolean requestHeader(HttpRequest request) throws IOException {
@@ -201,8 +200,6 @@ public class NettyHttpHandler extends ChannelInboundHandlerAdapter {
 				}
 				// 握手
 				ChannelFuture future = handshaker.handshake(m_Ctx.channel(), request);
-				// // 在pipe移除当前的NettyHttpContext
-				// m_Ctx.channel().pipeline().remove(NettyHttpContext.this);
 				future.addListener(new ChannelFutureListener() {
 					@Override
 					public void operationComplete(ChannelFuture future) throws Exception {
@@ -213,15 +210,10 @@ public class NettyHttpHandler extends ChannelInboundHandlerAdapter {
 						ChannelPipeline pl = future.channel().pipeline();
 						// 切换处理的handler
 						WebSocketContext handler = new WebSocketContext();
-						handler.setServerHandlerFactory(m_Server.getWebSocketHandlerFactory());
+						handler.setServerHandlerFactory(m_Server.getHandlerFactory());
 						pl.addLast("ws-ctx", handler);
 						// 在pipe移除当前的NettyHttpHandler
 						pl.remove(NettyHttpHandler.this);
-						// // XXX 测试
-						// for (java.util.Map.Entry<String, ChannelHandler> e :
-						// pl) {
-						// _Logger.trace(String.valueOf(e));
-						// }
 					}
 				});
 				return false;
@@ -262,8 +254,7 @@ public class NettyHttpHandler extends ChannelInboundHandlerAdapter {
 	/**
 	 * 已响应
 	 * 
-	 * @param hc
-	 *            HTTP服务端处理上下文
+	 * @param hc HTTP服务端处理上下文
 	 */
 	public void respond(NettyHttpContext hc) {
 		if (hc == m_HttpContext) {
@@ -307,10 +298,8 @@ public class NettyHttpHandler extends ChannelInboundHandlerAdapter {
 	/**
 	 * 直接无内容响应且主动关闭连接
 	 * 
-	 * @param status
-	 *            响应状态
-	 * @param responseHeaders
-	 *            可选的响应头
+	 * @param status          响应状态
+	 * @param responseHeaders 可选的响应头
 	 */
 	protected void responseAndClose(HttpResponseStatus status, HttpHeaders responseHeaders) {
 		responseAndClose(status, HttpVersion.HTTP_1_0, responseHeaders);
@@ -319,13 +308,10 @@ public class NettyHttpHandler extends ChannelInboundHandlerAdapter {
 	/**
 	 * 直接无内容响应且主动关闭连接
 	 * 
-	 * @param status
-	 *            响应状态
-	 * @param httpVersion
-	 *            HTTP版本（如：HTTP 1.0，HTTP 1.1）
+	 * @param status      响应状态
+	 * @param httpVersion HTTP版本（如：HTTP 1.0，HTTP 1.1）
 	 */
-	private void responseAndClose(HttpResponseStatus status, HttpVersion httpVersion,
-			HttpHeaders responseHeaders) {
+	private void responseAndClose(HttpResponseStatus status, HttpVersion httpVersion, HttpHeaders responseHeaders) {
 		NettyHttpContext hc = m_HttpContext;
 		try {
 			m_HttpContext = null;
@@ -333,8 +319,8 @@ public class NettyHttpHandler extends ChannelInboundHandlerAdapter {
 			if (null == responseHeaders) {
 				msg = new DefaultFullHttpResponse(httpVersion, status);
 			} else {
-				msg = new DefaultFullHttpResponse(httpVersion, status, Unpooled.buffer(0),
-						responseHeaders, EmptyHttpHeaders.INSTANCE);
+				msg = new DefaultFullHttpResponse(httpVersion, status, Unpooled.buffer(0), responseHeaders,
+						EmptyHttpHeaders.INSTANCE);
 			}
 			io.netty.handler.codec.http.HttpHeaders headers = msg.headers();
 			headers.set(HttpHeaderNames.CONTENT_LENGTH, HttpHeaderValues.ZERO);

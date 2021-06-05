@@ -8,37 +8,17 @@
  * THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * 
  */
-package cn.weforward.protocol.aio;
-
-import java.util.Enumeration;
-
-import cn.weforward.common.DictionaryExt;
+package cn.weforward.protocol.aio.netty.websocket;
 
 /**
- * 请求/响应头信息
+ * 切换到WebSocket下的处理器（客户端）
  * 
  * @author liangyi
- * 
+ *
  */
-public interface Headers extends DictionaryExt<String, String> {
-
-	/**
-	 * 取得指定名称的原生（未urldecode）头信息
-	 * 
-	 * @param name 名称
-	 * @return 相应的值
-	 */
-	public String getHeaderRaw(String name);
-
-	/**
-	 * HTTP头的个数
-	 * 
-	 * @return 个数
-	 */
-	public int size();
-
-	/**
-	 * HTTP头名称列表
-	 */
-	public Enumeration<String> names();
+public class WebSocketContextClient extends WebSocketContext {
+	protected char getSideMarker() {
+		// 客户端
+		return 'z';
+	}
 }

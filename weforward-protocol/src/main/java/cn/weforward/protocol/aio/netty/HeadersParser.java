@@ -1,5 +1,7 @@
 package cn.weforward.protocol.aio.netty;
 
+import cn.weforward.common.sys.GcCleaner;
+import cn.weforward.common.util.RingBuffer;
 import cn.weforward.common.util.StringPool;
 import cn.weforward.protocol.aio.http.HttpHeaders;
 import io.netty.buffer.ByteBuf;
@@ -62,8 +64,7 @@ public class HeadersParser implements ByteProcessor {
 		return true;
 	}
 
-	public io.netty.handler.codec.http.HttpHeaders openHeaders(
-			io.netty.handler.codec.http.HttpHeaders headers) {
+	public io.netty.handler.codec.http.HttpHeaders openHeaders(io.netty.handler.codec.http.HttpHeaders headers) {
 		if (EmptyHttpHeaders.INSTANCE == headers) {
 			headers = new DefaultHttpHeaders(false);
 		}
@@ -173,4 +174,26 @@ public class HeadersParser implements ByteProcessor {
 		}
 		return 0;
 	}
+
+	/**
+	 * 池化HeadersParser
+	 */
+	public static RingBuffer<HeadersParser> _Pool = new RingBuffer<HeadersParser>(512) {
+
+		@Override
+		public boolean offer(HeadersParser item) {
+			item.reset();
+			return super.offer(item);
+		}
+
+		@Override
+		protected HeadersParser onEmpty() {
+			return new HeadersParser();
+		}
+
+		@Override
+		protected void onInit() {
+			GcCleaner.register(this);
+		}
+	};
 }

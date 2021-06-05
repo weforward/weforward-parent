@@ -13,4 +13,9 @@ public class WebSocketResponse extends WebSocketMessage {
 	public WebSocketResponse(WebSocketSession session, NettyHttpHeaders headers) {
 		super(session, headers);
 	}
+
+	@Override
+	protected int getPacketPreamble() {
+		return PACKET_PREAMBLE_RESPONSE;
+	}
 }

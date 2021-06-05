@@ -10,6 +10,7 @@ import java.util.Map.Entry;
 import cn.weforward.common.io.OutputStreamStay;
 import cn.weforward.common.io.StayException;
 import cn.weforward.protocol.aio.Headers;
+import cn.weforward.protocol.aio.http.HttpConstants;
 import cn.weforward.protocol.aio.netty.ByteBufInput;
 import cn.weforward.protocol.aio.netty.ByteBufStream;
 import cn.weforward.protocol.aio.netty.CompositeByteBufStream;
@@ -31,6 +32,32 @@ import io.netty.util.concurrent.GenericFutureListener;
  *
  */
 public abstract class WebSocketMessage {
+	/** 调用请求的数据包 */
+	public final static int PACKET_REQUEST = 0x01;
+	/** 调用响应的数据包 */
+	public final static int PACKET_RESPONSE = 0x02;
+	/** 最后的数据包 */
+	public final static int PACKET_MARK_FINAL = 0x10;
+	/** 已初始化header */
+	public final static int PACKET_MARK_HEADER = 0x20;
+	/** 处理中断 */
+	public final static int PACKET_MARK_ABORT = Integer.MIN_VALUE;
+
+	/** 请求包前导码 */
+	public final static int PACKET_PREAMBLE_REQUEST = 'P';
+	/** 响应包前导码 */
+	public final static int PACKET_PREAMBLE_RESPONSE = 'R';
+	/** 消息包分隔符 */
+	public final static char PACKET_LF = '\n';
+	/** 消息包ID最大长度 */
+	public final static int PACKET_ID_LENGTH = 128;
+
+	public final static String HEADER_URI = "URI";
+	public final static String HEADER_WS_RPC_ID = "WS-RPC-ID";
+	public final static String HEADER_STATUS = "Status";
+	public final static String HEADER_VERB = "Verb";
+	public static final String STATUS_NOT_IMPLEMENTED = HttpConstants.NOT_IMPLEMENTED + " Not Implemented";
+
 	/** 消息头分隔符 */
 	final static byte[] HEADER_DELIMITER = { ':', ' ' };
 
@@ -48,6 +75,11 @@ public abstract class WebSocketMessage {
 		m_Headers = headers;
 		m_Session = session;
 	}
+
+	/**
+	 * 消息包前导码 PACKET_PREAMBLE_REQUEST PACKET_PREAMBLE_RESPONSE
+	 */
+	abstract protected int getPacketPreamble();
 
 	public int readable(ByteBuf payload) throws IOException {
 		ByteBufStream body;
@@ -91,6 +123,14 @@ public abstract class WebSocketMessage {
 		return stream;
 	}
 
+	synchronized public InputStream duplicateStream() throws IOException {
+		ByteBufStream body = m_Body;
+		if (!(body instanceof CompositeByteBufStream)) {
+			throw new IOException("只能在getStream前使用");
+		}
+		return ((CompositeByteBufStream) body).snapshot();
+	}
+
 	synchronized void cleanup() {
 		if (null != m_Body) {
 			m_Body.abort();
@@ -107,8 +147,12 @@ public abstract class WebSocketMessage {
 		m_Headers.setHeader(name, value);
 	}
 
-	synchronized public Output openWriter() {
+	synchronized public Output openWriter() throws IOException {
 		if (null == m_Output) {
+//			if (null != m_Body || null != m_TransferTo) {
+//				// 消息输入的状态，不能输出吧？
+//				throw new IOException("输入的状态");
+//			}
 			m_Output = new Output();
 		}
 		return m_Output;
@@ -117,8 +161,7 @@ public abstract class WebSocketMessage {
 	/**
 	 * 直接输出消息
 	 * 
-	 * @param body
-	 *            消息体（可为空）
+	 * @param body 消息体（可为空）
 	 * @throws IOException
 	 */
 	public void flush(ByteBuf body) throws IOException {
@@ -179,8 +222,7 @@ public abstract class WebSocketMessage {
 	/**
 	 * 转发消息体
 	 * 
-	 * @param data
-	 *            数据片段
+	 * @param data 数据片段
 	 */
 	boolean forward(ByteBuf data) {
 		NettyOutputStream out = m_TransferTo;
@@ -195,6 +237,34 @@ public abstract class WebSocketMessage {
 			m_Session.errorTransferTo(this, e, data, out);
 		}
 		return false;
+	}
+
+	public ChannelFuture writeAndFlush(Object content) {
+		return m_Session.writeAndFlush(content);
+	}
+
+	public void disconnect() {
+		m_Session.disconnect();
+	}
+
+	public void toString(StringBuilder builder) {
+		builder.append("{state:");
+		if (isCompleted()) {
+			builder.append("completed");
+		} else if (null != m_TransferTo) {
+			builder.append("trans");
+		} else if (null != m_Body) {
+			builder.append("body,len:");
+			try {
+				builder.append(m_Body.available());
+			} catch (IOException e) {
+			}
+		} else if (null != m_Output) {
+			builder.append("output");
+		} else if (null != m_Headers) {
+			builder.append("headed");
+		}
+		builder.append("}");
 	}
 
 	static final int STATE_INIT = 1;
@@ -262,16 +332,16 @@ public abstract class WebSocketMessage {
 					buf.writeCharSequence(h.getKey(), CharsetUtil.UTF_8);
 					buf.writeBytes(HEADER_DELIMITER);
 					buf.writeCharSequence(h.getValue(), CharsetUtil.UTF_8);
-					buf.writeByte(WebSocketSession.PACKET_LF);
+					buf.writeByte(PACKET_LF);
 				}
 			}
-			buf.writeByte(WebSocketSession.PACKET_LF);
+			buf.writeByte(PACKET_LF);
 		}
 
 		protected void putId(ByteBuf buf) {
-			buf.writeByte(WebSocketSession.PACKET_PREAMBLE_REQUEST);
+			buf.writeByte(getPacketPreamble());
 			buf.writeCharSequence(m_Session.getId(), CharsetUtil.UTF_8);
-			buf.writeByte(WebSocketSession.PACKET_LF);
+			buf.writeByte(PACKET_LF);
 		}
 
 		synchronized protected void cleanup() {
@@ -306,7 +376,7 @@ public abstract class WebSocketMessage {
 
 		//// NettyOutputStream ////
 		protected ByteBuf allocBuffer(int len) {
-			return allocBuffer(len);
+			return m_Session.allocBuffer(len);
 		}
 
 		protected void ensureOpen() throws IOException {
@@ -383,14 +453,14 @@ public abstract class WebSocketMessage {
 					putId(buf);
 					putHeaders(buf);
 				} else {
-					buf = allocBuffer(WebSocketSession.PACKET_ID_LENGTH + 2);
+					buf = allocBuffer(PACKET_ID_LENGTH + 2);
 					putId(buf);
 				}
 				if (null != m_Last) {
 					// 混合内容打包
 					bufs = compositeBuffer();
-					bufs.addComponent(buf);
-					bufs.addComponent(m_Last);
+					bufs.addComponent(true, buf);
+					bufs.addComponent(true, m_Last);
 					buf = bufs;
 					bufs = null;
 				}
@@ -402,6 +472,7 @@ public abstract class WebSocketMessage {
 				future.addListener(new GenericFutureListener<Future<Void>>() {
 					@Override
 					public void operationComplete(Future<Void> future) throws Exception {
+						m_State = STATE_CLOSED;
 						if (future.isSuccess()) {
 							// 已经提交完请求
 							success();
@@ -435,13 +506,5 @@ public abstract class WebSocketMessage {
 		protected void fail() {
 			m_Session.messageAbort(WebSocketMessage.this);
 		}
-	}
-
-	public ChannelFuture writeAndFlush(Object content) {
-		return m_Session.writeAndFlush(content);
-	}
-
-	public void disconnect() {
-		m_Session.disconnect();
 	}
 }

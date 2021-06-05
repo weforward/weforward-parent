@@ -24,10 +24,8 @@ public interface ClientContext {
 	/**
 	 * 设置请求头
 	 * 
-	 * @param name
-	 *            名称
-	 * @param value
-	 *            值（若为null则移除该项）
+	 * @param name  名称
+	 * @param value 值（若为null则移除该项）
 	 * @throws IOException
 	 */
 	void setRequestHeader(String name, String value) throws IOException;
@@ -56,10 +54,18 @@ public interface ClientContext {
 	/**
 	 * 建立传输管道直接输出响应内容
 	 * 
-	 * @param writer
-	 *            输出响应内容的流
-	 * @param skipBytes
-	 *            >0则跳过已在缓冲区的部分内容
+	 * @param writer    输出响应内容的流
+	 * @param skipBytes >0则跳过已在缓冲区的部分内容
 	 */
 	void responseTransferTo(OutputStream writer, int skipBytes) throws IOException;
+
+	/**
+	 * 响应是否已（接收）完整
+	 */
+	boolean isResponseCompleted();
+
+	/**
+	 * 断开连接
+	 */
+	void disconnect();
 }

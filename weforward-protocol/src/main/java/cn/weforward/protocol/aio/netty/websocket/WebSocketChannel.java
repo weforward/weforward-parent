@@ -1,5 +1,6 @@
 package cn.weforward.protocol.aio.netty.websocket;
 
+import java.io.Closeable;
 import java.io.IOException;
 
 import cn.weforward.protocol.aio.ClientContext;
@@ -11,7 +12,7 @@ import cn.weforward.protocol.aio.ClientHandler;
  * @author liangcha
  *
  */
-public interface WebSocketChannel {
+public interface WebSocketChannel extends Closeable {
 	/**
 	 * 发起调用请求
 	 * 

@@ -54,6 +54,11 @@ public interface DictionaryExt<K, V> extends Dictionary<K, V> {
 		public Enumeration<Object> keys() {
 			return Collections.emptyEnumeration();
 		}
+
+		@Override
+		public String toString() {
+			return "<empty>";
+		}
 	};
 
 	/**
@@ -83,5 +88,9 @@ public interface DictionaryExt<K, V> extends Dictionary<K, V> {
 			return Collections.enumeration(map.keySet());
 		}
 
+		@Override
+		public String toString() {
+			return String.valueOf(map);
+		}
 	}
 }
