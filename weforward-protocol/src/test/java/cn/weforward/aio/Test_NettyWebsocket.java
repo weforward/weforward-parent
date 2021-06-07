@@ -20,7 +20,6 @@ import java.io.OutputStream;
 import cn.weforward.common.io.CachedInputStream;
 import cn.weforward.protocol.aio.ClientContext;
 import cn.weforward.protocol.aio.ClientHandler;
-import cn.weforward.protocol.aio.ConnectionListener;
 import cn.weforward.protocol.aio.ServerContext;
 import cn.weforward.protocol.aio.ServerHandler;
 import cn.weforward.protocol.aio.ServerHandlerFactory;
@@ -43,44 +42,30 @@ public class Test_NettyWebsocket {
 		factory = new NettyWebsocketFactory();
 	}
 
-	WebSocketChannel connect(String url) throws IOException {
+	void connect(String url) throws IOException {
 		System.out.println("conecting: " + url);
-		channel = factory.connect(new ServerHandlerFactory() {
+		factory.connect(new ServerHandlerFactory() {
 			@Override
 			public ServerHandler handle(ServerContext context) throws IOException {
 				return new Service(context);
 			}
-		}, url, new ConnectionListener() {
-
-			@Override
-			public void lost(Closeable context) {
-				System.out.println("lost:" + context);
-			}
-
-			@Override
-			public void fail(String url, Throwable cause) {
-				System.out.println("fail:" + url);
-				if (null != cause) {
-					cause.printStackTrace();
-				}
-			}
-
+		}, url, new NettyWebsocketFactory.Keepalive(5) {
 			@Override
 			public void establish(Closeable context) {
 				System.out.println("establish:" + context);
+				channel = (WebSocketChannel) context;
 			}
 		});
-		return channel;
 	}
 
 	public static void main(String args[]) throws Exception {
 		Test_NettyWebsocket test = new Test_NettyWebsocket();
 		test.factory.setSsl(true);
 
+		System.out.println("输入（q 退出，c 连接ws://127.0.0.1:8080/，p POST测试，t 多次调用测试，其它为连接的URL）：");
 		String cmd;
 		BufferedReader reader = new BufferedReader(new InputStreamReader(System.in, "UTF-8"));
 		for (;;) {
-			System.out.println("输入（q 退出，c 连接ws://127.0.0.1:8080/，p POST测试，t 多次调用测试，其它为连接的URL）：");
 			cmd = reader.readLine();
 			if (cmd.startsWith("ws://") || cmd.startsWith("wss://")) {
 				test.connect(cmd);
@@ -124,7 +109,7 @@ public class Test_NettyWebsocket {
 		}
 
 		@Override
-		public void established() {
+		public void established(ClientContext context) {
 			System.out.println("established " + m_Context);
 		}
 

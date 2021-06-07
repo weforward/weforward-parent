@@ -18,6 +18,7 @@ import java.io.OutputStream;
 import java.util.Random;
 
 import cn.weforward.common.io.OutputStreamNio;
+import cn.weforward.protocol.aio.ClientContext;
 import cn.weforward.protocol.aio.ClientHandler;
 import cn.weforward.protocol.aio.netty.NettyHttpClient;
 import cn.weforward.protocol.aio.netty.NettyHttpClientFactory;
@@ -69,7 +70,7 @@ public class Test_NettyHttpClient {
 	public static void main(String args[]) throws Exception {
 		Test_NettyHttpClient test = new Test_NettyHttpClient();
 		test.factory.setSsl(true);
-		 test.factory.setIdle(60);
+		test.factory.setIdle(60);
 		NettyHttpClient client;
 
 		String cmd;
@@ -131,8 +132,8 @@ public class Test_NettyHttpClient {
 		}
 
 		@Override
-		public void established() {
-			System.out.println("- established");
+		public void established(ClientContext context) {
+			System.out.println("- established " + context);
 		}
 
 		@Override
@@ -217,8 +218,8 @@ public class Test_NettyHttpClient {
 	static class PostHandler extends Handler {
 
 		@Override
-		public void established() {
-			super.established();
+		public void established(ClientContext context) {
+			super.established(context);
 			asyncPost();
 		}
 

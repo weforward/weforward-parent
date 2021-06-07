@@ -203,7 +203,7 @@ public class NettyHttpClient extends ChannelInboundHandlerAdapter implements Htt
 			}
 			this.notifyAll();
 		}
-		m_Handler.established();
+		m_Handler.established(this);
 	}
 
 	private void setTimeoutTask(ChannelHandlerContext ctx, long millis) {

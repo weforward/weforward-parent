@@ -19,6 +19,7 @@ import cn.weforward.protocol.Header;
 import cn.weforward.protocol.Request;
 import cn.weforward.protocol.RequestConstants;
 import cn.weforward.protocol.Response;
+import cn.weforward.protocol.aio.ClientContext;
 import cn.weforward.protocol.aio.ClientHandler;
 import cn.weforward.protocol.aio.http.HttpConstants;
 import cn.weforward.protocol.aio.netty.NettyHttpClient;
@@ -169,8 +170,7 @@ public class NettyAnyServiceInvoker extends AbstractServiceInvoker implements Ai
 			}
 			String service = request.getHeader().getService();
 			InputStream in = client.getResponseStream();
-			Response res = m_Producer.fetchResponse(
-					new SimpleProducerInput(client.getResponseHeaders(), in, service));
+			Response res = m_Producer.fetchResponse(new SimpleProducerInput(client.getResponseHeaders(), in, service));
 			in.close();
 			return res;
 		} catch (AuthException e) {
@@ -233,7 +233,7 @@ public class NettyAnyServiceInvoker extends AbstractServiceInvoker implements Ai
 		}
 
 		@Override
-		public void established() {
+		public void established(ClientContext context) {
 			// 提交请求
 			NettyOutputStream out = null;
 			try {
@@ -287,8 +287,8 @@ public class NettyAnyServiceInvoker extends AbstractServiceInvoker implements Ai
 				}
 				String service = m_Request.getHeader().getService();
 				InputStream in = m_Client.getResponseStream();
-				response = m_Producer.fetchResponse(
-						new SimpleProducerInput(m_Client.getResponseHeaders(), in, service));
+				response = m_Producer
+						.fetchResponse(new SimpleProducerInput(m_Client.getResponseHeaders(), in, service));
 				in.close();
 			} catch (SerialException | AuthException | IOException e) {
 				fail(e);

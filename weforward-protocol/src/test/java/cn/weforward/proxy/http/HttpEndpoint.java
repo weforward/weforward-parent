@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 import cn.weforward.common.io.OutputStreamNio;
+import cn.weforward.protocol.aio.ClientContext;
 import cn.weforward.protocol.aio.ClientHandler;
 import cn.weforward.protocol.aio.netty.NettyHttpClient;
 import cn.weforward.protocol.aio.netty.NettyHttpClientFactory;
@@ -126,11 +127,11 @@ public class HttpEndpoint extends AbstractEndpoint {
 		@Override
 		public void connectFail() {
 			// TODO Auto-generated method stub
-			
+
 		}
-		
+
 		@Override
-		public void established() {
+		public void established(ClientContext context) {
 			try {
 				m_Tunnel.established(this);
 			} catch (IOException e) {
@@ -188,13 +189,13 @@ public class HttpEndpoint extends AbstractEndpoint {
 		@Override
 		public void responseTimeout() {
 			// TODO Auto-generated method stub
-			
+
 		}
 
 		@Override
 		public void requestCompleted() {
 			// TODO Auto-generated method stub
-			
+
 		}
 	}
 }
