@@ -10,8 +10,6 @@
  */
 package cn.weforward.protocol.aio;
 
-import java.io.Closeable;
-
 /**
  * 连接的事件监听器
  * 
@@ -22,9 +20,9 @@ public interface ConnectionListener {
 	/**
 	 * 连接已就绪
 	 * 
-	 * @param context 相关的上下文
+	 * @param channel 就绪的通道
 	 */
-	void establish(Closeable context);
+	void establish(ClientChannel channel);
 
 	/**
 	 * 连接失败
@@ -37,9 +35,9 @@ public interface ConnectionListener {
 	/**
 	 * 连接断开
 	 * 
-	 * @param context 相关的上下文
+	 * @param channel 关闭的通道
 	 */
-	void lost(Closeable context);
+	void lost(ClientChannel channel);
 
 	/**
 	 * 未指定前占位用
@@ -51,7 +49,7 @@ public interface ConnectionListener {
 		}
 
 		@Override
-		public void establish(Closeable context) {
+		public void establish(ClientChannel channel) {
 		}
 
 		@Override
@@ -59,7 +57,7 @@ public interface ConnectionListener {
 		}
 
 		@Override
-		public void lost(Closeable context) {
+		public void lost(ClientChannel channel) {
 		}
 
 	};

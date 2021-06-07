@@ -18,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import cn.weforward.common.io.OutputStreamNio;
+import cn.weforward.protocol.aio.ClientContext;
 import cn.weforward.protocol.aio.ClientHandler;
 import cn.weforward.protocol.aio.ServerContext;
 import cn.weforward.protocol.aio.ServerHandler;
@@ -97,7 +98,7 @@ public class Test_NettyHttpProxy {
 			}
 
 			@Override
-			public void established() {
+			public void established(ClientContext context) {
 				try {
 					forwardRequest = client.openRequestWriter();
 					// // XXX 要换掉hy_req部分

@@ -164,8 +164,9 @@ public class WebSocketSession {
 //			headers.set(HEADER_WS_RPC_ID, getId());
 			m_Request = new WebSocketRequest(this, new NettyHttpHeaders(headers));
 		}
-		handler.established();
-		return new ClientSide();
+		ClientContext context = new ClientSide();
+		handler.established(context);
+		return context;
 	}
 
 	synchronized WebSocketResponse openResponse() throws IOException {

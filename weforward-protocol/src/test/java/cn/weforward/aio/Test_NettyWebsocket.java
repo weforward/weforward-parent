@@ -11,22 +11,20 @@
 package cn.weforward.aio;
 
 import java.io.BufferedReader;
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 
 import cn.weforward.common.io.CachedInputStream;
+import cn.weforward.protocol.aio.ClientChannel;
 import cn.weforward.protocol.aio.ClientContext;
 import cn.weforward.protocol.aio.ClientHandler;
-import cn.weforward.protocol.aio.ConnectionListener;
 import cn.weforward.protocol.aio.ServerContext;
 import cn.weforward.protocol.aio.ServerHandler;
 import cn.weforward.protocol.aio.ServerHandlerFactory;
 import cn.weforward.protocol.aio.netty.NettyHttpServer;
 import cn.weforward.protocol.aio.netty.NettyWebsocketFactory;
-import cn.weforward.protocol.aio.netty.websocket.WebSocketChannel;
 
 /**
  * 测试 NettyWebsocket
@@ -37,50 +35,36 @@ import cn.weforward.protocol.aio.netty.websocket.WebSocketChannel;
  */
 public class Test_NettyWebsocket {
 	NettyWebsocketFactory factory;
-	WebSocketChannel channel;
+	ClientChannel channel;
 
 	Test_NettyWebsocket() {
 		factory = new NettyWebsocketFactory();
 	}
 
-	WebSocketChannel connect(String url) throws IOException {
+	void connect(String url) throws IOException {
 		System.out.println("conecting: " + url);
-		channel = factory.connect(new ServerHandlerFactory() {
+		factory.connect(new ServerHandlerFactory() {
 			@Override
 			public ServerHandler handle(ServerContext context) throws IOException {
 				return new Service(context);
 			}
-		}, url, new ConnectionListener() {
-
+		}, url, new NettyWebsocketFactory.Keepalive(5) {
 			@Override
-			public void lost(Closeable context) {
-				System.out.println("lost:" + context);
-			}
-
-			@Override
-			public void fail(String url, Throwable cause) {
-				System.out.println("fail:" + url);
-				if (null != cause) {
-					cause.printStackTrace();
-				}
-			}
-
-			@Override
-			public void establish(Closeable context) {
-				System.out.println("establish:" + context);
+			public void establish(ClientChannel channel) {
+				System.out.println("establish:" + channel);
+				Test_NettyWebsocket.this.channel = channel;
 			}
 		});
-		return channel;
 	}
 
 	public static void main(String args[]) throws Exception {
 		Test_NettyWebsocket test = new Test_NettyWebsocket();
 		test.factory.setSsl(true);
 
+		System.out.println("输入（q 退出，c 连接ws://127.0.0.1:8080/，p POST测试，t 多次调用测试，其它为连接的URL）：");
 		String cmd;
 		BufferedReader reader = new BufferedReader(new InputStreamReader(System.in, "UTF-8"));
 		for (;;) {
-			System.out.println("输入（q 退出，c 连接ws://127.0.0.1:8080/，p POST测试，t 多次调用测试，其它为连接的URL）：");
 			cmd = reader.readLine();
 			if (cmd.startsWith("ws://") || cmd.startsWith("wss://")) {
 				test.connect(cmd);
@@ -98,7 +82,7 @@ public class Test_NettyWebsocket {
 			} else if ('r' == ch) {
 				// 请求测试
 				Client c = new Client();
-				ClientContext cc = test.channel.request(c, "/mymethod");
+				ClientContext cc = test.channel.request(c, "/mymethod", null);
 				c.setContext(cc);
 				cc.setRequestHeader("Content-Type", "application/json");
 				OutputStream out = cc.openRequestWriter();
@@ -124,8 +108,8 @@ public class Test_NettyWebsocket {
 		}
 
 		@Override
-		public void established() {
-			System.out.println("established " + m_Context);
+		public void established(ClientContext context) {
+			System.out.println("established " + context);
 		}
 
 		@Override

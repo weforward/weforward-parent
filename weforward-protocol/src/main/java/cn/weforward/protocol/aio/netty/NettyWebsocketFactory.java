@@ -15,17 +15,17 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.SSLException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import cn.weforward.common.util.StringBuilderPool;
 import cn.weforward.common.util.StringUtil;
+import cn.weforward.protocol.aio.ClientChannel;
 import cn.weforward.protocol.aio.ConnectionListener;
 import cn.weforward.protocol.aio.ServerHandlerFactory;
-import cn.weforward.protocol.aio.netty.websocket.WebSocketChannel;
 import cn.weforward.protocol.aio.netty.websocket.WebSocketContext;
 import cn.weforward.protocol.aio.netty.websocket.WebSocketContextClient;
 import io.netty.bootstrap.Bootstrap;
@@ -71,10 +71,8 @@ public class NettyWebsocketFactory {
 	String m_Name;
 	/** 工作线程数 */
 	int m_Threads;
-//	/** 空闲超时值（毫秒） */
-//	protected int m_IdleMillis = 10 * 60 * 1000;
-	/** 是否debug模式 */
-	protected boolean m_DebugEnabled = false;
+	/** 空闲超时值（秒） */
+	protected int m_IdleSeconds;
 
 	public NettyWebsocketFactory() {
 		m_Threads = NettyRuntime.availableProcessors() * 2;
@@ -95,20 +93,16 @@ public class NettyWebsocketFactory {
 		m_Threads = threads;
 	}
 
-//	/**
-//	 * 空闲超时值（秒），默认10分钟
-//	 * 
-//	 * @param secs 空闲秒数
-//	 */
-//	public void setIdle(int secs) {
-//		m_IdleMillis = secs * 1000;
-//	}
-//
-//	public int getIdleMillis() {
-//		return m_IdleMillis;
-//	}
+	/**
+	 * 空闲超时值（秒）
+	 * 
+	 * @param secs 空闲秒数
+	 */
+	public void setIdle(int secs) {
+		m_IdleSeconds = secs;
+	}
 
-	public WebSocketChannel connect(ServerHandlerFactory factory, final String url, final ConnectionListener listener)
+	public ClientChannel connect(ServerHandlerFactory factory, final String url, final ConnectionListener listener)
 			throws IOException {
 		final URI uri;
 		try {
@@ -139,6 +133,12 @@ public class NettyWebsocketFactory {
 		final WebSocketContextClient handler = new WebSocketContextClient();
 		handler.setConnectionListener(listener);
 		handler.setServerHandlerFactory(factory);
+		if (listener instanceof Keepalive) {
+			((Keepalive) listener).init(this, factory, url);
+		}
+		if (_Logger.isDebugEnabled()) {
+			_Logger.debug("connecting " + url);
+		}
 		try {
 			future = open().connect(uri.getHost(), port);
 			future.addListener(new ChannelFutureListener() {
@@ -154,7 +154,9 @@ public class NettyWebsocketFactory {
 								WebSocketVersion.V13, null, false, new DefaultHttpHeaders());
 						pipeline.addLast(new HttpClientCodec(), new HttpObjectAggregator(8 * 1024),
 								new Handshaker(handshaker, handler));
-						trace("已连接", channel);
+						if (_Logger.isDebugEnabled()) {
+							_Logger.debug("已连接 " + channel);
+						}
 						handshaker.handshake(channel);
 					} else {
 						// 连接失败？
@@ -202,14 +204,6 @@ public class NettyWebsocketFactory {
 		}
 	}
 
-	public void setDebugEnabled(boolean enabled) {
-		m_DebugEnabled = enabled;
-	}
-
-	public boolean isDebugEnabled() {
-		return m_DebugEnabled;
-	}
-
 	synchronized public void close() {
 		if (null != m_EventLoopGroup) {
 			m_EventLoopGroup.shutdownGracefully();
@@ -245,7 +239,6 @@ public class NettyWebsocketFactory {
 			m_Bootstrap.handler(new ChannelInitializer<SocketChannel>() {
 				@Override
 				public void initChannel(SocketChannel ch) throws Exception {
-//					ChannelPipeline pipeline = ch.pipeline();
 				}
 			});
 			m_EventLoopGroup = eventLoop;
@@ -254,36 +247,9 @@ public class NettyWebsocketFactory {
 		return m_Bootstrap;
 	}
 
-	private void trace(String msg, Channel channel) {
-		if (!_Logger.isTraceEnabled()) {
-			return;
-		}
-		StringBuilder builder = StringBuilderPool._128.poll();
-		String content;
-		try {
-			if (null != msg) {
-				builder.append(msg);
-				builder.append(",");
-			}
-			// builder.append(m_Name);
-//			builder.append("{idle:").append(size());
-//			if (m_Reuses > 0) {
-//				builder.append(",reuses:").append(m_Reuses);
-//			}
-//			if (m_Pending > 0) {
-//				builder.append(",pending:").append(m_Pending);
-//			}
-//			builder.append("}");
-			if (null != channel) {
-				builder.append(channel.toString());
-			}
-			content = builder.toString();
-		} finally {
-			StringBuilderPool._128.offer(builder);
-		}
-		_Logger.trace(content);
-	}
-
+	/**
+	 * 完成握手处理过程
+	 */
 	class Handshaker extends ChannelInboundHandlerAdapter {
 		WebSocketClientHandshaker m_Handshaker;
 		WebSocketContext m_Context;
@@ -293,15 +259,8 @@ public class NettyWebsocketFactory {
 			m_Context = context;
 		}
 
-//		@Override
-//		public void channelActive(ChannelHandlerContext ctx) throws Exception {
-//			super.channelActive(ctx);
-//		}
-
 		@Override
 		public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-//			Channel channel = ctx.channel();
-//			super.channelInactive(ctx);
 //			trace("断开", channel);
 			try {
 				m_Context.lost(ctx);
@@ -309,14 +268,6 @@ public class NettyWebsocketFactory {
 				super.channelInactive(ctx);
 			}
 		}
-
-//		@Override
-//		public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-//			if (cause instanceof OutOfDirectMemoryError) {
-//				ctx.close();
-//			}
-//			super.exceptionCaught(ctx, cause);
-//		}
 
 		@Override
 		public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
@@ -330,8 +281,13 @@ public class NettyWebsocketFactory {
 							ChannelPipeline pipeline = ctx.channel().pipeline();
 							pipeline.addLast("ws-ctx", m_Context);
 							pipeline.remove(this);
+							if (_Logger.isDebugEnabled()) {
+								_Logger.debug("握手成功 " + ctx.channel());
+							}
+							if (m_IdleSeconds > 0) {
+								m_Context.setIdle(m_IdleSeconds);
+							}
 							m_Context.getConnectionListener().establish(m_Context);
-							trace("finishHandshake.", ctx.channel());
 						} catch (Exception e) {
 							_Logger.error("websock handshake error " + ctx.channel(), e);
 							m_Context.getConnectionListener().fail(m_Handshaker.uri().toString(), e);
@@ -345,6 +301,78 @@ public class NettyWebsocketFactory {
 			} finally {
 				super.channelRead(ctx, msg);
 			}
+		}
+	}
+
+	/**
+	 * 监听连接事件保持WebSocket连接
+	 */
+	public static class Keepalive implements ConnectionListener, Runnable {
+		protected NettyWebsocketFactory m_WsFactory;
+		protected int m_TryInterval;
+		protected String m_Url;
+		protected ServerHandlerFactory m_SvrFactory;
+
+		/**
+		 * 重试间隔
+		 * 
+		 * @param tryInterval 间隔时间（秒）
+		 */
+		public Keepalive(int tryInterval) {
+			if (tryInterval < 1) {
+				throw new IllegalArgumentException("tryInterval<1");
+			}
+			m_TryInterval = tryInterval;
+		}
+
+		protected void init(NettyWebsocketFactory wsFactory, ServerHandlerFactory svrFactory, String url) {
+			m_WsFactory = wsFactory;
+			m_SvrFactory = svrFactory;
+			m_Url = url;
+		}
+
+		@Override
+		public void establish(ClientChannel channel) {
+			if (_Logger.isDebugEnabled()) {
+				_Logger.debug("establish " + channel);
+			}
+		}
+
+		@Override
+		public void fail(String url, Throwable cause) {
+			if (_Logger.isDebugEnabled()) {
+				_Logger.debug("fail,retry " + m_Url);
+			}
+			retry();
+		}
+
+		@Override
+		public void lost(ClientChannel channel) {
+			if (_Logger.isDebugEnabled()) {
+				_Logger.debug("lost,retry " + m_Url);
+			}
+			retry();
+		}
+
+		protected void retry() {
+			EventLoopGroup el = m_WsFactory.m_EventLoopGroup;
+			if (null != el) {
+				el.schedule(this, m_TryInterval, TimeUnit.SECONDS);
+			}
+		}
+
+		@Override
+		public void run() {
+			try {
+				m_WsFactory.connect(m_SvrFactory, m_Url, this);
+			} catch (IOException e) {
+//				retry();
+				_Logger.error(m_Url, e);
+			}
+		}
+
+		public String toString() {
+			return "[" + m_TryInterval + "]" + m_Url;
 		}
 	}
 }

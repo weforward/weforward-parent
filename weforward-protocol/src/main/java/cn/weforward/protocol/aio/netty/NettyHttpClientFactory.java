@@ -27,6 +27,8 @@ import org.slf4j.LoggerFactory;
 
 import cn.weforward.common.util.NumberUtil;
 import cn.weforward.common.util.StringBuilderPool;
+import cn.weforward.protocol.aio.ClientChannel;
+import cn.weforward.protocol.aio.ClientContext;
 import cn.weforward.protocol.aio.ClientHandler;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -59,7 +61,7 @@ import io.netty.util.internal.OutOfDirectMemoryError;
  * @author liangyi
  *
  */
-public class NettyHttpClientFactory {
+public class NettyHttpClientFactory implements ClientChannel {
 	static final Logger _Logger = LoggerFactory.getLogger(NettyHttpClientFactory.class);
 
 	Bootstrap m_Bootstrap;
@@ -117,8 +119,7 @@ public class NettyHttpClientFactory {
 	/**
 	 * 空闲超时值（秒），默认10分钟
 	 * 
-	 * @param secs
-	 *            空闲秒数
+	 * @param secs 空闲秒数
 	 */
 	public void setIdle(int secs) {
 		m_IdleMillis = secs * 1000;
@@ -148,8 +149,7 @@ public class NettyHttpClientFactory {
 	/**
 	 * 创建异步HTTP客户端
 	 * 
-	 * @param handler
-	 *            客户端处理器，若指定ClientHandler.SYNC则可工作在同步模式
+	 * @param handler 客户端处理器，若指定ClientHandler.SYNC则可工作在同步模式
 	 * @return HTTP客户端
 	 */
 	public NettyHttpClient open(ClientHandler handler) {
@@ -157,8 +157,14 @@ public class NettyHttpClientFactory {
 		return client;
 	}
 
-	public void connect(final NettyHttpClient client, String host, int port, final boolean ssl)
-			throws IOException {
+	@Override
+	public ClientContext request(ClientHandler handler, String uri, String verb) throws IOException {
+		NettyHttpClient client = new NettyHttpClient(this, handler);
+		client.request(uri, verb);
+		return client;
+	}
+
+	public void connect(final NettyHttpClient client, String host, int port, final boolean ssl) throws IOException {
 		if (ssl && null == m_SslContext) {
 			throw new SSLException("不支持");
 		}
@@ -226,8 +232,7 @@ public class NettyHttpClientFactory {
 	/**
 	 * 指定连接超时值，默认值是5秒
 	 * 
-	 * @param millis
-	 *            超时值（毫秒）
+	 * @param millis 超时值（毫秒）
 	 */
 	synchronized public void setConnectTimeout(int millis) {
 		if (null == m_Bootstrap) {
@@ -237,8 +242,7 @@ public class NettyHttpClientFactory {
 	}
 
 	public int getConnectTimeout() {
-		Integer v = (Integer) m_Bootstrap.config().options()
-				.get(ChannelOption.CONNECT_TIMEOUT_MILLIS);
+		Integer v = (Integer) m_Bootstrap.config().options().get(ChannelOption.CONNECT_TIMEOUT_MILLIS);
 		return (null == v) ? 0 : v;
 	}
 
@@ -356,8 +360,7 @@ public class NettyHttpClientFactory {
 			int timeout = m_Service.getIdleMillis();
 			if (timeout > 0 && null != m_Channel && m_Channel.isActive()) {
 				// 启动空闲检查任务
-				m_IdleTask = m_Channel.eventLoop().schedule(new IdleChecker(), timeout,
-						TimeUnit.MILLISECONDS);
+				m_IdleTask = m_Channel.eventLoop().schedule(new IdleChecker(), timeout, TimeUnit.MILLISECONDS);
 			}
 		}
 

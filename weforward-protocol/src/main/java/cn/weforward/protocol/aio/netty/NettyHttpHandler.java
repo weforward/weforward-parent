@@ -44,6 +44,7 @@ import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.handler.codec.http.websocketx.WebSocketServerHandshaker;
 import io.netty.handler.codec.http.websocketx.WebSocketServerHandshakerFactory;
+import io.netty.util.ReferenceCountUtil;
 import io.netty.util.concurrent.ScheduledFuture;
 import io.netty.util.internal.OutOfDirectMemoryError;
 
@@ -114,7 +115,9 @@ public class NettyHttpHandler extends ChannelInboundHandlerAdapter {
 				_Logger.warn(formatMessage("调用提前结束/响应？" + msg));
 			}
 		} finally {
-			super.channelRead(ctx, msg);
+//			super.channelRead(ctx, msg);
+			// 释放msg，不再传递到下去，必须确保这是最后的处理器
+			ReferenceCountUtil.release(msg);
 		}
 	}
 

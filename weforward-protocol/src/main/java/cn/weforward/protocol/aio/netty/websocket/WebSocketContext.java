@@ -22,8 +22,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import cn.weforward.common.crypto.Hex;
+import cn.weforward.common.sys.ClockTick;
 import cn.weforward.common.util.Bytes;
 import cn.weforward.common.util.StringBuilderPool;
+import cn.weforward.common.util.StringUtil;
+import cn.weforward.protocol.aio.ClientChannel;
 import cn.weforward.protocol.aio.ClientContext;
 import cn.weforward.protocol.aio.ClientHandler;
 import cn.weforward.protocol.aio.ConnectionListener;
@@ -39,6 +42,7 @@ import io.netty.handler.codec.http.websocketx.PingWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.PongWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
+import io.netty.util.ReferenceCountUtil;
 import io.netty.util.concurrent.ScheduledFuture;
 import io.netty.util.internal.OutOfDirectMemoryError;
 
@@ -48,8 +52,10 @@ import io.netty.util.internal.OutOfDirectMemoryError;
  * @author liangyi
  *
  */
-public class WebSocketContext extends ChannelInboundHandlerAdapter implements WebSocketChannel {
+public class WebSocketContext extends ChannelInboundHandlerAdapter implements ClientChannel {
 	static final Logger _Logger = LoggerFactory.getLogger(WebSocketContext.class);
+
+	static final ClockTick _Tick = ClockTick.getInstance(1);
 
 	/** 业务处理器工厂 */
 	protected ServerHandlerFactory m_HandlerFactory = ServerHandlerFactory._unassigned;
@@ -61,7 +67,12 @@ public class WebSocketContext extends ChannelInboundHandlerAdapter implements We
 	protected Map<String, WebSocketSession> m_Multiplex;
 	/** 请求序号生成器 */
 	protected AtomicLong m_Sequencer;
+	/** 最后收到消息的时间点（单位秒） */
+	protected long m_LastActivity;
+	/** 定时PING */
 	protected ScheduledFuture<?> m_PingTask;
+	/** 定时检查空闲 */
+	protected ScheduledFuture<?> m_IdleTask;
 	/** 连接的事件监听器 */
 	protected ConnectionListener m_ConnectionListener = ConnectionListener._unassigned;
 
@@ -151,10 +162,10 @@ public class WebSocketContext extends ChannelInboundHandlerAdapter implements We
 				ctx.close();
 				return;
 			}
-			// if (_Logger.isTraceEnabled()) {
-			// _Logger.trace("[" + ctx.hashCode() + "]" + msg);
-			// }
 			if (msg instanceof WebSocketFrame) {
+				// 刷新活跃时间
+				m_LastActivity = _Tick.getTickerLong();
+
 				WebSocketFrame wsframe = (WebSocketFrame) msg;
 				if (wsframe instanceof BinaryWebSocketFrame || wsframe instanceof TextWebSocketFrame) {
 					if (_Logger.isTraceEnabled()) {
@@ -178,21 +189,23 @@ public class WebSocketContext extends ChannelInboundHandlerAdapter implements We
 				}
 			}
 		} finally {
-			super.channelRead(ctx, msg);
+//			super.channelRead(ctx, msg);
+			// 释放msg，不再传递到下一个，必须确保这是最后的处理器
+			ReferenceCountUtil.release(msg);
 		}
 	}
 
 	/**
 	 * 启动PING->PONG心跳保持（一般由TCP服务端发送PING）
 	 * 
-	 * @param millis 心跳间隔（毫秒），Firefox,Chrome等浏览器超过30秒会断开
+	 * @param seconds 心跳间隔（秒），Firefox,Chrome等浏览器超过30秒会断开
 	 */
-	synchronized public void setKeepalive(int millis) {
+	synchronized public void setKeepalive(int seconds) {
 		if (null != m_PingTask) {
 			m_PingTask.cancel(false);
 			m_PingTask = null;
 		}
-		if (millis < 1) {
+		if (seconds < 1) {
 			return;
 		}
 		Runnable worker = new Runnable() {
@@ -203,7 +216,37 @@ public class WebSocketContext extends ChannelInboundHandlerAdapter implements We
 				return;
 			}
 		};
-		m_PingTask = m_Ctx.executor().scheduleWithFixedDelay(worker, millis, millis, TimeUnit.MILLISECONDS);
+		m_PingTask = m_Ctx.executor().scheduleWithFixedDelay(worker, seconds, seconds, TimeUnit.SECONDS);
+	}
+
+	/**
+	 * 启用空闲超时检测（秒）
+	 * 
+	 * @param seconds 空闲秒数
+	 */
+	synchronized public void setIdle(final int seconds) {
+		if (null != m_IdleTask) {
+			m_IdleTask.cancel(false);
+			m_IdleTask = null;
+		}
+		if (seconds < 1) {
+			return;
+		}
+		Runnable worker = new Runnable() {
+			@Override
+			public void run() {
+				if (_Tick.getTickerLong() > m_LastActivity + seconds) {
+					if (_Logger.isDebugEnabled()) {
+						_Logger.debug("idle timeout: " + this);
+					}
+					m_Ctx.close();
+					m_IdleTask.cancel(false);
+					m_IdleTask = null;
+				}
+				return;
+			}
+		};
+		m_IdleTask = m_Ctx.executor().scheduleWithFixedDelay(worker, seconds, seconds, TimeUnit.SECONDS);
 	}
 
 	public String getRemoteAddr() {
@@ -384,10 +427,14 @@ public class WebSocketContext extends ChannelInboundHandlerAdapter implements We
 		return sb.toString();
 	}
 
-	public ClientContext request(ClientHandler handler, String uri) throws IOException {
+	public ClientContext request(ClientHandler handler, String uri, String verb) throws IOException {
 		String seq = genSequence();
 		WebSocketSession session = openSession(seq);
-		return session.openRequest(handler, uri);
+		ClientContext client = session.openRequest(handler, uri);
+		if (!StringUtil.isEmpty(verb)) {
+			client.setRequestHeader(WebSocketMessage.HEADER_VERB, verb);
+		}
+		return client;
 	}
 
 	public StringBuilder toString(StringBuilder builder) {

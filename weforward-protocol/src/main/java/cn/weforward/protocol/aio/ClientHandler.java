@@ -31,8 +31,10 @@ public interface ClientHandler {
 
 	/**
 	 * 连接已就绪，可以开始提交请求
+	 * 
+	 * @param context 客户端上下文
 	 */
-	void established();
+	void established(ClientContext context);
 
 	/**
 	 * 请求已完成
@@ -52,8 +54,7 @@ public interface ClientHandler {
 	/**
 	 * 有响应数据就绪（可接收）
 	 * 
-	 * @param available
-	 *            可读取的数据量（字节）
+	 * @param available 可读取的数据量（字节）
 	 */
 	void prepared(int available);
 
@@ -72,12 +73,9 @@ public interface ClientHandler {
 	/**
 	 * 直接传输异常
 	 * 
-	 * @param e
-	 *            发生的异常
-	 * @param msg
-	 *            将传输的消息/数据
-	 * @param writer
-	 *            将传输到输出流
+	 * @param e      发生的异常
+	 * @param msg    将传输的消息/数据
+	 * @param writer 将传输到输出流
 	 */
 	void errorResponseTransferTo(IOException e, Object msg, OutputStream writer);
 
@@ -91,7 +89,7 @@ public interface ClientHandler {
 		}
 
 		@Override
-		public void established() {
+		public void established(ClientContext context) {
 		}
 
 		@Override
@@ -137,7 +135,7 @@ public interface ClientHandler {
 		}
 
 		@Override
-		public void established() {
+		public void established(ClientContext context) {
 			if (_Logger.isDebugEnabled()) {
 				_Logger.debug("established");
 			}
