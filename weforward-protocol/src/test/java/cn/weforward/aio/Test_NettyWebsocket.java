@@ -60,6 +60,7 @@ public class Test_NettyWebsocket {
 	public static void main(String args[]) throws Exception {
 		Test_NettyWebsocket test = new Test_NettyWebsocket();
 		test.factory.setSsl(true);
+		test.factory.setIdle(60);
 
 		System.out.println("输入（q 退出，c 连接ws://127.0.0.1:8080/，p POST测试，t 多次调用测试，其它为连接的URL）：");
 		String cmd;

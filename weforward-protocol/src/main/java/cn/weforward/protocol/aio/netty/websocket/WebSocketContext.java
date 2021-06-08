@@ -34,7 +34,9 @@ import cn.weforward.protocol.aio.ServerHandlerFactory;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.CompositeByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
@@ -43,6 +45,8 @@ import io.netty.handler.codec.http.websocketx.PongWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import io.netty.util.ReferenceCountUtil;
+import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.GenericFutureListener;
 import io.netty.util.concurrent.ScheduledFuture;
 import io.netty.util.internal.OutOfDirectMemoryError;
 
@@ -56,6 +60,8 @@ public class WebSocketContext extends ChannelInboundHandlerAdapter implements Cl
 	static final Logger _Logger = LoggerFactory.getLogger(WebSocketContext.class);
 
 	static final ClockTick _Tick = ClockTick.getInstance(1);
+
+	static final ByteBuf _PingData = Unpooled.wrappedBuffer("weforward".getBytes()).asReadOnly();
 
 	/** 业务处理器工厂 */
 	protected ServerHandlerFactory m_HandlerFactory = ServerHandlerFactory._unassigned;
@@ -76,9 +82,10 @@ public class WebSocketContext extends ChannelInboundHandlerAdapter implements Cl
 	/** 连接的事件监听器 */
 	protected ConnectionListener m_ConnectionListener = ConnectionListener._unassigned;
 
-	public WebSocketContext() {
+	public WebSocketContext(ServerHandlerFactory factory) {
 		m_Multiplex = new HashMap<String, WebSocketSession>();
 		m_Sequencer = new AtomicLong();
+		m_HandlerFactory = factory;
 	}
 
 	public void setServerHandlerFactory(ServerHandlerFactory factory) {
@@ -123,8 +130,8 @@ public class WebSocketContext extends ChannelInboundHandlerAdapter implements Cl
 	public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
 		super.handlerAdded(ctx);
 		m_Ctx = ctx;
-		if (isDebugEnabled()) {
-			_Logger.info(formatMessage("handlerAdded"));
+		if (_Logger.isDebugEnabled()) {
+			_Logger.debug(formatMessage("handlerAdded"));
 		}
 		initRemoteAddr(ctx.channel());
 //		m_ConnectionListener.establish(this);
@@ -144,8 +151,8 @@ public class WebSocketContext extends ChannelInboundHandlerAdapter implements Cl
 	@Override
 	public void channelInactive(ChannelHandlerContext ctx) throws Exception {
 		try {
-			if (isDebugEnabled()) {
-				_Logger.info(formatMessage("channelInactive"));
+			if (_Logger.isDebugEnabled()) {
+				_Logger.debug(formatMessage("channelInactive"));
 			}
 			cleanup();
 			lost(ctx);
@@ -177,15 +184,15 @@ public class WebSocketContext extends ChannelInboundHandlerAdapter implements Cl
 				}
 				if (wsframe instanceof PingWebSocketFrame) {
 					// PING响应PONG
-					if (_Logger.isTraceEnabled()) {
-						_Logger.trace(formatMessage("ping " + msg));
-					}
 					PongWebSocketFrame pong = new PongWebSocketFrame(wsframe.content().retain());
 					ctx.channel().writeAndFlush(pong);
+					if (_Logger.isDebugEnabled()) {
+						_Logger.debug(formatMessage("pong"));
+					}
 					return;
 				}
-				if (isDebugEnabled()) {
-					_Logger.warn(formatMessage("未知帧类型？" + msg));
+				if (_Logger.isDebugEnabled() && !(wsframe instanceof PongWebSocketFrame)) {
+					_Logger.debug(formatMessage("未知帧类型？" + msg));
 				}
 			}
 		} finally {
@@ -211,8 +218,19 @@ public class WebSocketContext extends ChannelInboundHandlerAdapter implements Cl
 		Runnable worker = new Runnable() {
 			@Override
 			public void run() {
-				PingWebSocketFrame ping = new PingWebSocketFrame();
-				m_Ctx.channel().writeAndFlush(ping);
+				PingWebSocketFrame ping = new PingWebSocketFrame(true, 0, _PingData.retainedDuplicate());
+				ChannelFuture future = m_Ctx.channel().writeAndFlush(ping);
+				if (_Logger.isDebugEnabled()) {
+					_Logger.debug(formatMessage("ping"));
+					future.addListener(new GenericFutureListener<Future<Void>>() {
+						@Override
+						public void operationComplete(Future<Void> future) throws Exception {
+							if (!future.isSuccess()) {
+								_Logger.debug(formatMessage("ping fail"), future.cause());
+							}
+						}
+					});
+				}
 				return;
 			}
 		};
@@ -237,11 +255,11 @@ public class WebSocketContext extends ChannelInboundHandlerAdapter implements Cl
 			public void run() {
 				if (_Tick.getTickerLong() > m_LastActivity + seconds) {
 					if (_Logger.isDebugEnabled()) {
-						_Logger.debug("idle timeout: " + this);
+						_Logger.debug(formatMessage("idle"));
 					}
-					m_Ctx.close();
 					m_IdleTask.cancel(false);
 					m_IdleTask = null;
+					close();
 				}
 				return;
 			}
@@ -374,6 +392,14 @@ public class WebSocketContext extends ChannelInboundHandlerAdapter implements Cl
 	}
 
 	synchronized protected void cleanup() {
+		if (null != m_IdleTask) {
+			m_IdleTask.cancel(false);
+			m_IdleTask = null;
+		}
+		if (null != m_PingTask) {
+			m_PingTask.cancel(false);
+			m_PingTask = null;
+		}
 		Map<String, WebSocketSession> empty = Collections.emptyMap();
 		Map<String, WebSocketSession> multiplex = m_Multiplex;
 		if (empty == multiplex) {
@@ -413,18 +439,17 @@ public class WebSocketContext extends ChannelInboundHandlerAdapter implements Cl
 		return ByteBufAllocator.DEFAULT.buffer(len);
 	}
 
-	public boolean isDebugEnabled() {
-		// TODO
-		return true;
-	}
-
 	private String formatMessage(String caption) {
-		StringBuilder sb = new StringBuilder(128);
-		if (null != caption) {
-			sb.append(caption);
+		StringBuilder builder = StringBuilderPool._128.poll();
+		try {
+			if (null != caption) {
+				builder.append(caption);
+			}
+			toString(builder);
+			return builder.toString();
+		} finally {
+			StringBuilderPool._128.offer(builder);
 		}
-		toString(sb);
-		return sb.toString();
 	}
 
 	public ClientContext request(ClientHandler handler, String uri, String verb) throws IOException {
@@ -442,6 +467,7 @@ public class WebSocketContext extends ChannelInboundHandlerAdapter implements Cl
 		if (null != m_RemoteAddr) {
 			builder.append(m_RemoteAddr);
 		}
+		builder.append(",seq:").append(m_Sequencer.get());
 		builder.append(",mul:").append(m_Multiplex.size());
 		builder.append("}");
 		return builder;

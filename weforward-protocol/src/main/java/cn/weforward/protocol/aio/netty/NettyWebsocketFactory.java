@@ -130,9 +130,8 @@ public class NettyWebsocketFactory {
 			throw new MalformedURLException("不支持的协议：" + protocol);
 		}
 		ChannelFuture future = null;
-		final WebSocketContextClient handler = new WebSocketContextClient();
+		final WebSocketContextClient handler = new WebSocketContextClient(factory);
 		handler.setConnectionListener(listener);
-		handler.setServerHandlerFactory(factory);
 		if (listener instanceof Keepalive) {
 			((Keepalive) listener).init(this, factory, url);
 		}

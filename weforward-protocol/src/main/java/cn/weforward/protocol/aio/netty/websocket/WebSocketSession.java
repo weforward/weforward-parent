@@ -164,6 +164,7 @@ public class WebSocketSession {
 //			headers.set(HEADER_WS_RPC_ID, getId());
 			m_Request = new WebSocketRequest(this, new NettyHttpHeaders(headers));
 		}
+		m_RequestTimepoint = System.currentTimeMillis();
 		ClientContext context = new ClientSide();
 		handler.established(context);
 		return context;
@@ -455,6 +456,7 @@ public class WebSocketSession {
 	 * 对ClientContext支持
 	 */
 	class ClientSide implements ClientContext {
+		int m_Timeout;
 
 		@Override
 		public void setRequestHeader(String name, String value) throws IOException {
@@ -494,6 +496,12 @@ public class WebSocketSession {
 		@Override
 		public String toString() {
 			return WebSocketSession.this.toString();
+		}
+
+		@Override
+		public void setTimeout(int millis) throws IOException {
+			// TODO Auto-generated method stub
+			m_Timeout = millis;
 		}
 	}
 }

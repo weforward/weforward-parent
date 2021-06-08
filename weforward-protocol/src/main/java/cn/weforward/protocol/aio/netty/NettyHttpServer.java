@@ -69,6 +69,8 @@ public class NettyHttpServer {
 	protected boolean m_DebugEnabled = false;
 	/** 空闲超时值（毫秒） */
 	protected int m_IdleMillis = 10 * 60 * 1000;
+	/** WebSocket的心跳保持时间（秒） */
+	protected int m_WebSocketKeepalive;
 
 	/** 监听中的服务器Channel */
 	protected volatile Channel m_Channel;
@@ -221,6 +223,19 @@ public class NettyHttpServer {
 
 	public int getIdleMillis() {
 		return m_IdleMillis;
+	}
+
+	/**
+	 * 指定WebSocket的心跳保持时间
+	 * 
+	 * @param secs 心跳间隔（秒），Firefox,Chrome等浏览器超过30秒会断开，20秒也许是合适的间隔
+	 */
+	public void setWebSocketKeepalive(int secs) {
+		m_WebSocketKeepalive = secs;
+	}
+
+	public int getWebSocketKeepalive() {
+		return m_WebSocketKeepalive;
 	}
 
 	/**

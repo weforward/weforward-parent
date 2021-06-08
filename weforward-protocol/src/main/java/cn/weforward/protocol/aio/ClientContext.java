@@ -38,6 +38,14 @@ public interface ClientContext {
 	OutputStream openRequestWriter() throws IOException;
 
 	/**
+	 * 设置超时值（从发起请求到收到完整响应）
+	 * 
+	 * @param millis 超时时间（毫秒）
+	 * @throws IOException
+	 */
+	void setTimeout(int millis) throws IOException;
+
+	/**
 	 * 取得响应头
 	 * 
 	 * @throws IOException

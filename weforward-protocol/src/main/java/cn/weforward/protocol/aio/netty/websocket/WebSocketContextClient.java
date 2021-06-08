@@ -10,6 +10,8 @@
  */
 package cn.weforward.protocol.aio.netty.websocket;
 
+import cn.weforward.protocol.aio.ServerHandlerFactory;
+
 /**
  * 切换到WebSocket下的处理器（客户端）
  * 
@@ -17,6 +19,10 @@ package cn.weforward.protocol.aio.netty.websocket;
  *
  */
 public class WebSocketContextClient extends WebSocketContext {
+	public WebSocketContextClient(ServerHandlerFactory factory) {
+		super(factory);
+	}
+
 	protected char getSideMarker() {
 		// 客户端
 		return 'z';

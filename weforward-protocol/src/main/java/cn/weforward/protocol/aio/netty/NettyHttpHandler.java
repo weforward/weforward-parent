@@ -81,6 +81,12 @@ public class NettyHttpHandler extends ChannelInboundHandlerAdapter {
 	}
 
 	@Override
+	public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
+		super.handlerRemoved(ctx);
+		stopIdleTask();
+	}
+
+	@Override
 	public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
 		try {
 			if (null != m_Ctx && ctx != m_Ctx) {
@@ -141,17 +147,17 @@ public class NettyHttpHandler extends ChannelInboundHandlerAdapter {
 		if (isDebugEnabled()) {
 			_Logger.info(formatMessage("channelInactive"));
 		}
-		if (null != m_IdleTask) {
-			m_IdleTask.cancel(false);
-			m_IdleTask = null;
+		try {
+			NettyHttpContext hc = m_HttpContext;
+			if (null != hc) {
+				m_HttpContext = null;
+				hc.inactive();
+			}
+			m_Ctx = null;
+			stopIdleTask();
+		} finally {
+			super.channelInactive(ctx);
 		}
-		NettyHttpContext hc = m_HttpContext;
-		if (null != hc) {
-			m_HttpContext = null;
-			hc.inactive();
-		}
-		m_Ctx = null;
-		super.channelInactive(ctx);
 	}
 
 	@Override
@@ -211,12 +217,12 @@ public class NettyHttpHandler extends ChannelInboundHandlerAdapter {
 							return;
 						}
 						ChannelPipeline pl = future.channel().pipeline();
-						// 切换处理的handler
-						WebSocketContext handler = new WebSocketContext();
-						handler.setServerHandlerFactory(m_Server.getHandlerFactory());
-						pl.addLast("ws-ctx", handler);
 						// 在pipe移除当前的NettyHttpHandler
 						pl.remove(NettyHttpHandler.this);
+						// 切换处理的handler
+						WebSocketContext handler = new WebSocketContext(m_Server.getHandlerFactory());
+						pl.addLast("ws-ctx", handler);
+						handler.setKeepalive(m_Server.getWebSocketKeepalive());
 					}
 				});
 				return false;
@@ -362,6 +368,7 @@ public class NettyHttpHandler extends ChannelInboundHandlerAdapter {
 	 * @param ctx
 	 */
 	private void startIdleTask(ChannelHandlerContext ctx) {
+		stopIdleTask();
 		int timeout = getIdleMillis();
 		if (timeout <= 0) {
 			return;
@@ -372,12 +379,16 @@ public class NettyHttpHandler extends ChannelInboundHandlerAdapter {
 			}
 			return;
 		}
-		if (null != m_IdleTask) {
-			m_IdleTask.cancel(false);
-			m_IdleTask = null;
-		}
 		// 启动空闲检查任务
 		m_IdleTask = ctx.executor().schedule(new IdleChecker(), timeout, TimeUnit.MILLISECONDS);
+	}
+
+	private void stopIdleTask() {
+		if (null == m_IdleTask) {
+			return;
+		}
+		m_IdleTask.cancel(false);
+		m_IdleTask = null;
 	}
 
 	private String formatMessage(String caption) {

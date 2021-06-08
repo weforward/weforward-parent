@@ -529,7 +529,9 @@ public class NettyHttpClient extends ChannelInboundHandlerAdapter implements Htt
 				throw new IOException("请求在处理中");
 			}
 			m_RequestTimepoint = System.currentTimeMillis();
-			m_Timeout = timeout;
+			if (timeout > 0) {
+				m_Timeout = timeout;
+			}
 
 			// 置入HTTP请求头
 			io.netty.handler.codec.http.HttpHeaders headers = openRequestHeaders();
@@ -555,6 +557,11 @@ public class NettyHttpClient extends ChannelInboundHandlerAdapter implements Htt
 			}
 		}
 		m_Factory.connect(this, uri.getHost(), port, ssl);
+	}
+
+	@Override
+	public void setTimeout(int millis) throws IOException {
+		m_Timeout = millis;
 	}
 
 	@Override
