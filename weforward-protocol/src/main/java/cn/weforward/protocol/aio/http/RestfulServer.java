@@ -324,13 +324,17 @@ public class RestfulServer implements cn.weforward.protocol.aio.ServerHandlerFac
 				return;
 			}
 			try {
-				byte[] content = null;
 				String msg = e.getMessage();
-				if (null != msg && msg.length() > 0) {
-					content = msg.getBytes("UTF-8");
-				}
 				_Logger.error(String.valueOf(e), e);
-				m_Context.response(RestfulResponse.STATUS_INTERNAL_SERVER_ERROR, content);
+				if (!m_Context.isRespond()) {
+					byte[] content = null;
+					if (null != msg && msg.length() > 0) {
+						content = msg.getBytes("UTF-8");
+					}
+					m_Context.response(RestfulResponse.STATUS_INTERNAL_SERVER_ERROR, content);
+				} else {
+					m_Context.disconnect();
+				}
 			} catch (IOException ee) {
 				_Logger.warn(String.valueOf(ee), ee);
 			}
