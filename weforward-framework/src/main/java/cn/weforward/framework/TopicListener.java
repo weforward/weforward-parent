@@ -15,7 +15,7 @@ package cn.weforward.framework;
  * 
  * @author daibo
  *
- * @param <E>
+ * @param <E> 数据对象
  */
 public interface TopicListener<E> {
 	/**

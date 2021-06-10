@@ -103,7 +103,7 @@ public class WeforwardService
 	/** 用于心跳的定时器 */
 	protected final static Timer _Timer = new Timer("WeforwardService-Timer", true);
 
-	/** 业务线程队列超时值（毫秒），默认1000ms，EXECUTOR_QUEUE_MULTIPLE>=2时有效 */
+	/** 业务线程队列超时值（毫秒），默认1000ms，EXECUTOR_QUEUE_MULTIPLE&gt;=2时有效 */
 	public static int EXECUTOR_QUEUE_TIMEOUT = NumberUtil
 			.toInt(System.getProperty("WeforwardService.EXECUTOR_QUEUE_TIMEOUT"), 1000);
 	/** 业务线程队列倍数，默认5倍 */
@@ -255,7 +255,7 @@ public class WeforwardService
 	/**
 	 * 设置执行器
 	 * 
-	 * @param executor
+	 * @param executor 执行器
 	 */
 	public void setExecutor(Executor executor) {
 		m_Executor = executor;
@@ -357,7 +357,7 @@ public class WeforwardService
 	/**
 	 * 开始方法发现
 	 * 
-	 * @param enabled
+	 * @param enabled 是否开启
 	 */
 	public void setMethodsAwareEnabled(boolean enabled) {
 		if (enabled) {
@@ -434,7 +434,7 @@ public class WeforwardService
 	/**
 	 * GZIP的最小输出大小
 	 * 
-	 * @param minSize
+	 * @param minSize 最小输出大小
 	 */
 	public void setGzipMinSize(int minSize) {
 		if (null != m_HttpServer) {
@@ -445,7 +445,7 @@ public class WeforwardService
 	/**
 	 * 空闲超时值
 	 * 
-	 * @param secs
+	 * @param secs 空闲超时值
 	 */
 	public void setIdle(int secs) {
 		if (null != m_HttpServer) {
@@ -870,6 +870,7 @@ public class WeforwardService
 
 	/**
 	 * @deprecated 使用setGatewayUrl
+	 * @param url 网关链接
 	 */
 	public void setServicesUrl(String url) {
 		setGatewayUrl(url);
@@ -922,7 +923,7 @@ public class WeforwardService
 	/**
 	 * 凭证加载器
 	 * 
-	 * @param loader
+	 * @param loader 加载器
 	 */
 	public void setAccessLoader(AccessLoader loader) {
 		m_AccessLoader = loader;
