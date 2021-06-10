@@ -40,8 +40,7 @@ public class RequestInvokeObject {// implements DtObject
 	/**
 	 * 构造
 	 * 
-	 * @param method
-	 *            方法名
+	 * @param method 方法名
 	 */
 	public RequestInvokeObject(String method) {
 		m_Invoke = new SimpleDtObject(false);
@@ -51,8 +50,7 @@ public class RequestInvokeObject {// implements DtObject
 	/**
 	 * 根据另一个RequestInvokeObject构造，复制其内容
 	 * 
-	 * @param method
-	 *            方法名
+	 * @param other 另一个对象
 	 */
 	public RequestInvokeObject(RequestInvokeObject other) {
 		m_Invoke = other.m_Invoke;

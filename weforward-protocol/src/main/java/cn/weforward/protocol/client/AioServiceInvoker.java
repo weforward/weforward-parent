@@ -24,15 +24,13 @@ public interface AioServiceInvoker extends ServiceInvoker {
 	/**
 	 * 调用
 	 * 
-	 * @param request
-	 *            调用请求
-	 * @throws ServiceInvokeException
-	 *             当出现网络异常，或者状态非成功时抛出
+	 * @param request 调用请求
+	 * @throws ServiceInvokeException 当出现网络异常，或者状态非成功时抛出
 	 */
 	void invoke(Request request, Listener listener) throws ServiceInvokeException;
 
 	/**
-	 * 监听异步调用，可能收到的事件，失败：-->fail-->complete，成功：-->success-->complete
+	 * 监听异步调用，可能收到的事件，失败：--&gt;fail--&gt;complete，成功：--&gt;success--&gt;complete
 	 * 
 	 * @author liangyi
 	 *
@@ -41,28 +39,23 @@ public interface AioServiceInvoker extends ServiceInvoker {
 		/**
 		 * 成功
 		 * 
-		 * @param request
-		 *            调用请求
-		 * @param response
-		 *            调用成功的响应
+		 * @param request  调用请求
+		 * @param response 调用成功的响应
 		 */
 		void success(Request request, Response response);
 
 		/**
 		 * 失败
 		 * 
-		 * @param request
-		 *            调用请求
-		 * @param throwable
-		 *            相关异常（可能为null）
+		 * @param request   调用请求
+		 * @param throwable 相关异常（可能为null）
 		 */
 		void fail(Request request, Throwable throwable);
 
 		/**
 		 * 执行结束
 		 * 
-		 * @param request
-		 *            调用请求
+		 * @param request 调用请求
 		 */
 		void complete(Request request);
 	}

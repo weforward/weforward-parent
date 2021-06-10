@@ -31,7 +31,8 @@ public interface User {
 	String getName();
 
 	/**
-	 * 所有权限。<br/>
+	 * 所有权限。
+	 * <p>
 	 * 根据list的顺序匹配，当匹配时忽略后面的权限。
 	 * 
 	 * @deprecated 请使用{@linkplain #getRights()}
@@ -39,7 +40,8 @@ public interface User {
 	List<Right> getRight();
 
 	/**
-	 * 所有权限。<br/>
+	 * 所有权限。
+	 * <p>
 	 * 根据list的顺序匹配，当匹配时忽略后面的权限。
 	 */
 	List<Right> getRights();

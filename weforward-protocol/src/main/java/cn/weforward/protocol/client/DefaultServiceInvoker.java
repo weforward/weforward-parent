@@ -21,7 +21,8 @@ import cn.weforward.protocol.client.execption.ServiceInvokeException;
 import cn.weforward.protocol.client.execption.TransportException;
 
 /**
- * 默认的服务调用器实现。<br/>
+ * 默认的服务调用器实现。
+ * <p>
  * 集成多个Invoker，自动选择最优的
  * 
  * @author zhangpengji

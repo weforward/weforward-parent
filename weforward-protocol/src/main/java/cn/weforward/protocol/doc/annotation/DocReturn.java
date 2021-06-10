@@ -28,13 +28,15 @@ import java.lang.annotation.Target;
 public @interface DocReturn {
 
 	/**
-	 * 类型。<br/>
+	 * 类型。
+	 * <p>
 	 * 取值：基础数据类型名、微服务的通用对象类名、微服务的方法对象类名
 	 */
 	Class<?> type() default Void.class;
 
 	/**
-	 * 当type为List、ResultPage时，需要描述集合元素的类型。<br/>
+	 * 当type为List、ResultPage时，需要描述集合元素的类型。
+	 * <p>
 	 * 取值同type，排除List、ResultPage
 	 */
 	Class<?> component() default Void.class;

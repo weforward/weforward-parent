@@ -113,7 +113,7 @@ public abstract class AutherOutputStream extends OutputStream implements OutputS
 		if (0 == m_Mode) {
 			throw new IllegalStateException("请先初始化");
 		}
-		if(MODE_ENCODE == m_Mode) {
+		if (MODE_ENCODE == m_Mode) {
 			// 清空，重新生成
 			header.setNoise(null);
 			header.setSign(null);
@@ -136,7 +136,8 @@ public abstract class AutherOutputStream extends OutputStream implements OutputS
 	/**
 	 * 将验证后的内容转发到此输出流。
 	 * <p>
-	 * <code>MODE_ENCODE</code>下，验证器完成header后，通过headerOutput输出。<br/>
+	 * <code>MODE_ENCODE</code>下，验证器完成header后，通过headerOutput输出。
+	 * <p>
 	 * 验证器将保证头信息在内容之前输出。
 	 * <p>
 	 * 在write前未调用此方法，内容将被丢弃。

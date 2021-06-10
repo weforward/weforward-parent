@@ -17,13 +17,20 @@ import java.util.List;
  * <p>
  * 根据微服务实例的编号与版本号，依次按规则项的顺序匹配，无匹配规则时，相当于屏蔽某实例的流量。
  * <p>
- * - 负载均衡：<br/>
- * 采用加权轮询(WRR)的方式， 初始状态（未配置任何规则）为轮询(RR)。<br/>
- * - 熔断保护：<br/>
- * 1.设置微服务示例的最大并发数。当并发数超过最大值，将不再将请求交给此实例。<br/>
- * 2.设置最大连续失败次数与达到次数后的重置时间。当实例的失败次数达到最大值，在重置时间内，将不再将请求交给此实例。<br/>
- * 特殊情况，当全部实例的失败次数都达到最大值，将马上重置全部实例。<br/>
- * - 请求转发：<br/>
+ * - 负载均衡：
+ * <p>
+ * 采用加权轮询(WRR)的方式， 初始状态（未配置任何规则）为轮询(RR)。
+ * <p>
+ * - 熔断保护：
+ * <p>
+ * 1.设置微服务示例的最大并发数。当并发数超过最大值，将不再将请求交给此实例。
+ * <p>
+ * 2.设置最大连续失败次数与达到次数后的重置时间。当实例的失败次数达到最大值，在重置时间内，将不再将请求交给此实例。
+ * <p>
+ * 特殊情况，当全部实例的失败次数都达到最大值，将马上重置全部实例。
+ * <p>
+ * - 请求转发：
+ * <p>
  * 当网关访问一个微服务实例失败时，默认不会将请求交给其他实例，若要实现类似功能，请参考微服务请求转发。
  * 
  * @author zhangpengji
@@ -63,8 +70,7 @@ public interface TrafficTable {
 	 * 
 	 * @param item
 	 * @param index
-	 * @param name
-	 *            原位置规则的名称
+	 * @param name  原位置规则的名称
 	 */
 	void replaceItem(TrafficTableItem item, int index, String name);
 
@@ -80,16 +86,14 @@ public interface TrafficTable {
 	 * 删除指定位置的规则
 	 * 
 	 * @param index
-	 * @param name
-	 *            原位置规则的名称
+	 * @param name  原位置规则的名称
 	 */
 	void removeItem(int index, String name);
 
 	/**
 	 * 设置规则表
 	 * 
-	 * @param items
-	 *            规则项列表
+	 * @param items 规则项列表
 	 */
 	void setItems(List<TrafficTableItem> items);
 }

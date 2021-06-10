@@ -52,7 +52,7 @@ public interface ServerContext {
 	 * 建立传输管道直接输出请求内容
 	 * 
 	 * @param writer    输出请求内容的流
-	 * @param skipBytes >0则跳过已在缓冲区的部分内容
+	 * @param skipBytes &gt;0则跳过已在缓冲区的部分内容
 	 */
 	void requestTransferTo(OutputStream writer, int skipBytes) throws IOException;
 

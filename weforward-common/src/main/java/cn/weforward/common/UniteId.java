@@ -356,8 +356,19 @@ public class UniteId implements Serializable, UniqueKey {
 	 * @param unid 联合标识
 	 * @return true/false
 	 */
-	public static final boolean isEmtpy(UniteId unid) {
+	public static final boolean isEmpty(UniteId unid) {
 		return (null == unid || 0 == unid.m_Unite.length());
+	}
+
+	/**
+	 * 联合标识是否为空
+	 * 
+	 * @deprecated 使用 isEmpty
+	 * @param unid 联合标识
+	 * @return true/false
+	 */
+	public static final boolean isEmtpy(UniteId unid) {
+		return isEmpty(unid);
 	}
 
 	/**

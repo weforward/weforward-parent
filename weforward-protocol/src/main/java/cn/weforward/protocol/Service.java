@@ -60,7 +60,8 @@ public interface Service {
 	String getBuildVersion();
 
 	/**
-	 * 心跳周期时间，单位：秒。<br/>
+	 * 心跳周期时间，单位：秒。
+	 * <p>
 	 * 默认（值为0）为60秒，-1表示无心跳
 	 */
 	int getHeartbeatPeriod();
@@ -69,7 +70,8 @@ public interface Service {
 	String getNote();
 
 	/**
-	 * 获取文档的方法名。<br/>
+	 * 获取文档的方法名。
+	 * <p>
 	 * 若不为空时，网关会调用此方法获取文档。方法无入参，返回值为ServiceDocument对象。
 	 * 
 	 * @return 文档的方法名
@@ -77,7 +79,8 @@ public interface Service {
 	String getDocumentMethod();
 
 	/**
-	 * 用于调试（执行脚本）的方法名。<br/>
+	 * 用于调试（执行脚本）的方法名。
+	 * <p>
 	 * 不为空时，网关调用此方法，传入源代码（参数名：src），返回值同一般方法
 	 * 
 	 * @return 调试（执行脚本）的方法名

@@ -40,7 +40,7 @@ public class QueryStringParser {
 	/**
 	 * 分析请求串参数
 	 * 
-	 * @param queryString 请求串（如 ?a=x&b=x&c=...）
+	 * @param queryString 请求串（如 ?a=x&amp;b=x&amp;c=...）
 	 * @param offset      串的开始位置
 	 * @param charset     字符集
 	 * @param paramsLimit 限制分析参数项数
