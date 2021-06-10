@@ -23,18 +23,22 @@ public interface JsonInput {
 	 * 返回当前可读的字符数
 	 * 
 	 * @return 返回0表示未知，返回-1表示已经结束，其它&gt;0的值为当前可读
+	 * @throws IOException IO异常时抛出
 	 */
 	int available() throws IOException;
 
 	/**
 	 * 读取一个字符
 	 * 
+	 * @return 字符
 	 * @throws IOException IO异常时抛出
 	 */
 	char readChar() throws IOException;
 
 	/**
 	 * 已读取到的位置
+	 * 
+	 * @return 位置
 	 */
 	int position();
 

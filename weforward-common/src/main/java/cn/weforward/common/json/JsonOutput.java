@@ -23,7 +23,7 @@ public interface JsonOutput extends Appendable {
 	/**
 	 * 关闭
 	 * 
-	 * @throws IOException
+	 * @throws IOException IO异常时抛出
 	 */
 	void close() throws IOException;
 }

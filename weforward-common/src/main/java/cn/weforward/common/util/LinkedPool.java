@@ -88,6 +88,8 @@ public class LinkedPool<E> {
 
 	/**
 	 * 名称
+	 * 
+	 * @return 名称
 	 */
 	public String getName() {
 		return m_Name;
@@ -242,6 +244,8 @@ public class LinkedPool<E> {
 
 	/**
 	 * 池的最大项数
+	 * 
+	 * @return 项数
 	 */
 	public int getMaxSize() {
 		return m_MaxSize;
@@ -331,6 +335,8 @@ public class LinkedPool<E> {
 
 	/**
 	 * 在等待及处理中的项数
+	 * 
+	 * @return 项数
 	 */
 	public int getInQueue() {
 		return m_InQueue.get();
@@ -342,6 +348,8 @@ public class LinkedPool<E> {
 
 	/**
 	 * 使用中的项数
+	 * 
+	 * @return 项数
 	 */
 	public int getInUseCount() {
 		return m_InUseCount;

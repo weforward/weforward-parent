@@ -245,6 +245,8 @@ public interface RestfulResponse {
 
 	/**
 	 * 是否已响应
+	 * 
+	 * @return 是否已响应
 	 */
 	boolean isRespond();
 }

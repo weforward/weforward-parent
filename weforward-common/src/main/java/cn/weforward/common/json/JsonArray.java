@@ -19,14 +19,15 @@ package cn.weforward.common.json;
 public interface JsonArray extends JsonNode {
 	/**
 	 * 项数
+	 * 
+	 * @return 项数
 	 */
 	int size();
 
 	/**
 	 * 指定下标的项
 	 * 
-	 * @param index
-	 *            下标
+	 * @param index 下标
 	 * @return 相应项
 	 */
 	Object item(int index);
@@ -41,8 +42,7 @@ public interface JsonArray extends JsonNode {
 		/**
 		 * 追加项
 		 * 
-		 * @param value
-		 *            追加的项
+		 * @param value 追加的项
 		 */
 		void add(Object value);
 	}

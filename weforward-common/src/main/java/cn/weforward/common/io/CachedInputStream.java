@@ -344,6 +344,8 @@ public class CachedInputStream extends InputStream {
 
 	/**
 	 * 取得刚好合适内容的字节数组
+	 * 
+	 * @return 数组
 	 */
 	public byte[] getFitBytes() {
 		if (0 == m_Pos && m_Count == m_Cache.length) {

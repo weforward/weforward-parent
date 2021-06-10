@@ -553,7 +553,8 @@ public class JsonUtil {
 	 * 
 	 * @param in    JSON格式流
 	 * @param limit 限制跳过的字符数
-	 * @throws InvalidFormatException
+	 * @return 字符
+	 * @throws IOException IO异常时抛出
 	 */
 	static public char skipBlank(JsonInput in, int limit) throws IOException {
 		char ch;
@@ -570,6 +571,7 @@ public class JsonUtil {
 	 * 是否空白字符（空格、TAB、换行符等）
 	 * 
 	 * @param ch 要检查的字符
+	 * @return 是否为空白字符
 	 */
 	final public static boolean isBlank(char ch) {
 		return ' ' == ch || '\t' == ch || '\r' == ch || '\n' == ch;
@@ -599,28 +601,45 @@ public class JsonUtil {
 	/**
 	 * 编码JOSN字串
 	 * 
-	 * any-Unicode-character-except-"-or-\-or- control-character<br/>
-	 * \" \\ \/ \b \f \n \r \t \ u four-hex-digits<br/>
+	 * any-Unicode-character-except-"-or-\-or- control-character
 	 * <p>
-	 * char = unescaped /<p>
-	 * escape (<p>
-	 * %x22 / ; " quotation mark U+0022<p>
-	 * %x5C / ; \ reverse solidus U+005C<p>
-	 * %x2F / ; / solidus U+002F<p>
-	 * %x62 / ; b backspace U+0008<p>
-	 * %x66 / ; f form feed U+000C<p>
-	 * %x6E / ; n line feed U+000A<p>
-	 * %x72 / ; r carriage return U+000D<p>
-	 * %x74 / ; t tab U+0009<p>
-	 * %x75 4HEXDIG ) ; uXXXX U+XXXX<p>
-	 * escape = %x5C ; \<p>
-	 * quotation-mark = %x22 ; "<p>
-	 * unescaped = %x20-21 / %x23-5B / %x5D-10FFFF<p>
+	 * \" \\ \/ \b \f \n \r \t \ u four-hex-digits
+	 * <p>
+	 * <p>
+	 * char = unescaped /
+	 * <p>
+	 * escape (
+	 * <p>
+	 * %x22 / ; " quotation mark U+0022
+	 * <p>
+	 * %x5C / ; \ reverse solidus U+005C
+	 * <p>
+	 * %x2F / ; / solidus U+002F
+	 * <p>
+	 * %x62 / ; b backspace U+0008
+	 * <p>
+	 * %x66 / ; f form feed U+000C
+	 * <p>
+	 * %x6E / ; n line feed U+000A
+	 * <p>
+	 * %x72 / ; r carriage return U+000D
+	 * <p>
+	 * %x74 / ; t tab U+0009
+	 * <p>
+	 * %x75 4HEXDIG ) ; uXXXX U+XXXX
+	 * <p>
+	 * escape = %x5C ; \
+	 * <p>
+	 * quotation-mark = %x22 ; "
+	 * <p>
+	 * unescaped = %x20-21 / %x23-5B / %x5D-10FFFF
+	 * <p>
 	 * 
-	 * <url>http://www.ietf.org/rfc/rfc4627.txt?number=4627</url>
+	 * @see <a href="http://www.ietf.org/rfc/rfc4627.txt?number=4627"></a>
 	 * 
 	 * @param string   要转义的字串
 	 * @param appender 转义后输出的序列器
+	 * @throws IOException IO异常时抛出
 	 */
 	static public void escape(CharSequence string, Appendable appender) throws IOException {
 		if (isEmpty(string)) {

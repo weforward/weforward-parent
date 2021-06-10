@@ -45,8 +45,7 @@ public class RingBuffer<T> implements Destroyable, GcCleanable {
 	/**
 	 * 缓冲区满了
 	 * 
-	 * @param item
-	 *            要置入的项
+	 * @param item 要置入的项
 	 */
 	protected void onFull(T item) {
 	}
@@ -63,10 +62,8 @@ public class RingBuffer<T> implements Destroyable, GcCleanable {
 	/**
 	 * 释放缓存项
 	 * 
-	 * @param item
-	 *            要释放的缓存项
-	 * @param index
-	 *            缓存项所在的位置（下标）
+	 * @param item  要释放的缓存项
+	 * @param index 缓存项所在的位置（下标）
 	 */
 	protected void onDestroy(T item, int index) {
 	}
@@ -91,8 +88,7 @@ public class RingBuffer<T> implements Destroyable, GcCleanable {
 	/**
 	 * 置入缓冲区
 	 * 
-	 * @param item
-	 *            要置入缓冲区的项
+	 * @param item 要置入缓冲区的项
 	 * @return 缓冲区满则失败返回false，成功则返回true
 	 * 
 	 * @see #remove()
@@ -116,6 +112,7 @@ public class RingBuffer<T> implements Destroyable, GcCleanable {
 	 * 由缓冲区获取最顶的项（不置空引用），若缓冲区空则调用onEmpty返回值
 	 * 
 	 * @see #remove()
+	 * @return 项
 	 */
 	public T poll() {
 		synchronized (lockGet()) {
@@ -135,6 +132,7 @@ public class RingBuffer<T> implements Destroyable, GcCleanable {
 	 * 由缓冲区获取最顶的项（置空引用），若缓冲区空则调用onEmpty返回值
 	 * 
 	 * @see #poll()
+	 * @return 移除项
 	 */
 	public T remove() {
 		synchronized (lockGet()) {
@@ -159,8 +157,7 @@ public class RingBuffer<T> implements Destroyable, GcCleanable {
 	/**
 	 * 转换为逻辑地址（在缓冲区的实际位置）
 	 * 
-	 * @param index
-	 *            地址
+	 * @param index 地址
 	 * @return 0～size()-1
 	 */
 	private int logicIndex(int index) {
@@ -170,8 +167,7 @@ public class RingBuffer<T> implements Destroyable, GcCleanable {
 	/**
 	 * 虚拟地址（用于识别缓冲区空还是满）
 	 * 
-	 * @param index
-	 *            地址
+	 * @param index 地址
 	 * @return 0～size()*2-1
 	 */
 	private int virtualIndex(int index) {
@@ -198,6 +194,8 @@ public class RingBuffer<T> implements Destroyable, GcCleanable {
 
 	/**
 	 * 清空缓冲区
+	 * 
+	 * @return 是否清空成功
 	 */
 	public boolean empty() {
 		if (0 == m_IndexPut && 0 == m_IndexGet) {
@@ -239,8 +237,7 @@ public class RingBuffer<T> implements Destroyable, GcCleanable {
 
 	@Override
 	public String toString() {
-		return "{size:" + size() + ",readable:" + readable() + ",ip:" + m_IndexPut + ",ig:"
-				+ m_IndexGet + ",empty:" + m_EmtryCounter + ",full:" + m_FullCounter + ",hit:"
-				+ m_HitCounter + "}";
+		return "{size:" + size() + ",readable:" + readable() + ",ip:" + m_IndexPut + ",ig:" + m_IndexGet + ",empty:"
+				+ m_EmtryCounter + ",full:" + m_FullCounter + ",hit:" + m_HitCounter + "}";
 	}
 }

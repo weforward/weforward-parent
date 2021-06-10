@@ -45,10 +45,11 @@ public class Memory {
 
 	/**
 	 * 默认内存使用状态刷新周期（毫秒）
+	 * 
+	 * @return 毫秒
 	 */
 	public static int getRefreshPeriod() {
-		int period = NumberUtil.toInt(System.getProperty("cn.weforward.common.sys.period"),
-				8 * 60 * 1000);
+		int period = NumberUtil.toInt(System.getProperty("cn.weforward.common.sys.period"), 8 * 60 * 1000);
 		return period;
 	}
 
@@ -83,8 +84,7 @@ public class Memory {
 		for (GarbageCollectorMXBean gc : gcs) {
 			String name = gc.getName();
 			// PS GC, GMS GC, G1 GC
-			if (name.equals("PS MarkSweep") || name.equals("ConcurrentMarkSweep")
-					|| name.contains(" Old ")) {
+			if (name.equals("PS MarkSweep") || name.equals("ConcurrentMarkSweep") || name.contains(" Old ")) {
 				m_gc = gc;
 				break;
 			}
@@ -135,22 +135,38 @@ public class Memory {
 		return max;
 	}
 
-	/** （最大）可用的 */
+	/**
+	 * （最大）可用的
+	 * 
+	 * @return 字节
+	 */
 	public long getUsable() {
 		return usable;
 	}
 
-	/** 已分配的 */
+	/**
+	 * 已分配的
+	 * 
+	 * @return 字节
+	 */
 	public long getAlloc() {
 		return alloc;
 	}
 
-	/** full-GC次数 */
+	/**
+	 * full-GC次数
+	 * 
+	 * @return 次数
+	 */
 	public int getGcCount() {
 		return gcCount;
 	}
 
-	/** full-GC消耗时间（秒） */
+	/**
+	 * full-GC消耗时间（秒）
+	 * 
+	 * @return 时间
+	 */
 	public int getGcTime() {
 		return gcTime;
 	}
@@ -160,11 +176,10 @@ public class Memory {
 	}
 
 	/**
-	 * 检查内存是否达到指定的状态以上（MEMORY_SUSPEND->MEMORY_CRITICAL->MEMORY_LOW->
-	 * MEMORY_NORMAL ->MEMORY_IDEL）
+	 * 检查内存是否达到指定的状态以上（MEMORY_SUSPEND-&gt;MEMORY_CRITICAL-&gt;MEMORY_LOW-&gt;
+	 * MEMORY_NORMAL -&gt;MEMORY_IDEL）
 	 * 
-	 * @param level
-	 *            要检查的内存状态
+	 * @param level 要检查的内存状态
 	 * @return 在状态以上则返回true
 	 */
 	public boolean checkLevel(NameItem level) {
@@ -172,14 +187,13 @@ public class Memory {
 	}
 
 	/**
-	 * 等待内存达到指定的状态以上（MEMORY_SUSPEND->MEMORY_CRITICAL->MEMORY_LOW->MEMORY_NORMAL
-	 * ->MEMORY_IDEL）
+	 * 等待内存达到指定的状态以上（MEMORY_SUSPEND-&gt;MEMORY_CRITICAL-&gt;MEMORY_LOW-&gt;MEMORY_NORMAL
+	 * -&gt;MEMORY_IDEL）
 	 * 
-	 * @param level
-	 *            要等的内存状态
-	 * @param timeoutMs
-	 *            等待超时值（毫秒），=0则永远等待
+	 * @param level     要等的内存状态
+	 * @param timeoutMs 等待超时值（毫秒），=0则永远等待
 	 * @return 等待时间内等到则返回剩余时间，超时返回-1
+	 * @throws InterruptedIOException 中断时抛出
 	 */
 	public int waitFor(NameItem level, int timeoutMs) throws InterruptedIOException {
 		if (level.id >= this.m_Level.id) {
@@ -193,8 +207,7 @@ public class Memory {
 		try {
 			m_Lock.lockInterruptibly();
 			lock = m_Lock;
-			interval = (timeoutMs > 0) ? (timeoutMs - (int) (TimeUtil.currentTimeMillis() - ts))
-					: 0;
+			interval = (timeoutMs > 0) ? (timeoutMs - (int) (TimeUtil.currentTimeMillis() - ts)) : 0;
 			while (interval >= 0) {
 				// 等啊
 				if (0 == timeoutMs) {
@@ -223,8 +236,7 @@ public class Memory {
 	/**
 	 * 设定内存空间严重不足界线
 	 * 
-	 * @param bytes
-	 *            不足界线（单位字）
+	 * @param bytes 不足界线（单位字）
 	 */
 	public void setCritical(long bytes) {
 		m_Critical = bytes;
@@ -232,6 +244,8 @@ public class Memory {
 
 	/**
 	 * 统计内存使用状态 MEMORY_xxx
+	 * 
+	 * @return 状态项
 	 */
 	protected NameItem calcSate() {
 		if (m_Critical > 0 && this.usable < m_Critical) {
@@ -262,8 +276,7 @@ public class Memory {
 			// // >=30%
 			// state = MEMORY_NORMAL;
 		}
-		if (this.usable < (32 * 1024 * 1024)
-				|| (rate < 5 && m_Critical > 0 && this.usable < m_Critical)) {
+		if (this.usable < (32 * 1024 * 1024) || (rate < 5 && m_Critical > 0 && this.usable < m_Critical)) {
 			// <5% or 32M，要挂掉了吧
 			state = MEMORY_SUSPEND;
 		}

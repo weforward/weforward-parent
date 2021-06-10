@@ -25,10 +25,8 @@ import cn.weforward.common.sys.ClockTick;
  * 
  * @author liangyi
  *
- * @param <K>
- *            键的类型（通常是字串）
- * @param <V>
- *            值的类型
+ * @param <K> 键的类型（通常是字串）
+ * @param <V> 值的类型
  */
 public class LruCache<K, V> extends LruHashMap<K, V> {
 	/** 传递GC事件给实现GcCleanable接口的项 */
@@ -88,8 +86,7 @@ public class LruCache<K, V> extends LruHashMap<K, V> {
 	/**
 	 * 设置缓存长时间未访问的超时值
 	 * 
-	 * @param seconds
-	 *            超时值（秒），超过此时间未访问的缓存将可能被清除
+	 * @param seconds 超时值（秒），超过此时间未访问的缓存将可能被清除
 	 */
 	public void setTimeout(int seconds) {
 		m_Timeout = seconds;
@@ -97,6 +94,8 @@ public class LruCache<K, V> extends LruHashMap<K, V> {
 
 	/**
 	 * 缓存长时间未访问的超时值
+	 * 
+	 * @return 超时值
 	 */
 	public int getTimeout() {
 		return m_Timeout;
@@ -105,8 +104,7 @@ public class LruCache<K, V> extends LruHashMap<K, V> {
 	/**
 	 * NULL值(getHitLoad)重新加载间隔（秒）
 	 * 
-	 * @param seconds
-	 *            重新加载间隔（秒），0为不控制
+	 * @param seconds 重新加载间隔（秒），0为不控制
 	 */
 	public void setNullTimeout(int seconds) {
 		m_NullTimeout = seconds;
@@ -123,8 +121,7 @@ public class LruCache<K, V> extends LruHashMap<K, V> {
 	/**
 	 * 加载等待超时值（毫秒），默认5000毫秒
 	 * 
-	 * @param mills
-	 *            超时值（毫秒）
+	 * @param mills 超时值（毫秒）
 	 */
 	public void setPendingTimeout(int mills) {
 		m_PendingTimeout = mills;
@@ -137,8 +134,7 @@ public class LruCache<K, V> extends LruHashMap<K, V> {
 	/**
 	 * 最大加载并发数，默认不限制
 	 * 
-	 * @param max
-	 *            最大值（&lt;=0为不限制）
+	 * @param max 最大值（&lt;=0为不限制）
 	 */
 	public void setMaxLoadConcurrent(int max) {
 		m_MaxLoadConcurrent = max;
@@ -153,8 +149,7 @@ public class LruCache<K, V> extends LruHashMap<K, V> {
 	/**
 	 * 是否控制对象单例
 	 * 
-	 * @param enabled
-	 *            是否单例
+	 * @param enabled 是否单例
 	 */
 	public void setReachable(boolean enabled) {
 		if (enabled) {
@@ -174,10 +169,8 @@ public class LruCache<K, V> extends LruHashMap<K, V> {
 	/**
 	 * 取缓存项，且当缓存中没有时尝试加载缓存项，不管加载后的值是否为null（在缓存项有存在时）都只加载一次
 	 * 
-	 * @param key
-	 *            缓存项的键
-	 * @param loader
-	 *            缓存项加载器，若为null则不加载只创建空的缓存项
+	 * @param key    缓存项的键
+	 * @param loader 缓存项加载器，若为null则不加载只创建空的缓存项
 	 * @return 返回相应缓存项的值，没有则返回null
 	 */
 	public V getHintLoad(K key, Loader<K, V> loader) {
@@ -208,12 +201,9 @@ public class LruCache<K, V> extends LruHashMap<K, V> {
 	/**
 	 * 取缓存项，且当缓存中没有时尝试加载缓存项，不管加载后的值是否为null（在缓存项有存在时）都只加载一次
 	 * 
-	 * @param key
-	 *            缓存项的键
-	 * @param loader
-	 *            缓存项加载器，若为null则不加载只创建空的缓存项
-	 * @param expire
-	 *            过期值（秒），若不为0则超过此时间重新加载
+	 * @param key    缓存项的键
+	 * @param loader 缓存项加载器，若为null则不加载只创建空的缓存项
+	 * @param expire 过期值（秒），若不为0则超过此时间重新加载
 	 * @return 返回相应缓存项的值，没有则返回null
 	 */
 	public V getHintLoad(K key, Loader<K, V> loader, int expire) {
@@ -259,12 +249,9 @@ public class LruCache<K, V> extends LruHashMap<K, V> {
 	/**
 	 * 取缓存项，当缓存中没有或为null时总会尝试加载缓存项
 	 * 
-	 * @param key
-	 *            缓存项的键
-	 * @param loader
-	 *            缓存项加载器，若为null则不加载只创建空的缓存项
-	 * @param expire
-	 *            过期值（秒），若不为0则超过此时间重新加载
+	 * @param key    缓存项的键
+	 * @param loader 缓存项加载器，若为null则不加载只创建空的缓存项
+	 * @param expire 过期值（秒），若不为0则超过此时间重新加载
 	 * @return 返回相应缓存项的值，没有则返回null
 	 */
 	public V getAndLoad(K key, Loader<K, V> loader, int expire) {
@@ -305,10 +292,8 @@ public class LruCache<K, V> extends LruHashMap<K, V> {
 	/**
 	 * 更新缓存项
 	 * 
-	 * @param key
-	 *            缓存项的key
-	 * @param updater
-	 *            更新器
+	 * @param key     缓存项的key
+	 * @param updater 更新器
 	 * @return 更新后缓存项当前的值
 	 */
 	public V update(K key, Updater<K, V> updater) {
@@ -393,8 +378,7 @@ public class LruCache<K, V> extends LruHashMap<K, V> {
 	/**
 	 * 按LRU且确认缓存项是否被引用下清除缓存项
 	 * 
-	 * @param expect
-	 *            期望移除的项数
+	 * @param expect 期望移除的项数
 	 * @return 已移除的项数
 	 */
 	public int trimClean(int expect) {
@@ -486,8 +470,7 @@ public class LruCache<K, V> extends LruHashMap<K, V> {
 	/**
 	 * 清理长时间未访问的空闲缓存项
 	 * 
-	 * @param lastAccess
-	 *            清除的时间点（小于它则被清除）
+	 * @param lastAccess 清除的时间点（小于它则被清除）
 	 * @return 已清除的项数
 	 */
 	protected int idleTrim(int lastAccess) {
@@ -561,12 +544,9 @@ public class LruCache<K, V> extends LruHashMap<K, V> {
 	/**
 	 * 在一个同步块内（防止并发）加载缓存项
 	 * 
-	 * @param node
-	 *            要加载的缓存项
-	 * @param loader
-	 *            加载器
-	 * @param removeFail
-	 *            若加载失败移该缓存项
+	 * @param node       要加载的缓存项
+	 * @param loader     加载器
+	 * @param removeFail 若加载失败移该缓存项
 	 * @return 加载完的缓存值
 	 */
 	private V load(CacheNode<K, V> node, Loader<K, V> loader, boolean removeFail) {
@@ -668,8 +648,7 @@ public class LruCache<K, V> extends LruHashMap<K, V> {
 	/**
 	 * 缓存项加载后
 	 * 
-	 * @param node
-	 *            加载的项
+	 * @param node 加载的项
 	 */
 	protected void afterNodeLoad(CacheNode<K, V> node) {
 		putLru(node);
@@ -702,10 +681,8 @@ public class LruCache<K, V> extends LruHashMap<K, V> {
 	/**
 	 * 取得已更新待刷写的链表
 	 * 
-	 * @param copyOn
-	 *            是否复制链表（可减少刷写期间过长导致的缓冲访问阻塞）
-	 * @param limit
-	 *            限制项数
+	 * @param copyOn 是否复制链表（可减少刷写期间过长导致的缓冲访问阻塞）
+	 * @param limit  限制项数
 	 * @return 链表
 	 */
 	@SuppressWarnings("unchecked")
@@ -721,6 +698,8 @@ public class LruCache<K, V> extends LruHashMap<K, V> {
 
 	/**
 	 * 缓存命中率（百分比）
+	 * 
+	 * @return 百分比
 	 */
 	public int getHitRate() {
 		long hits = (m_GetCount - m_LoadCount);
@@ -742,19 +721,15 @@ public class LruCache<K, V> extends LruHashMap<K, V> {
 	 * 
 	 * @author liangyi
 	 * 
-	 * @param <K>
-	 *            键的类型（通常是字串）
-	 * @param <V>
-	 *            值的类型
+	 * @param <K> 键的类型（通常是字串）
+	 * @param <V> 值的类型
 	 */
 	public static interface Loader<K, V> {
 		/**
 		 * 加载
 		 * 
-		 * @param key
-		 *            要加载项的key
-		 * @param node
-		 *            缓存项节点
+		 * @param key  要加载项的key
+		 * @param node 缓存项节点
 		 * @return 加载回来的值
 		 */
 		V load(K key, CacheNode<K, V> node);
@@ -765,19 +740,15 @@ public class LruCache<K, V> extends LruHashMap<K, V> {
 	 * 
 	 * @author liangyi
 	 * 
-	 * @param <K>
-	 *            键的类型（通常是字串）
-	 * @param <V>
-	 *            值的类型
+	 * @param <K> 键的类型（通常是字串）
+	 * @param <V> 值的类型
 	 */
 	public static interface Updater<K, V> {
 		/**
 		 * 更新
 		 * 
-		 * @param key
-		 *            要更新项的key
-		 * @param current
-		 *            当前的值
+		 * @param key     要更新项的key
+		 * @param current 当前的值
 		 * @return 更新后的值
 		 */
 		V update(K key, V current);
@@ -914,8 +885,7 @@ public class LruCache<K, V> extends LruHashMap<K, V> {
 		/**
 		 * 标记到更新链表
 		 * 
-		 * @param linked
-		 *            更新链表头
+		 * @param linked 更新链表头
 		 * @return 链表头
 		 */
 		synchronized public CacheNode<K, V> update(CacheNode<K, V> linked) {

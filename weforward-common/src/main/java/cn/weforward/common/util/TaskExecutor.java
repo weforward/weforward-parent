@@ -205,6 +205,8 @@ public interface TaskExecutor extends Executor {
 
 		/**
 		 * 任务最后执行完成时间
+		 * 
+		 * @return 时间
 		 */
 		public Date getLastFinish();
 

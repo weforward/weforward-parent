@@ -52,8 +52,7 @@ public class ClockTick extends TimerTask {
 	/**
 	 * 取得可能共享的计时发布器实例
 	 * 
-	 * @param period
-	 *            计时周期（秒）
+	 * @param period 计时周期（秒）
 	 * @return 可能共享的实例
 	 */
 	public static ClockTick getInstance(int period) {
@@ -69,8 +68,7 @@ public class ClockTick extends TimerTask {
 	/**
 	 * 取得可能共享的计时发布器实例
 	 * 
-	 * @param period
-	 *            计时周期（秒）
+	 * @param period 计时周期（秒）
 	 * @return 可能共享的实例
 	 */
 	public static ClockTick getInstance(double period) {
@@ -95,10 +93,8 @@ public class ClockTick extends TimerTask {
 	/**
 	 * 构建计时发布器
 	 * 
-	 * @param period
-	 *            计时周期（秒）
-	 * @param initTicker
-	 *            初始值
+	 * @param period     计时周期（秒）
+	 * @param initTicker 初始值
 	 */
 	public ClockTick(int period, int initTicker) {
 		m_Ticker = initTicker;
@@ -112,6 +108,8 @@ public class ClockTick extends TimerTask {
 
 	/**
 	 * 计数值
+	 * 
+	 * @return 值
 	 */
 	public int getTicker() {
 		return (int) m_Ticker;
@@ -119,6 +117,8 @@ public class ClockTick extends TimerTask {
 
 	/**
 	 * 计数值（长整数）
+	 * 
+	 * @return 值
 	 */
 	public long getTickerLong() {
 		return m_Ticker;
@@ -126,6 +126,8 @@ public class ClockTick extends TimerTask {
 
 	/**
 	 * 毫秒数
+	 * 
+	 * @return 毫秒
 	 */
 	public long getMills() {
 		return m_Ticker * m_Period * 1000;
@@ -133,6 +135,8 @@ public class ClockTick extends TimerTask {
 
 	/**
 	 * 计数周期（秒）
+	 * 
+	 * @return 秒
 	 */
 	public int getPeriod() {
 		return m_Period;
@@ -140,6 +144,8 @@ public class ClockTick extends TimerTask {
 
 	/**
 	 * 计数周期（毫秒）
+	 * 
+	 * @return 毫秒
 	 */
 	public int getPeriodMills() {
 		return m_Period * 1000;
@@ -171,10 +177,8 @@ public class ClockTick extends TimerTask {
 		/**
 		 * 创建计数器
 		 * 
-		 * @param period
-		 *            计时周期（毫秒）
-		 * @param initTicker
-		 *            初始值（毫秒）
+		 * @param period     计时周期（毫秒）
+		 * @param initTicker 初始值（毫秒）
 		 */
 		protected ClockTickMills(int period, int initTicker) {
 			super(period);

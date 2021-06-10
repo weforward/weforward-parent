@@ -7,7 +7,8 @@ import java.io.UnsupportedEncodingException;
 import cn.weforward.common.crypto.Hex;
 
 /**
- * 简单的UTF-8编码器。<br/>
+ * 简单的UTF-8编码器。
+ * <p>
  * 根据编码表，直接将UTF-16转为UTF-8，参考：
  * 
  * @see <a href="https://zh.wikipedia.org/wiki/UTF-16">UTF-16</a>

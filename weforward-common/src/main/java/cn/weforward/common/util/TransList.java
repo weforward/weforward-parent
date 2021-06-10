@@ -49,7 +49,7 @@ public abstract class TransList<T, S> extends AbstractList<T> {
 	}
 
 	/**
-	 * 子类实现此抽象方法提供S->T的封装功能
+	 * 子类实现此抽象方法提供S-&gt;T的封装功能
 	 * 
 	 * @param src 源条目
 	 * @return 目标条目

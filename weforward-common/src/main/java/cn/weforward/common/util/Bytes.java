@@ -35,8 +35,7 @@ public class Bytes {
 					"offset[" + offset + "]+size[" + size + "] over{0~" + bytes.length + "}");
 		}
 		if (size < 0 || size > offset + bytes.length) {
-			throw new IllegalArgumentException(
-					"size[" + size + "+" + offset + "] over{0~" + bytes.length + "}");
+			throw new IllegalArgumentException("size[" + size + "+" + offset + "] over{0~" + bytes.length + "}");
 		}
 		this.m_Bytes = bytes;
 		this.m_Offset = offset;
@@ -63,6 +62,8 @@ public class Bytes {
 
 	/**
 	 * 取得刚好合适内容的字节数组
+	 * 
+	 * @return 字节数组
 	 */
 	public byte[] fit() {
 		if (0 == m_Offset && m_Size == m_Bytes.length) {
@@ -74,6 +75,8 @@ public class Bytes {
 
 	/**
 	 * 剩余空间（数组长度-size）
+	 * 
+	 * @return 长度
 	 */
 	public int getFree() {
 		return (this.m_Bytes.length - this.m_Size);
@@ -91,8 +94,8 @@ public class Bytes {
 		StringBuilder sb = new StringBuilder(256);
 		// return "{bytes:" + Arrays.toString(bytes) + ",offset:" + offset +
 		// ",size:" + size + "}";
-		sb.append("{offset:").append(m_Offset).append(",size:").append(m_Size).append(",free:")
-				.append(getFree()).append(",bytes:");
+		sb.append("{offset:").append(m_Offset).append(",size:").append(m_Size).append(",free:").append(getFree())
+				.append(",bytes:");
 		toString(sb, this.m_Bytes, 50);
 		sb.append("}");
 		return sb.toString();
@@ -101,12 +104,9 @@ public class Bytes {
 	/**
 	 * 字串数组格式串
 	 * 
-	 * @param sb
-	 *            输出格式串的StringBuilder，若为null则内部创建
-	 * @param bytes
-	 *            字节数组
-	 * @param limit
-	 *            限制节字数（-1为不限制）
+	 * @param sb    输出格式串的StringBuilder，若为null则内部创建
+	 * @param bytes 字节数组
+	 * @param limit 限制节字数（-1为不限制）
 	 * @return 格式串 [1,2,8...]
 	 */
 	public static StringBuilder toString(StringBuilder sb, byte[] bytes, int limit) {
@@ -144,6 +144,8 @@ public class Bytes {
 
 	/**
 	 * 0长度字节数组
+	 * 
+	 * @return 字节数组
 	 */
 	public static Bytes empty() {
 		return _nil;
@@ -152,17 +154,12 @@ public class Bytes {
 	/**
 	 * 比较两个字节数组
 	 * 
-	 * @param b1
-	 *            字节数组1
-	 * @param offset1
-	 *            字节数组1开始位置
-	 * @param b2
-	 *            字节数组2
-	 * @param offset2
-	 *            字节数组2开始位置
-	 * @param length
-	 *            长度
-	 * @return 0为相等，>0则b1>b2，<0则b1<b2
+	 * @param b1      字节数组1
+	 * @param offset1 字节数组1开始位置
+	 * @param b2      字节数组2
+	 * @param offset2 字节数组2开始位置
+	 * @param length  长度
+	 * @return 0为相等，&gt;0则b1&gt;b2，&lt;0则b1&lt;b2
 	 */
 	public static int compare(byte[] b1, int offset1, byte[] b2, int offset2, int length) {
 		int ret = 0;
@@ -211,8 +208,7 @@ public class Bytes {
 	/**
 	 * 友好的存储容量格式化，按T、G、K及保留小数点两位，如：4.5T,3.4G,2.3M,1.2K
 	 * 
-	 * @param bytes
-	 *            字节数
+	 * @param bytes 字节数
 	 * @return 格式化后的容量信息
 	 */
 	public static String formatHumanReadable(long bytes) {
@@ -222,10 +218,8 @@ public class Bytes {
 	/**
 	 * 友好的存储容量格式化，按T、G、K及保留小数点两位，如：4.5T,3.4G,2.3M,1.2K
 	 * 
-	 * @param sb
-	 *            字串缓冲区
-	 * @param bytes
-	 *            字节数
+	 * @param sb    字串缓冲区
+	 * @param bytes 字节数
 	 * @return 输出格式化后的容量信息
 	 */
 	public static StringBuilder formatHumanReadable(StringBuilder sb, long bytes) {
@@ -270,11 +264,9 @@ public class Bytes {
 	/**
 	 * 从格式化友好的存储容量（如1.5G,200M）中解析出实际字节数大小
 	 * 
-	 * @param readable
-	 *            友好的存储容量
+	 * @param readable 友好的存储容量
 	 * @return 字节数大小
-	 * @throws NumberFormatException
-	 *             字符串格式错误
+	 * @throws NumberFormatException 字符串格式错误
 	 */
 	public static long parseHumanReadable(String readable) throws NumberFormatException {
 		if (null == readable || 0 == readable.length()) {
@@ -318,18 +310,14 @@ public class Bytes {
 		}
 	}
 
-	public static int POOL_8K_SIZE = NumberUtil.toInt(System.getProperty("Bytes.POOL_8K_SIZE"),
-			512);
-	public static int POOL_1K_SIZE = NumberUtil.toInt(System.getProperty("Bytes.POOL_1K_SIZE"),
-			1024);
-	public static int POOL_512_SIZE = NumberUtil.toInt(System.getProperty("Bytes.POOL_512_SIZE"),
-			2048);
+	public static int POOL_8K_SIZE = NumberUtil.toInt(System.getProperty("Bytes.POOL_8K_SIZE"), 512);
+	public static int POOL_1K_SIZE = NumberUtil.toInt(System.getProperty("Bytes.POOL_1K_SIZE"), 1024);
+	public static int POOL_512_SIZE = NumberUtil.toInt(System.getProperty("Bytes.POOL_512_SIZE"), 2048);
 
 	/**
 	 * 找一个容量合适的池
 	 * 
-	 * @param capacity
-	 *            期望的容量
+	 * @param capacity 期望的容量
 	 * @return 没有合适的池则返回null
 	 */
 	public static Pool pool(int capacity) {
@@ -357,10 +345,8 @@ public class Bytes {
 		/**
 		 * 构建池
 		 * 
-		 * @param size
-		 *            池大小
-		 * @param capacity
-		 *            字节数组容量
+		 * @param size     池大小
+		 * @param capacity 字节数组容量
 		 */
 		public Pool(int size, int capacity) {
 			super(size);

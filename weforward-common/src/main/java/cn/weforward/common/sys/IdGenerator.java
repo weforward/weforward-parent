@@ -37,6 +37,8 @@ public abstract class IdGenerator {
 
 	/**
 	 * ID包含的服务器标识如x000a
+	 * 
+	 * @return 服务器标识
 	 */
 	public String getServerId() {
 		return m_ServerId;
@@ -45,8 +47,7 @@ public abstract class IdGenerator {
 	/**
 	 * 产生新ID
 	 * 
-	 * @param prefix
-	 *            前缀，可为null
+	 * @param prefix 前缀，可为null
 	 * @return 新的ID
 	 */
 	public abstract String genId(String prefix);
@@ -54,8 +55,7 @@ public abstract class IdGenerator {
 	/**
 	 * 由联合标识的序号尝试分析服务器标识（ID），格式类似”xxxx-xxxx“的最后的xxxx
 	 * 
-	 * @param ordinal
-	 *            （ID）序号
+	 * @param ordinal （ID）序号
 	 * @return 服务器标识没有则返回null
 	 */
 	public static String getServerId(String ordinal) {
@@ -72,10 +72,8 @@ public abstract class IdGenerator {
 	/**
 	 * 56位整数HEX字串，不足14个字符前端补0
 	 * 
-	 * @param val
-	 *            56位数值
-	 * @param builder
-	 *            字串缓冲区
+	 * @param val     56位数值
+	 * @param builder 字串缓冲区
 	 * @return 16字符的HEX编码串
 	 */
 	public static StringBuilder toHex(long val, StringBuilder builder) {

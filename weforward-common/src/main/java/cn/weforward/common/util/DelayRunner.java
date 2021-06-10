@@ -153,6 +153,8 @@ public abstract class DelayRunner<E> implements DestroyableExt {
 
 	/**
 	 * 创建任务链表
+	 * 
+	 * @return 链表
 	 */
 	protected SinglyLinked<E> createTasks() {
 		return new SinglyLinked<E>();
@@ -199,6 +201,8 @@ public abstract class DelayRunner<E> implements DestroyableExt {
 
 	/**
 	 * 每次执行任务的最小间隔（秒）
+	 * 
+	 * @return 间隔（秒）
 	 */
 	public int getInterval() {
 		return m_Interval;
@@ -215,6 +219,8 @@ public abstract class DelayRunner<E> implements DestroyableExt {
 
 	/**
 	 * 延时执行任务的最大累积项数
+	 * 
+	 * @return 数据量
 	 */
 	public int getMaxSuspend() {
 		return m_MaxSuspend;
@@ -222,6 +228,8 @@ public abstract class DelayRunner<E> implements DestroyableExt {
 
 	/**
 	 * 已完成任务量
+	 * 
+	 * @return 数据量
 	 */
 	public int getCompletes() {
 		return m_Completes;
@@ -229,6 +237,8 @@ public abstract class DelayRunner<E> implements DestroyableExt {
 
 	/**
 	 * 在执行中的任务量
+	 * 
+	 * @return 数据量
 	 */
 	public int getPending() {
 		return m_Pending;
@@ -236,6 +246,8 @@ public abstract class DelayRunner<E> implements DestroyableExt {
 
 	/**
 	 * 当前任务执行连续失败数
+	 * 
+	 * @return 数据量
 	 */
 	public int getFails() {
 		return m_Fails;
@@ -243,6 +255,8 @@ public abstract class DelayRunner<E> implements DestroyableExt {
 
 	/**
 	 * 总处理任务数据（完成及失败）
+	 * 
+	 * @return 数据量
 	 */
 	public int getTotal() {
 		return m_Total;
@@ -271,6 +285,8 @@ public abstract class DelayRunner<E> implements DestroyableExt {
 
 	/**
 	 * 取得任务（还在等待的）
+	 * 
+	 * @return 任务列表
 	 */
 	public Iterator<E> getQueueTasks() {
 		return new SinglyLinked.LinkedIterator<E>(m_Tasks.getHead());
@@ -278,6 +294,8 @@ public abstract class DelayRunner<E> implements DestroyableExt {
 
 	/**
 	 * 取得正在处理的任务
+	 * 
+	 * @return 任务列表
 	 */
 	public Iterator<E> getPendingTasks() {
 		SinglyLinked.Node<E> node = m_PendingTask;
@@ -390,6 +408,8 @@ public abstract class DelayRunner<E> implements DestroyableExt {
 
 	/**
 	 * 任务列表有变化
+	 * 
+	 * @return 是否有变化
 	 */
 	public boolean isQueueChanged() {
 		return STATE_QUEUE_CHANGED == (m_State & STATE_QUEUE_CHANGED);

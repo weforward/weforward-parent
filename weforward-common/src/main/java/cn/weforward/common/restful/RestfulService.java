@@ -23,35 +23,27 @@ public interface RestfulService {
 	/**
 	 * （可选的）预检查请求是否可以进行
 	 * 
-	 * @param request
-	 *            请求
-	 * @param response
-	 *            响应
-	 * @throws IOException
-	 *             若抛出则会直接关闭连接（且尽量响应500）
+	 * @param request  请求
+	 * @param response 响应
+	 * @throws IOException 若抛出则会直接关闭连接（且尽量响应500）
 	 */
 	void precheck(RestfulRequest request, RestfulResponse response) throws IOException;
 
 	/**
 	 * 处理请求
 	 * 
-	 * @param request
-	 *            请求
-	 * @param response
-	 *            响应
-	 * @throws IOException
-	 *             若抛出则会直接关闭连接（且尽量响应500）
+	 * @param request  请求
+	 * @param response 响应
+	 * @throws IOException 若抛出则会直接关闭连接（且尽量响应500）
 	 */
 	void service(RestfulRequest request, RestfulResponse response) throws IOException;
 
 	/**
 	 * 处理请求超时未响应，可以响应业务层的超时，若不处理会响应HTTP 202
 	 * 
-	 * @param request
-	 *            请求
-	 * @param response
-	 *            响应
-	 * @throws IOException
+	 * @param request  请求
+	 * @param response 响应
+	 * @throws IOException IO异常时抛出
 	 */
 	void timeout(RestfulRequest request, RestfulResponse response) throws IOException;
 }
