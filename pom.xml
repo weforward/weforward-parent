@@ -30,11 +30,6 @@
 		<java.version>1.7</java.version>
 	</properties>
 
-	<scm>
-		<url>https://codeup.aliyun.com/5faca4d322a8c7ff39350b14/weforward/weforward-parent.git</url>
-		<tag>https://codeup.aliyun.com/5faca4d322a8c7ff39350b14/weforward/weforward-parent.git</tag>
-	</scm>
-
 	<modules>
 		<module>weforward-common</module>
 		<module>weforward-protocol</module>
