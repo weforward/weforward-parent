@@ -18,6 +18,7 @@ import cn.weforward.protocol.aio.netty.HeadersParser;
 import cn.weforward.protocol.aio.netty.NettyHttpHeaders;
 import cn.weforward.protocol.aio.netty.NettyOutputStream;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.CompositeByteBuf;
 import io.netty.channel.ChannelFuture;
 import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
@@ -61,7 +62,8 @@ public abstract class WebSocketMessage {
 	/** 消息头分隔符 */
 	final static byte[] HEADER_DELIMITER = { ':', ' ' };
 
-	WebSocketSession m_Session;
+	final WebSocketSession m_Session;
+	ByteBufAllocator m_Allocator;
 	/** 消息头 */
 	NettyHttpHeaders m_Headers;
 	/** 消息体 */
@@ -74,6 +76,7 @@ public abstract class WebSocketMessage {
 	public WebSocketMessage(WebSocketSession session, NettyHttpHeaders headers) {
 		m_Headers = headers;
 		m_Session = session;
+		m_Allocator = session.getAllocator();
 	}
 
 	/**
@@ -91,7 +94,7 @@ public abstract class WebSocketMessage {
 			// 不转传则写入缓冲区
 			body = m_Body;
 			if (null == body) {
-				body = new CompositeByteBufStream(m_Session.compositeBuffer());
+				body = new CompositeByteBufStream(m_Allocator.compositeBuffer());
 				m_Body = body;
 			}
 			body.readable(payload);
@@ -114,7 +117,7 @@ public abstract class WebSocketMessage {
 		}
 		ByteBufInput stream;
 		if (null == m_Body) {
-			stream = new ByteBufInput(m_Session.compositeBuffer(), false);
+			stream = new ByteBufInput(m_Allocator.compositeBuffer(), false);
 		} else {
 			CompositeByteBufStream buffers = (CompositeByteBufStream) m_Body;
 			stream = new ByteBufInput(buffers.detach(), buffers.isCompleted());
@@ -132,6 +135,11 @@ public abstract class WebSocketMessage {
 	}
 
 	synchronized void cleanup() {
+		Output out = m_Output;
+		if (null != out) {
+			m_Output = null;
+			out.cleanup();
+		}
 		if (null != m_Body) {
 			m_Body.abort();
 			m_Body = null;
@@ -139,11 +147,20 @@ public abstract class WebSocketMessage {
 		m_Headers = null;
 	}
 
-	public void abort() {
+	public boolean abort() {
+		boolean ret = (null != m_Headers);
 		cleanup();
+		return ret;
 	}
 
-	synchronized public void setHeader(String name, String value) {
+	public boolean isInvalid() {
+		return null == m_Headers;
+	}
+
+	synchronized public void setHeader(String name, String value) throws IOException {
+		if (null == m_Headers) {
+//			throw new ;
+		}
 		m_Headers.setHeader(name, value);
 	}
 
@@ -172,7 +189,11 @@ public abstract class WebSocketMessage {
 		out.close();
 	}
 
-	public Headers getHeaders() {
+	public Headers getHeaders() throws IllegalStateException {
+//		return null == m_Headers ? HttpHeaders._Empty : m_Headers;
+		if (null == m_Headers) {
+			throw new IllegalStateException("closed");
+		}
 		return m_Headers;
 	}
 
@@ -216,7 +237,7 @@ public abstract class WebSocketMessage {
 	}
 
 	protected CompositeByteBuf compositeBuffer() {
-		return m_Session.compositeBuffer();
+		return m_Allocator.compositeBuffer();
 	}
 
 	/**
@@ -237,10 +258,6 @@ public abstract class WebSocketMessage {
 			m_Session.errorTransferTo(this, e, data, out);
 		}
 		return false;
-	}
-
-	public ChannelFuture writeAndFlush(Object content) {
-		return m_Session.writeAndFlush(content);
 	}
 
 	public void disconnect() {
@@ -287,7 +304,7 @@ public abstract class WebSocketMessage {
 			return STATE_HEADER == m_State;
 		}
 
-		protected boolean sendHeaders(ByteBuf content, boolean finalFragment) {
+		protected boolean sendHeaders(ByteBuf content, boolean finalFragment) throws IOException {
 			if (STATE_INIT != m_State) {
 				return false;
 			}
@@ -307,7 +324,7 @@ public abstract class WebSocketMessage {
 					bufs = null;
 				}
 				BinaryWebSocketFrame frame = new BinaryWebSocketFrame(finalFragment, 0, buf);
-				writeAndFlush(frame);
+				m_Session.writeAndFlush(frame);
 				buf = null;
 				bufs = null;
 			} finally {
@@ -345,6 +362,7 @@ public abstract class WebSocketMessage {
 		}
 
 		synchronized protected void cleanup() {
+			m_State = STATE_CLOSED;
 			ByteBuf buf;
 			buf = m_Last;
 			if (null != buf) {
@@ -376,7 +394,7 @@ public abstract class WebSocketMessage {
 
 		//// NettyOutputStream ////
 		protected ByteBuf allocBuffer(int len) {
-			return m_Session.allocBuffer(len);
+			return m_Allocator.buffer(len);
 		}
 
 		protected void ensureOpen() throws IOException {
@@ -413,7 +431,7 @@ public abstract class WebSocketMessage {
 					flushBuffer();
 					// 发送消息体
 					BinaryWebSocketFrame frame = new BinaryWebSocketFrame(false, 0, last);
-					writeAndFlush(frame);
+					m_Session.writeAndFlush(frame);
 					last = null;
 				}
 			} finally {
@@ -460,14 +478,13 @@ public abstract class WebSocketMessage {
 					// 混合内容打包
 					bufs = compositeBuffer();
 					bufs.addComponent(true, buf);
-					bufs.addComponent(true, m_Last);
+					bufs.addComponent(true, m_Last.retain());
 					buf = bufs;
 					bufs = null;
 				}
 				frame = new BinaryWebSocketFrame(true, 0, buf);
 				m_State = STATE_PENDING;
-				ChannelFuture future = writeAndFlush(frame);
-				m_Last = null;
+				ChannelFuture future = m_Session.writeAndFlush(frame);
 				buf = null;
 				future.addListener(new GenericFutureListener<Future<Void>>() {
 					@Override
@@ -483,13 +500,13 @@ public abstract class WebSocketMessage {
 					}
 				});
 			} finally {
-				cleanup();
 				if (null != buf) {
 					buf.release();
 				}
 				if (null != bufs) {
 					bufs.release();
 				}
+				cleanup();
 			}
 		}
 

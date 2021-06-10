@@ -10,6 +10,7 @@
  */
 package cn.weforward.protocol.aio.netty.websocket;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Collections;
@@ -24,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import cn.weforward.common.crypto.Hex;
 import cn.weforward.common.sys.ClockTick;
 import cn.weforward.common.util.Bytes;
+import cn.weforward.common.util.NumberUtil;
 import cn.weforward.common.util.StringBuilderPool;
 import cn.weforward.common.util.StringUtil;
 import cn.weforward.protocol.aio.ClientChannel;
@@ -33,7 +35,6 @@ import cn.weforward.protocol.aio.ConnectionListener;
 import cn.weforward.protocol.aio.ServerHandlerFactory;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-import io.netty.buffer.CompositeByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -57,11 +58,13 @@ import io.netty.util.internal.OutOfDirectMemoryError;
  *
  */
 public class WebSocketContext extends ChannelInboundHandlerAdapter implements ClientChannel {
-	static final Logger _Logger = LoggerFactory.getLogger(WebSocketContext.class);
+	protected static final Logger _Logger = LoggerFactory.getLogger(WebSocketContext.class);
+	protected static final ClockTick _Tick = ClockTick.getInstance(1);
+	protected static final ByteBuf _PingData = Unpooled.wrappedBuffer("weforward".getBytes()).asReadOnly();
 
-	static final ClockTick _Tick = ClockTick.getInstance(1);
-
-	static final ByteBuf _PingData = Unpooled.wrappedBuffer("weforward".getBytes()).asReadOnly();
+	/** 控制连接最大并发数（默认1000） */
+	public static final int _MaxRequests = NumberUtil
+			.toInt(System.getProperty("cn.weforward.protocol.aio.netty.websocket.MAX_REQUESTS"), 1000);
 
 	/** 业务处理器工厂 */
 	protected ServerHandlerFactory m_HandlerFactory = ServerHandlerFactory._unassigned;
@@ -75,6 +78,8 @@ public class WebSocketContext extends ChannelInboundHandlerAdapter implements Cl
 	protected AtomicLong m_Sequencer;
 	/** 最后收到消息的时间点（单位秒） */
 	protected long m_LastActivity;
+	/** 请求计数 */
+	protected long m_RequestCounter;
 	/** 定时PING */
 	protected ScheduledFuture<?> m_PingTask;
 	/** 定时检查空闲 */
@@ -105,6 +110,10 @@ public class WebSocketContext extends ChannelInboundHandlerAdapter implements Cl
 			initRemoteAddr(ctx.channel());
 		}
 		m_ConnectionListener.lost(this);
+	}
+
+	public ChannelHandlerContext getChannelContext() {
+		return m_Ctx;
 	}
 
 	protected void initRemoteAddr(Channel channel) {
@@ -351,11 +360,6 @@ public class WebSocketContext extends ChannelInboundHandlerAdapter implements Cl
 		if (WebSocketMessage.PACKET_REQUEST == (WebSocketMessage.PACKET_REQUEST & packetState)) {
 			// 是请求消息
 			session = openSession(seq);
-//			packetState = session.readable(payload, packetState);
-//			if (WebSocketMessage.PACKET_MARK_HEADER == (WebSocketMessage.PACKET_MARK_HEADER & packetState)) {
-//				// 请求开始
-//				requestHeader(session);
-//			}
 			session.readable(payload, packetState);
 			return;
 		}
@@ -367,19 +371,26 @@ public class WebSocketContext extends ChannelInboundHandlerAdapter implements Cl
 			return;
 		}
 		session.readable(payload, packetState);
-		if (WebSocketMessage.PACKET_MARK_FINAL == (WebSocketMessage.PACKET_MARK_FINAL & packetState)) {
-			// 响应结束，移除session
-			removeSession(seq);
-		}
 	}
 
-	synchronized protected WebSocketSession openSession(String seq) {
-		WebSocketSession session = m_Multiplex.get(seq);
-		if (null == session) {
-			session = new WebSocketSession(this, seq);
-			m_Multiplex.put(seq, session);
+	protected WebSocketSession openSession(String seq) throws IOException {
+		synchronized (this) {
+			WebSocketSession session = m_Multiplex.get(seq);
+			if (null != session) {
+				return session;
+			}
+			if (_MaxRequests < 1 || m_Multiplex.size() < _MaxRequests) {
+				session = new WebSocketSession(this, seq);
+				m_Multiplex.put(seq, session);
+				++m_RequestCounter;
+				return session;
+			}
 		}
-		return session;
+		// 同一websocket连接的请求并发超额
+		String msg = "over max requests " + m_Multiplex.size() + ">" + _MaxRequests;
+		_Logger.warn(formatMessage(msg));
+		close();
+		throw new EOFException(msg);
 	}
 
 	synchronized protected WebSocketSession removeSession(String seq) {
@@ -410,7 +421,7 @@ public class WebSocketContext extends ChannelInboundHandlerAdapter implements Cl
 		for (Map.Entry<String, WebSocketSession> e : multiplex.entrySet()) {
 			session = e.getValue();
 			if (null != session) {
-				session.close();
+				session.abort();
 			}
 		}
 	}
@@ -424,19 +435,11 @@ public class WebSocketContext extends ChannelInboundHandlerAdapter implements Cl
 		}
 	}
 
-	protected CompositeByteBuf compositeBuffer() {
-		ChannelHandlerContext ctx = m_Ctx;
-		if (null != ctx) {
-			return ctx.alloc().compositeBuffer();
-		}
-		return ByteBufAllocator.DEFAULT.compositeBuffer();
-	}
-
-	protected ByteBuf allocBuffer(int len) {
+	protected ByteBufAllocator getAllocator() {
 		if (null != m_Ctx) {
-			return m_Ctx.alloc().buffer(len);
+			return m_Ctx.alloc();
 		}
-		return ByteBufAllocator.DEFAULT.buffer(len);
+		return ByteBufAllocator.DEFAULT;
 	}
 
 	private String formatMessage(String caption) {
@@ -469,6 +472,8 @@ public class WebSocketContext extends ChannelInboundHandlerAdapter implements Cl
 		}
 		builder.append(",seq:").append(m_Sequencer.get());
 		builder.append(",mul:").append(m_Multiplex.size());
+		builder.append(",count:").append(m_RequestCounter);
+		builder.append(",age:").append(_Tick.getTickerLong() - m_LastActivity);
 		builder.append("}");
 		return builder;
 	}

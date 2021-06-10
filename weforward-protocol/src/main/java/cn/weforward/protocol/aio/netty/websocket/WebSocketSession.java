@@ -31,7 +31,7 @@ import cn.weforward.protocol.aio.netty.NettyHttpHeaders;
 import cn.weforward.protocol.aio.netty.NettyOutputStream;
 import cn.weforward.protocol.aio.netty.websocket.WebSocketMessage.Output;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.CompositeByteBuf;
+import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
@@ -44,8 +44,8 @@ import io.netty.util.concurrent.ScheduledFuture;
  *
  */
 public class WebSocketSession {
-	protected String m_Id;
-	protected WebSocketContext m_Context;
+	final protected String m_Id;
+	final protected WebSocketContext m_Websocket;
 	protected WebSocketRequest m_Request;
 	protected WebSocketResponse m_Response;
 	protected ServerHandler m_ServerHandler = ServerHandler._init;
@@ -53,7 +53,7 @@ public class WebSocketSession {
 	protected long m_RequestTimepoint;
 
 	public WebSocketSession(WebSocketContext ctx, String id) {
-		m_Context = ctx;
+		m_Websocket = ctx;
 		m_Id = id;
 	}
 
@@ -72,7 +72,7 @@ public class WebSocketSession {
 				// m_RequestTimepoint = System.currentTimeMillis();
 				ServerHandler handler = null;
 				try {
-					handler = m_Context.m_HandlerFactory.handle(new ServerSide());
+					handler = m_Websocket.m_HandlerFactory.handle(new ServerSide());
 				} finally {
 					if (null == handler) {
 						if (isRespond()) {
@@ -92,7 +92,8 @@ public class WebSocketSession {
 			if (WebSocketMessage.PACKET_MARK_FINAL == (WebSocketMessage.PACKET_MARK_FINAL & packetState)) {
 				m_RequestTimepoint = System.currentTimeMillis();
 				m_Request.complete();
-				m_ServerHandler.requestCompleted();
+//				m_ServerHandler.requestCompleted();
+				messageCompleted(m_Request);
 			}
 			return packetState;
 		}
@@ -107,7 +108,8 @@ public class WebSocketSession {
 			m_ClientHandler.prepared(available);
 			if (WebSocketMessage.PACKET_MARK_FINAL == (WebSocketMessage.PACKET_MARK_FINAL & packetState)) {
 				m_Response.complete();
-				m_ClientHandler.responseCompleted();
+//				m_ClientHandler.responseCompleted();
+				messageCompleted(m_Response);
 			}
 			return packetState;
 		}
@@ -134,23 +136,25 @@ public class WebSocketSession {
 		return new NettyHttpHeaders(headers);
 	}
 
-	public void close() {
+	public void abort() {
 		WebSocketRequest req = m_Request;
 		WebSocketResponse rsp = m_Response;
-		if (null != req) {
-			req.abort();
-		}
+		boolean abort = false;
+		abort = (null != req && req.abort());
 		if (null != rsp) {
+			if (rsp.isCompleted()) {
+				abort = false;
+			}
 			rsp.abort();
 		}
+		if (abort) {
+			m_ClientHandler.requestAbort();
+			m_ServerHandler.requestAbort();
+		}
 	}
 
-	protected CompositeByteBuf compositeBuffer() {
-		return m_Context.compositeBuffer();
-	}
-
-	protected ByteBuf allocBuffer(int len) {
-		return m_Context.allocBuffer(len);
+	public ByteBufAllocator getAllocator() {
+		return m_Websocket.getAllocator();
 	}
 
 	protected ClientContext openRequest(ClientHandler handler, String uri) throws IOException {
@@ -171,6 +175,9 @@ public class WebSocketSession {
 	}
 
 	synchronized WebSocketResponse openResponse() throws IOException {
+		if (null == m_Request || m_Request.isInvalid()) {
+			throw new EOFException("invalid");
+		}
 		if (null == m_Response) {
 			io.netty.handler.codec.http.HttpHeaders headers = new DefaultHttpHeaders();
 //			headers.set(HEADER_WS_RPC_ID, getId());
@@ -192,7 +199,7 @@ public class WebSocketSession {
 			rsp.setHeader(WebSocketMessage.HEADER_STATUS, status);
 		}
 		rsp.flush(null);
-		m_Context.close();
+		m_Websocket.close();
 	}
 
 	protected void errorTransferTo(WebSocketMessage message, IOException e, ByteBuf data, NettyOutputStream out) {
@@ -211,6 +218,7 @@ public class WebSocketSession {
 			return;
 		}
 		if (message == m_Response) {
+			m_Websocket.removeSession(getId());
 			m_ServerHandler.responseCompleted();
 			return;
 		}
@@ -222,24 +230,39 @@ public class WebSocketSession {
 			m_ClientHandler.requestAbort();
 			return;
 		}
+		if (message == m_Response) {
+			m_Websocket.removeSession(getId());
+			return;
+		}
 	}
 
-	public ChannelFuture writeAndFlush(Object content) {
-		return m_Context.m_Ctx.writeAndFlush(content);
+	public ChannelFuture writeAndFlush(Object content) throws IOException {
+		ChannelHandlerContext ctx = m_Websocket.getChannelContext();
+		if (null == ctx) {
+			throw new EOFException("closed");
+		}
+		return ctx.writeAndFlush(content);
 	}
 
 	public void disconnect() {
-		if (null != m_Context) {
-			m_Context.close();
-		}
+//		if (null != m_Context) {
+		m_Websocket.close();
+//		}
 	}
 
 	@Override
 	public String toString() {
+		return toString(null);
+	}
+
+	protected String toString(String msg) {
 		StringBuilder builder = StringBuilderPool._8k.poll();
 		try {
+			if (null != msg) {
+				builder.append(msg);
+			}
 			builder.append("{id:").append(m_Id).append(",ctx:");
-			m_Context.toString(builder);
+			m_Websocket.toString(builder);
 			if (null != m_Request) {
 				builder.append(",req:");
 				m_Request.toString(builder);
@@ -256,11 +279,72 @@ public class WebSocketSession {
 	}
 
 	/**
+	 * 响应超时检查
+	 */
+	abstract class ResponseChecker implements Runnable {
+		int m_Timeout;
+		ScheduledFuture<?> m_Task;
+
+		protected abstract void onTimeout();
+
+		public void setTimeout(int millis) {
+			ScheduledFuture<?> task = m_Task;
+			if (null != task) {
+				// 先取消上个任务
+				m_Task = null;
+				task.cancel(false);
+			}
+			ChannelHandlerContext ctx = m_Websocket.getChannelContext();
+			if (null == ctx || millis < 1) {
+				return;
+			}
+			m_Timeout = millis;
+			checkTimeout();
+		}
+
+		/**
+		 * 响应超时检查
+		 */
+		protected void checkTimeout() {
+			long remaind;
+			try {
+				int timeout = m_Timeout;
+				if (timeout <= 0) {
+					// 没指定超时值，略过
+					return;
+				}
+				remaind = timeout - System.currentTimeMillis() - m_RequestTimepoint;
+				if (remaind <= 0) {
+					// 超时了
+					if (WebSocketContext._Logger.isDebugEnabled()) {
+						WebSocketContext._Logger.debug(WebSocketSession.this.toString("timeout"));
+					}
+					onTimeout();
+					return;
+				}
+				// 还没到时间，要再等等
+			} finally {
+				m_Task = null;
+			}
+			// N毫秒后再检查
+			if (remaind > 0) {
+				ChannelHandlerContext ctx = m_Websocket.getChannelContext();
+				if (null != ctx) {
+					m_Task = ctx.executor().schedule(this, remaind, TimeUnit.MILLISECONDS);
+				}
+			}
+		}
+
+		@Override
+		public void run() {
+			checkTimeout();
+		}
+	}
+
+	/**
 	 * 对ServerContext支持
 	 */
-	class ServerSide implements ServerContext, Runnable {
-		int m_ResponseTimeout;
-		ScheduledFuture<?> m_ResponseTimeoutTask;
+	class ServerSide extends ResponseChecker implements ServerContext, Runnable {
 		String m_Uri;
 		String m_QueryString;
 		DictionaryExt<String, String> m_Params;
@@ -287,7 +371,7 @@ public class WebSocketSession {
 
 		@Override
 		public String getRemoteAddr() {
-			return m_Context.getRemoteAddr();
+			return m_Websocket.getRemoteAddr();
 		}
 
 		@Override
@@ -343,22 +427,7 @@ public class WebSocketSession {
 
 		@Override
 		public void setResponseTimeout(int millis) {
-			ScheduledFuture<?> task = m_ResponseTimeoutTask;
-			if (null != task) {
-				// 先取消上个任务
-				m_ResponseTimeoutTask = null;
-				task.cancel(false);
-			}
-			// if (Integer.MAX_VALUE == millis) {
-			// // 使用空闲超时值
-			// millis = m_Context.getIdleMillis();
-			// }
-			ChannelHandlerContext ctx = m_Context.m_Ctx;
-			if (null == ctx || millis < 1) {
-				return;
-			}
-			m_ResponseTimeout = millis;
-			m_ResponseTimeoutTask = ctx.executor().schedule(this, millis, TimeUnit.MILLISECONDS);
+			setTimeout(millis);
 		}
 
 		@Override
@@ -384,41 +453,6 @@ public class WebSocketSession {
 				rsp.setHeader(WebSocketMessage.HEADER_STATUS, status);
 			}
 			return rsp.openWriter();
-		}
-
-		@Override
-		public void run() {
-			checkTimeout();
-		}
-
-		/**
-		 * 响应超时检查
-		 */
-		private void checkTimeout() {
-			long remaind;
-			try {
-				int timeout = m_ResponseTimeout;
-				if (timeout <= 0) {
-					// 超时值为，略过
-					return;
-				}
-				remaind = timeout - System.currentTimeMillis() - m_RequestTimepoint;
-				if (remaind <= 0) {
-					// 超时了
-					m_ServerHandler.responseTimeout();
-					return;
-				}
-				// 还没到时间，要再等等
-			} finally {
-				m_ResponseTimeoutTask = null;
-			}
-			// N毫秒后再检查
-			if (remaind > 0) {
-				ChannelHandlerContext ctx = m_Context.m_Ctx;
-				if (null != ctx) {
-					m_ResponseTimeoutTask = ctx.executor().schedule(this, remaind, TimeUnit.MILLISECONDS);
-				}
-			}
 		}
 
 		@Override
@@ -450,14 +484,17 @@ public class WebSocketSession {
 		public String toString() {
 			return WebSocketSession.this.toString();
 		}
+
+		@Override
+		protected void onTimeout() {
+			m_ServerHandler.responseTimeout();
+		}
 	}
 
 	/**
 	 * 对ClientContext支持
 	 */
-	class ClientSide implements ClientContext {
-		int m_Timeout;
-
+	class ClientSide extends ResponseChecker implements ClientContext, Runnable {
 		@Override
 		public void setRequestHeader(String name, String value) throws IOException {
 			m_Request.setHeader(name, value);
@@ -499,9 +536,8 @@ public class WebSocketSession {
 		}
 
 		@Override
-		public void setTimeout(int millis) throws IOException {
-			// TODO Auto-generated method stub
-			m_Timeout = millis;
+		protected void onTimeout() {
+			m_ClientHandler.responseTimeout();
 		}
 	}
 }
