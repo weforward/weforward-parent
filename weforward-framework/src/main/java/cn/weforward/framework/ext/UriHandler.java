@@ -18,16 +18,16 @@ public interface UriHandler {
 	/**
 	 * URI字串，支持通配符，参考{@linkplain UriMatcher}
 	 * 
-	 * @return
+	 * @return URI字串
 	 */
 	String getUri();
 
 	/**
 	 * 处理请求
 	 * 
-	 * @param request
-	 * @param response
-	 * @throws IOException
+	 * @param request  请求
+	 * @param response 响应
+	 * @throws IOException IO异常时抛出
 	 */
 	void handle(RestfulRequest request, RestfulResponse response) throws IOException;
 

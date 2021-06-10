@@ -43,6 +43,7 @@ public class HostUtil {
 	/**
 	 * 获取最可能作为服务端点的IP（尽量使用外网地址）
 	 * 
+	 * @param prefix 前缀
 	 * @return ip
 	 */
 	public static String getServiceIp(String prefix) {

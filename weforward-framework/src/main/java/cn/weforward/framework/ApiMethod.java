@@ -42,7 +42,7 @@ public interface ApiMethod {
 	 * 是否允许访问
 	 * 
 	 * @param session 会话
-	 * @return
+	 * @return 是否允许访问
 	 */
 	boolean isAllow(WeforwardSession session);
 
