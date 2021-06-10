@@ -44,6 +44,7 @@ import cn.weforward.common.sys.VmStat;
 import cn.weforward.common.util.ClassUtil;
 import cn.weforward.common.util.ListUtil;
 import cn.weforward.common.util.NumberUtil;
+import cn.weforward.common.util.StringBuilderPool;
 import cn.weforward.common.util.StringUtil;
 import cn.weforward.common.util.ThreadPool;
 import cn.weforward.framework.ApiException;
@@ -69,6 +70,8 @@ import cn.weforward.protocol.aio.http.HttpHeaderHelper;
 import cn.weforward.protocol.aio.http.HttpHeaderOutput;
 import cn.weforward.protocol.aio.http.RestfulServer;
 import cn.weforward.protocol.aio.netty.NettyHttpServer;
+import cn.weforward.protocol.aio.netty.NettyWebSocketFactory;
+import cn.weforward.protocol.client.netty.NettyWebSocketInvoker;
 import cn.weforward.protocol.client.util.MappedUtil;
 import cn.weforward.protocol.datatype.DtBase;
 import cn.weforward.protocol.doc.DocObject;
@@ -1049,16 +1052,32 @@ public class WeforwardService
 		}
 	}
 
+	ServiceRegister openServiceRegister() {
+		if (null == m_ServiceRecorder) {
+			if (m_Local || StringUtil.isEmpty(m_GatewayUrl) || StringUtil.isEmpty(m_AccessId)
+					|| StringUtil.isEmpty(m_AccessKey)) {
+				return null;
+			}
+			if (NettyWebSocketFactory.isWebSocket(m_GatewayUrl)) {
+				// 使用websocket
+				NettyWebSocketInvoker invoker = new NettyWebSocketInvoker(m_RestfulServer, m_GatewayUrl, m_Producer);
+				invoker.setAccessId(m_AccessId);
+				invoker.setServiceName(HttpServiceRegister.getServiceName());
+				m_ServiceRecorder = new HttpServiceRegister(invoker);
+			} else {
+				m_ServiceRecorder = new HttpServiceRegister(m_GatewayUrl, m_AccessId, m_AccessKey);
+			}
+		}
+		return m_ServiceRecorder;
+	}
+
 	/**
 	 * 注册/心跳到网关
 	 */
 	protected void register() {
-		if (null == m_ServiceRecorder) {
-			if (StringUtil.isEmpty(m_GatewayUrl) || StringUtil.isEmpty(m_AccessId) || StringUtil.isEmpty(m_AccessKey)
-					|| isLocal(m_GatewayUrl)) {
-				return;
-			}
-			m_ServiceRecorder = new HttpServiceRegister(m_GatewayUrl, m_AccessId, m_AccessKey);
+		ServiceRegister register = openServiceRegister();
+		if (null == register) {
+			return;
 		}
 		ServiceVo info = new ServiceVo();
 		info.no = getNo();
@@ -1092,7 +1111,7 @@ public class WeforwardService
 			runtime.timestamp = System.currentTimeMillis();
 			runtime.startTime = getStartTime();
 			runtime.upTime = getUpTime();
-			m_ServiceRecorder.registerService(info, runtime);
+			register.registerService(info, runtime);
 			if (_Logger.isTraceEnabled()) {
 				_Logger.trace("心跳:" + this + ",ver:" + getVersion() + ",build-ver:" + getImplementationVersion());
 			}
@@ -1123,8 +1142,9 @@ public class WeforwardService
 	 * 注销
 	 */
 	protected void unregister() {
-		if (null == m_ServiceRecorder) {
-			m_ServiceRecorder = new HttpServiceRegister(m_GatewayUrl, m_AccessId, m_AccessKey);
+		ServiceRegister register = openServiceRegister();
+		if (null == register) {
+			return;
 		}
 		ServiceVo info = new ServiceVo();
 		info.no = getNo();
@@ -1143,7 +1163,7 @@ public class WeforwardService
 			info.heartbeatPeriod = m_HeartbeatPeriod;
 		}
 		try {
-			m_ServiceRecorder.unregisterService(info);
+			register.unregisterService(info);
 			_Logger.info("unregister service");
 		} catch (Throwable e) {
 			_Logger.warn(this + " 注销异常", e);
@@ -1601,7 +1621,20 @@ public class WeforwardService
 
 	@Override
 	public String toString() {
-		return getHost() + ":" + getPort() + "/" + getName();
+		StringBuilder builder = StringBuilderPool._8k.poll();
+		try {
+			builder.append('{');
+			if (null != m_HttpServer) {
+				builder.append("http:");
+				m_HttpServer.toString(builder);
+			} else {
+				builder.append(getHost()).append(':').append(getPort());
+			}
+			builder.append(",executor:").append(m_Executor);
+			builder.append('}');
+			return builder.toString();
+		} finally {
+			StringBuilderPool._8k.offer(builder);
+		}
 	}
-
 }

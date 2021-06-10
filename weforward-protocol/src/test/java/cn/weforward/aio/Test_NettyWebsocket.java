@@ -24,7 +24,7 @@ import cn.weforward.protocol.aio.ServerContext;
 import cn.weforward.protocol.aio.ServerHandler;
 import cn.weforward.protocol.aio.ServerHandlerFactory;
 import cn.weforward.protocol.aio.netty.NettyHttpServer;
-import cn.weforward.protocol.aio.netty.NettyWebsocketFactory;
+import cn.weforward.protocol.aio.netty.NettyWebSocketFactory;
 
 /**
  * 测试 NettyWebsocket
@@ -34,11 +34,11 @@ import cn.weforward.protocol.aio.netty.NettyWebsocketFactory;
  *
  */
 public class Test_NettyWebsocket {
-	NettyWebsocketFactory factory;
+	NettyWebSocketFactory factory;
 	ClientChannel channel;
 
 	Test_NettyWebsocket() {
-		factory = new NettyWebsocketFactory();
+		factory = new NettyWebSocketFactory();
 	}
 
 	void connect(String url) throws IOException {
@@ -48,7 +48,7 @@ public class Test_NettyWebsocket {
 			public ServerHandler handle(ServerContext context) throws IOException {
 				return new Service(context);
 			}
-		}, url, new NettyWebsocketFactory.Keepalive(5) {
+		}, url, new NettyWebSocketFactory.Keepalive(5) {
 			@Override
 			public void establish(ClientChannel channel) {
 				System.out.println("establish:" + channel);

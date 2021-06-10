@@ -10,12 +10,16 @@
 <!DOCTYPE configuration>
 <configuration>
 
-	<appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
-		<encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+	<appender name="stdout"
+		class="ch.qos.logback.core.ConsoleAppender">
+		<encoder
+			class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
 			<Pattern>%d{HH:mm:ss.SSS}[%thread]%-5level %logger{50} %msg%n
 			</Pattern>
 		</encoder>
 	</appender>
+
+	<logger name="cn.weforward.protocol.aio" level="DEBUG" />
 
 	<root>
 		<level value="INFO" />

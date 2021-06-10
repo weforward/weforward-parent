@@ -76,4 +76,11 @@ public interface ClientContext {
 	 * 断开连接
 	 */
 	void disconnect();
+
+	/**
+	 * 响应状态码
+	 * 
+	 * @throws IOException
+	 */
+	int getResponseCode() throws IOException;
 }

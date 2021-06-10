@@ -17,6 +17,7 @@ import java.io.OutputStream;
 import java.util.concurrent.TimeUnit;
 
 import cn.weforward.common.DictionaryExt;
+import cn.weforward.common.util.NumberUtil;
 import cn.weforward.common.util.StringBuilderPool;
 import cn.weforward.common.util.StringUtil;
 import cn.weforward.protocol.aio.ClientContext;
@@ -214,12 +215,12 @@ public class WebSocketSession {
 
 	void messageCompleted(WebSocketMessage message) {
 		if (message == m_Request) {
-			m_ClientHandler.requestCompleted();
+			m_ServerHandler.requestCompleted();
 			return;
 		}
 		if (message == m_Response) {
 			m_Websocket.removeSession(getId());
-			m_ServerHandler.responseCompleted();
+			m_ClientHandler.responseCompleted();
 			return;
 		}
 	}
@@ -313,7 +314,7 @@ public class WebSocketSession {
 					// 没指定超时值，略过
 					return;
 				}
-				remaind = timeout - System.currentTimeMillis() - m_RequestTimepoint;
+				remaind = timeout - (System.currentTimeMillis() - m_RequestTimepoint);
 				if (remaind <= 0) {
 					// 超时了
 					if (WebSocketContext._Logger.isDebugEnabled()) {
@@ -538,6 +539,11 @@ public class WebSocketSession {
 		@Override
 		protected void onTimeout() {
 			m_ClientHandler.responseTimeout();
+		}
+
+		@Override
+		public int getResponseCode() throws IOException {
+			return NumberUtil.toInt(getResponseHeaders().get(WebSocketMessage.HEADER_STATUS), 0);
 		}
 	}
 }

@@ -55,7 +55,8 @@ import cn.weforward.protocol.support.doc.ServiceDocumentVo;
 
 public class SayHelloService {
 
-	String gateWayUrl = "http://127.0.0.1:5661/";
+//	String gateWayUrl = "http://127.0.0.1:5661/";
+	String gateWayUrl = "ws://127.0.0.1:8080/";
 	String accessId = "H-0947f4f50120-0947f4f50120";
 	String accessKey = "0abdc16ef73b3a02f31b5cc7b67467cfb02e30fb4a32bc9f2e08d12e80f6ee54";
 
@@ -71,7 +72,7 @@ public class SayHelloService {
 	public void main() throws Exception {
 		service = new WeforwardService("say_hello", host, port, "", 0);
 		service.setNo(no);
-		service.setServicesUrl(gateWayUrl);
+		service.setGatewayUrl(gateWayUrl);
 		service.setAccessId(accessId);
 		service.setAccessKey(accessKey);
 		service.setForwardEnable(true);

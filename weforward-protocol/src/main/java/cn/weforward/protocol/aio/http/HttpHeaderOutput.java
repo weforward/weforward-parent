@@ -14,6 +14,8 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.util.Map;
 
+import cn.weforward.protocol.aio.ClientContext;
+
 /**
  * 用于输出http头
  * 
@@ -41,9 +43,9 @@ public interface HttpHeaderOutput {
 
 	class HttpClientOutput implements HttpHeaderOutput {
 
-		HttpClient m_Client;
+		ClientContext m_Client;
 
-		public HttpClientOutput(HttpClient client) {
+		public HttpClientOutput(ClientContext client) {
 			m_Client = client;
 		}
 

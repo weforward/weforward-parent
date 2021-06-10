@@ -37,9 +37,16 @@ import cn.weforward.protocol.support.datatype.FriendlyObject;
  */
 public class HttpServiceRegister implements ServiceRegister {
 
-	protected String m_AccessId;
+//	protected String m_AccessId;
 	protected ServiceInvoker m_Invoker;
 	protected ObjectMapperSet m_Mappers;
+
+	/**
+	 * 提供注册接口的服务名
+	 */
+	public static String getServiceName() {
+		return ServiceName.SERVICE_REGISTER.name;
+	}
 
 	public HttpServiceRegister(String preUrl, String accessId, String accessKey) {
 		if (!StringUtil.isEmpty(accessId)) {
@@ -48,8 +55,11 @@ public class HttpServiceRegister implements ServiceRegister {
 		if (!StringUtil.isEmpty(accessKey)) {
 			accessKey = accessKey.trim();
 		}
-		m_AccessId = accessId;
-		m_Invoker = ServiceInvokerFactory.create(ServiceName.SERVICE_REGISTER.name, preUrl, accessId, accessKey);
+		m_Invoker = ServiceInvokerFactory.create(getServiceName(), preUrl, accessId, accessKey);
+	}
+
+	public HttpServiceRegister(ServiceInvoker invoker) {
+		m_Invoker = invoker;
 	}
 
 	@Override

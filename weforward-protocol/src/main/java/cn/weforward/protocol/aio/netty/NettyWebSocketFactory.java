@@ -60,8 +60,8 @@ import io.netty.util.concurrent.DefaultThreadFactory;
  * @author liangyi
  *
  */
-public class NettyWebsocketFactory {
-	static final Logger _Logger = LoggerFactory.getLogger(NettyWebsocketFactory.class);
+public class NettyWebSocketFactory {
+	static final Logger _Logger = LoggerFactory.getLogger(NettyWebSocketFactory.class);
 
 	Bootstrap m_Bootstrap;
 	volatile EventLoopGroup m_EventLoopGroup;
@@ -74,7 +74,7 @@ public class NettyWebsocketFactory {
 	/** 空闲超时值（秒） */
 	protected int m_IdleSeconds;
 
-	public NettyWebsocketFactory() {
+	public NettyWebSocketFactory() {
 		m_Threads = NettyRuntime.availableProcessors() * 2;
 		if (m_Threads > 8) {
 			m_Threads = 8;
@@ -100,6 +100,19 @@ public class NettyWebsocketFactory {
 	 */
 	public void setIdle(int secs) {
 		m_IdleSeconds = secs;
+	}
+
+	/**
+	 * 是否websocket的URL
+	 * 
+	 * @param url URL
+	 */
+	public static boolean isWebSocket(String url) {
+		if (null == url || url.length() < 6) {
+			return false;
+		}
+		String protocol = url.substring(0, 6).toLowerCase();
+		return protocol.startsWith("ws://") || protocol.startsWith("wss://");
 	}
 
 	public ClientChannel connect(ServerHandlerFactory factory, final String url, final ConnectionListener listener)
@@ -307,10 +320,14 @@ public class NettyWebsocketFactory {
 	 * 监听连接事件保持WebSocket连接
 	 */
 	public static class Keepalive implements ConnectionListener, Runnable {
-		protected NettyWebsocketFactory m_WsFactory;
+		protected NettyWebSocketFactory m_WsFactory;
 		protected int m_TryInterval;
 		protected String m_Url;
 		protected ServerHandlerFactory m_SvrFactory;
+
+		public Keepalive() {
+			m_TryInterval = 60;
+		}
 
 		/**
 		 * 重试间隔
@@ -318,13 +335,22 @@ public class NettyWebsocketFactory {
 		 * @param tryInterval 间隔时间（秒）
 		 */
 		public Keepalive(int tryInterval) {
-			if (tryInterval < 1) {
-				throw new IllegalArgumentException("tryInterval<1");
-			}
-			m_TryInterval = tryInterval;
+			setInterval(tryInterval);
 		}
 
-		protected void init(NettyWebsocketFactory wsFactory, ServerHandlerFactory svrFactory, String url) {
+		/**
+		 * 配置重试间隔
+		 * 
+		 * @param secs 间隔时间（秒）
+		 */
+		public void setInterval(int secs) {
+			if (secs < 1) {
+				throw new IllegalArgumentException("tryInterval<1");
+			}
+			m_TryInterval = secs;
+		}
+
+		protected void init(NettyWebSocketFactory wsFactory, ServerHandlerFactory svrFactory, String url) {
 			m_WsFactory = wsFactory;
 			m_SvrFactory = svrFactory;
 			m_Url = url;

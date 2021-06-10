@@ -58,6 +58,27 @@ public class ServiceInvokerFactory {
 	 * @return 服务调用器
 	 */
 	public static ServiceInvoker create(String serviceName, List<String> preUrls, String accessId, String accessKey) {
+//		AccessLoader accessLoader;
+//		if (StringUtil.isEmpty(accessId)) {
+//			accessLoader = AccessLoader.EMPTY;
+//		} else {
+//			accessLoader = new AccessLoader.Single(accessId, accessKey);
+//		}
+//		SimpleProducer producer = new SimpleProducer(accessLoader);
+		DefaultServiceInvoker invoker = (DefaultServiceInvoker) create(preUrls, serviceName,
+				createProducer(accessId, accessKey));
+		invoker.setAccessId(accessId);
+		return invoker;
+	}
+
+	/**
+	 * 创建制作器
+	 * 
+	 * @param accessId  访问id
+	 * @param accessKey 访问key（16进制或base64格式）
+	 * @return 制作器
+	 */
+	public static Producer createProducer(String accessId, String accessKey) {
 		AccessLoader accessLoader;
 		if (StringUtil.isEmpty(accessId)) {
 			accessLoader = AccessLoader.EMPTY;
@@ -65,9 +86,7 @@ public class ServiceInvokerFactory {
 			accessLoader = new AccessLoader.Single(accessId, accessKey);
 		}
 		SimpleProducer producer = new SimpleProducer(accessLoader);
-		DefaultServiceInvoker invoker = (DefaultServiceInvoker) create(preUrls, serviceName, producer);
-		invoker.setAccessId(accessId);
-		return invoker;
+		return producer;
 	}
 
 	/**

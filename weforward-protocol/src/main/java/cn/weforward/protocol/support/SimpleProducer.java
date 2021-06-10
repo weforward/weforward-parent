@@ -31,7 +31,7 @@ import cn.weforward.protocol.Request;
 import cn.weforward.protocol.RequestConstants;
 import cn.weforward.protocol.Response;
 import cn.weforward.protocol.ResponseConstants;
-import cn.weforward.protocol.aio.http.HttpClient;
+import cn.weforward.protocol.aio.ClientContext;
 import cn.weforward.protocol.aio.http.HttpContext;
 import cn.weforward.protocol.aio.http.HttpHeaderHelper;
 import cn.weforward.protocol.aio.http.HttpHeaderOutput;
@@ -626,7 +626,7 @@ public class SimpleProducer implements Producer {
 		HttpHeaderOutput m_HeaderOutput;
 		OutputStream m_Output;
 
-		public SimpleProducerOutput(HttpClient client, OutputStream output) {
+		public SimpleProducerOutput(ClientContext client, OutputStream output) {
 			m_HeaderOutput = new HttpHeaderOutput.HttpClientOutput(client);
 			m_Output = output;
 		}

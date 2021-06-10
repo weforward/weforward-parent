@@ -65,26 +65,11 @@ public abstract class AbstractServiceInvoker implements ServiceInvoker {
 		if (null != params) {
 			invoke.put(RequestConstants.PARAMS, params);
 		}
-		// return createRequest(invoke);
 		return createRequest(invoke, getServiceName());
 	}
 
 	@Override
 	public Request createRequest(DtObject invokeInfo) {
-		// Header header = new Header(getServiceName());
-		// header.setContentType(getContentType());
-		// header.setAuthType(getAuthType());
-		// header.setCharset(getCharset());
-		// header.setAccessId(getAccessId());
-		//
-		// Request request = new SimpleRequest();
-		// request.setHeader(header);
-		// String traceToken = ServiceTraceToken.TTT.get();
-		// if (!StringUtil.isEmpty(traceToken)) {
-		// request.setTraceToken(traceToken);
-		// }
-		// request.setServiceInvoke(invokeInfo);
-		// return request;
 		return createRequest(invokeInfo, getServiceName());
 	}
 

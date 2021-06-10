@@ -343,22 +343,23 @@ public class NettyHttpServer {
 
 	@Override
 	public String toString() {
-		StringBuilder sb = StringBuilderPool._128.poll();
+		StringBuilder builder = StringBuilderPool._128.poll();
 		try {
-			sb.append("{port:").append(m_Port);
-			String name = getName();
-			if (null != name && name.length() > 0) {
-				sb.append(",name:").append(name);
-			}
-			sb.append(",m-at:").append(m_AcceptThreads).append(",m-wk:").append(m_WorkThreads).append(",c:");
-			// if (null != m_Executor) {
-			// sb.append(",executor:").append(m_Executor);
-			// }
-			sb.append("}");
-			return sb.toString();
+			return toString(builder).toString();
 		} finally {
-			StringBuilderPool._128.offer(sb);
+			StringBuilderPool._128.offer(builder);
 		}
+	}
+
+	public StringBuilder toString(StringBuilder builder) {
+		builder.append("{port:").append(m_Port);
+		String name = getName();
+		if (null != name && name.length() > 0) {
+			builder.append(",name:").append(name);
+		}
+		builder.append(",m-at:").append(m_AcceptThreads).append(",m-wk:").append(m_WorkThreads).append(",c:");
+		builder.append("}");
+		return builder;
 	}
 
 	/**
