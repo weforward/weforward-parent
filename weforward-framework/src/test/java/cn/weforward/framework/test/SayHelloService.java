@@ -71,7 +71,7 @@ public class SayHelloService {
 	public void main() throws Exception {
 		service = new WeforwardService("say_hello", host, port, "", 0);
 		service.setNo(no);
-		service.setServicesUrl(gateWayUrl);
+		service.setGatewayUrl(gateWayUrl);
 		service.setAccessId(accessId);
 		service.setAccessKey(accessKey);
 		service.setForwardEnable(true);
