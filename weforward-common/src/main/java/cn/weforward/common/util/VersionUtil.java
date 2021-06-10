@@ -92,7 +92,6 @@ public class VersionUtil {
 	 * 从pom.xml获取主版本
 	 * 
 	 * @return 版本号
-	 * @throws IOException
 	 */
 	public static String getMainVersionByPom() {
 		File file = new File(FileUtil.getAbsolutePath("pom.xml", null));
@@ -164,7 +163,6 @@ public class VersionUtil {
 	 * 从pom.xml获取实现版本
 	 * 
 	 * @return 版本号
-	 * @throws IOException
 	 */
 	public static String getImplementationVersionByPom() {
 		File file = new File(FileUtil.getAbsolutePath("pom.xml", null));

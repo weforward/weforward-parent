@@ -19,8 +19,8 @@ import java.util.List;
  * 
  * @author daibo
  * 
- * @param <T>
- * @param <S>
+ * @param <T> 分页结果目标对象
+ * @param <S> 分页结果源对象
  */
 public abstract class TransList<T, S> extends AbstractList<T> {
 	/** 原数据 */

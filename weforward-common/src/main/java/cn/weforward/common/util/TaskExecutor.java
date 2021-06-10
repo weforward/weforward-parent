@@ -16,10 +16,13 @@ import java.util.concurrent.Executor;
 import cn.weforward.common.Cancelable;
 
 /**
- * 任务执行器，可指定任务执行的条件、事件或延时及周期<br/>
+ * 任务执行器，可指定任务执行的条件、事件或延时及周期
+ * <p>
  * 
- * EVENT_*为任务执行触发事件，使用0x10000000~0xFFFF0000位<br/>
- * CONDITION_*为任务执行条件，使用0x00001000~0x0000FFFF位<br/>
+ * EVENT_*为任务执行触发事件，使用0x10000000~0xFFFF0000位
+ * <p>
+ * CONDITION_*为任务执行条件，使用0x00001000~0x0000FFFF位
+ * <p>
  * 
  * @author liangyi
  * 
@@ -63,14 +66,10 @@ public interface TaskExecutor extends Executor {
 	/**
 	 * 增加一个后台任务
 	 * 
-	 * @param worker
-	 *            要执行的任务
-	 * @param options
-	 *            选项 CONDITION_*或EVENT_*
-	 * @param delay
-	 *            任务在（毫秒后）执行
-	 * @param period
-	 *            任务按（毫秒）周期地执行
+	 * @param worker  要执行的任务
+	 * @param options 选项 CONDITION_*或EVENT_*
+	 * @param delay   任务在（毫秒后）执行
+	 * @param period  任务按（毫秒）周期地执行
 	 * @return 后台任务
 	 */
 	public Task execute(Runnable worker, int options, long delay, long period);
@@ -78,14 +77,10 @@ public interface TaskExecutor extends Executor {
 	/**
 	 * 增加一个后台任务，若firstTime小于当前时间且period为0则不执行任务
 	 * 
-	 * @param worker
-	 *            要执行的任务
-	 * @param options
-	 *            选项 CONDITION_*或EVENT_*
-	 * @param firstTime
-	 *            任务首次执行时间
-	 * @param period
-	 *            任务按（毫秒）周期地执行，若为0表示只执行一次
+	 * @param worker    要执行的任务
+	 * @param options   选项 CONDITION_*或EVENT_*
+	 * @param firstTime 任务首次执行时间
+	 * @param period    任务按（毫秒）周期地执行，若为0表示只执行一次
 	 * @return 后台任务，若firstTime小于当前时间且period为0返回null
 	 */
 	public Task execute(Runnable worker, int options, Date firstTime, long period);
@@ -93,12 +88,9 @@ public interface TaskExecutor extends Executor {
 	/**
 	 * 增加一个后台任务
 	 * 
-	 * @param worker
-	 *            要执行的任务
-	 * @param options
-	 *            选项 CONDITION_*或EVENT_*
-	 * @param delay
-	 *            任务在（毫秒后）执行
+	 * @param worker  要执行的任务
+	 * @param options 选项 CONDITION_*或EVENT_*
+	 * @param delay   任务在（毫秒后）执行
 	 * @return 后台任务
 	 */
 	public Task execute(Runnable worker, int options, long delay);
@@ -106,10 +98,8 @@ public interface TaskExecutor extends Executor {
 	/**
 	 * 增加一个后台任务
 	 * 
-	 * @param worker
-	 *            要执行的任务
-	 * @param options
-	 *            选项 CONDITION_*或EVENT_*
+	 * @param worker  要执行的任务
+	 * @param options 选项 CONDITION_*或EVENT_*
 	 * @return 后台任务
 	 */
 	public Task execute(Runnable worker, int options);
@@ -124,8 +114,7 @@ public interface TaskExecutor extends Executor {
 	/**
 	 * 检查指定的条件或事件是否都具备
 	 * 
-	 * @param options
-	 *            选项 CONDITION_*或EVENT_*
+	 * @param options 选项 CONDITION_*或EVENT_*
 	 * @return 具备则返回true
 	 */
 	public boolean isReady(int options);

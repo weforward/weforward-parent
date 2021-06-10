@@ -24,47 +24,42 @@ public interface OutputStreamNio {
 	/**
 	 * 写入
 	 * 
-	 * @param src
-	 *            要写入的输入流
+	 * @param src 要写入的输入流
 	 * @return 写入的字节数
-	 * @throws IOException
+	 * @throws IOException IO异常时抛出
 	 */
 	int write(InputStream src) throws IOException;
 
 	/**
 	 * 写入
 	 * 
-	 * @param src
-	 *            要写入的数据
+	 * @param src 要写入的数据
 	 * @return 写入的字节数
-	 * @throws IOException
+	 * @throws IOException IO异常时抛出
 	 */
 	int write(ByteBuffer src) throws IOException;
 
 	/**
 	 * 取消且关闭
 	 * 
-	 * @throws IOException
+	 * @throws IOException IO异常时抛出
 	 */
 	void cancel() throws IOException;
 
 	/**
 	 * 写入
 	 * 
-	 * @param data
-	 *            要写入的数据
-	 * @param off
-	 *            开始位置
-	 * @param len
-	 *            数据长度
-	 * @throws IOException
+	 * @param data 要写入的数据
+	 * @param off  开始位置
+	 * @param len  数据长度
+	 * @throws IOException IO异常时抛出
 	 */
 	void write(byte data[], int off, int len) throws IOException;
 
 	/**
 	 * （写入结束）关闭流
 	 * 
-	 * @throws IOException
+	 * @throws IOException IO异常时抛出
 	 */
 	void close() throws IOException;
 

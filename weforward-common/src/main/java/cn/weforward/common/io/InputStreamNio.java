@@ -23,38 +23,35 @@ public interface InputStreamNio {
 	/**
 	 * 读取
 	 * 
-	 * @param dst
-	 *            读取到的缓冲区
+	 * @param dst 读取到的缓冲区
 	 * @return 读取到的字节数
-	 * @throws IOException
+	 * @throws IOException IO异常时抛出
 	 */
 	int read(ByteBuffer dst) throws IOException;
 
 	/**
 	 * 读取
 	 * 
-	 * @param buffer
-	 *            缓冲区
-	 * @param off
-	 *            缓冲区开始位置
-	 * @param len
-	 *            缓冲区的空间
+	 * @param buffer 缓冲区
+	 * @param off    缓冲区开始位置
+	 * @param len    缓冲区的空间
 	 * @return 读取到的字节数
-	 * @throws IOException
+	 * @throws IOException IO异常时抛出
 	 */
 	int read(byte buffer[], int off, int len) throws IOException;
 
 	/**
 	 * 当前马上可读取的数据（很可能是0）
 	 * 
-	 * @throws IOException
+	 * @return 可读取的数据数
+	 * @throws IOException IO异常时抛出
 	 */
 	int available() throws IOException;
 
 	/**
 	 * 关闭流
 	 * 
-	 * @throws IOException
+	 * @throws IOException IO异常时抛出
 	 */
 	void close() throws IOException;
 
@@ -62,7 +59,7 @@ public interface InputStreamNio {
 	 * 产生同样内容的副本流，与主体读取互不影响
 	 * 
 	 * @return 其副本
-	 * @throws IOException
+	 * @throws IOException IO异常时抛出
 	 */
 	InputStreamNio duplicate() throws IOException;
 }

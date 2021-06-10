@@ -81,8 +81,8 @@ public class CRC16 {
 	/**
 	 * 计算crc16
 	 * 
-	 * @param mode
-	 * @param data
+	 * @param mode 模式
+	 * @param data 数据
 	 * @return 不管那种标准，返回值统一为高位在前短整型
 	 */
 	public static short calculate(CRC16Mode mode, byte[] data) {

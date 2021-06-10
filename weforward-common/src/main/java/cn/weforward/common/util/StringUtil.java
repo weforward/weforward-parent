@@ -139,7 +139,7 @@ public class StringUtil {
 	 * 
 	 * @param s1 字串1
 	 * @param s2 字串2
-	 * @return s1==s2返回0,s1>s2返回大于0，s1<s2返回小于0
+	 * @return s1==s2返回0,s1&gt;s2返回大于0，s1&lt;s2返回小于0
 	 */
 	public static final int compareTo(String s1, String s2) {
 		if (s1 == s2) {

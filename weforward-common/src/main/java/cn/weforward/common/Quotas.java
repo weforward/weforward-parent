@@ -40,22 +40,24 @@ public interface Quotas {
 	}
 
 	/**
-	 * 最大值（总配额）
+	 * 获取最大值（总配额）
+	 * 
+	 * @return 最大值（总配额）
 	 */
 	public int getMax();
 
 	/**
-	 * 正使用的（总）配额
+	 * 获取正使用的（总）配额
+	 * 
+	 * @return 正使用的（总）配额
 	 */
 	public int getCount();
 
 	/**
 	 * 指定资源的当前可用配额
 	 * 
-	 * @param governable
-	 *            受配额控制的资源项
-	 * @param concurrent
-	 *            资源的并发数（正在使用数）
+	 * @param governable 受配额控制的资源项
+	 * @param concurrent 资源的并发数（正在使用数）
 	 * @return 相应的配额
 	 */
 	public int getQuota(Governable governable, int concurrent);
@@ -63,21 +65,17 @@ public interface Quotas {
 	/**
 	 * 使用配额
 	 * 
-	 * @param governable
-	 *            使用配额的资源项
-	 * @param concurrent
-	 *            资源的并发数（正在使用数）
+	 * @param governable 使用配额的资源项
+	 * @param concurrent 资源的并发数（正在使用数）
 	 * @return 已使用的（总）配额
-	 * @throws OverquotaException
-	 *             若超过配额抛出异常
+	 * @throws OverquotaException 若超过配额抛出异常
 	 */
 	public int use(Governable governable, int concurrent) throws OverquotaException;
 
 	/**
 	 * 归还配额
 	 * 
-	 * @param resource
-	 *            要归还配额的资源
+	 * @param resource 要归还配额的资源
 	 * @return 正使用的（总）配额
 	 */
 	public int refund(Object resource);
@@ -165,8 +163,8 @@ public interface Quotas {
 			if (count > m_Max) {
 				// 超额了，减一对冲前面的加一，然后抛出超额异常
 				m_Count.decrementAndGet();
-				throw new OverquotaException("超额{count:" + count + ",concurrent:" + concurrent
-						+ ",max:" + m_Max + ",res:" + resource + "}");
+				throw new OverquotaException(
+						"超额{count:" + count + ",concurrent:" + concurrent + ",max:" + m_Max + ",res:" + resource + "}");
 			}
 			// if (concurrent > 0 && concurrent >= getQuota(resource,
 			// concurrent)) {
@@ -175,9 +173,8 @@ public interface Quotas {
 				if (concurrent >= q) {
 					// 当前资源满额了，减一对冲前面的加一，然后抛出满额异常
 					m_Count.decrementAndGet();
-					throw new RejectedExecutionException(
-							"满额{count:" + (count - 1) + ",concurrent:" + concurrent + ",quota:" + q
-									+ ",max:" + m_Max + ",res:" + resource + "}");
+					throw new RejectedExecutionException("满额{count:" + (count - 1) + ",concurrent:" + concurrent
+							+ ",quota:" + q + ",max:" + m_Max + ",res:" + resource + "}");
 				}
 			}
 			return count;

@@ -27,7 +27,7 @@ public final class ListUtil {
 	/**
 	 * 列表是否为空
 	 * 
-	 * @param list
+	 * @param list 列表
 	 * @return 为空返回true
 	 */
 	public static boolean isEmpty(List<?> list) {

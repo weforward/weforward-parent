@@ -318,7 +318,7 @@ public class Hex {
 	/**
 	 * 16位整数HEX字串，不足4个字符前端补0
 	 * 
-	 * @param val
+	 * @param val 要转换的值
 	 * @return hex结果
 	 */
 	public static String toHex16(short val) {
@@ -436,7 +436,7 @@ public class Hex {
 	 * @param val 要转换的数值
 	 * @param sb  转换输出字串缓冲区，若为null则自动内部创建
 	 * @return 传入或内部创建的缓存区
-	 * @throws IOException
+	 * @throws IOException IO异常时抛出
 	 */
 	public static Appendable toHexFixed(short val, Appendable sb) throws IOException {
 		if (val < 0 || val >= 0x1000) {

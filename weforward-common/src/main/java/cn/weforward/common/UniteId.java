@@ -700,7 +700,7 @@ public class UniteId implements Serializable, UniqueKey {
 	/**
 	 * 取得类用于标识/映射对象的短名（主要代替Class.getSimpleName，性能高于其将近10倍）
 	 * 
-	 * @param clazz 类，如 {@link cn.weforward.data.UniteId}
+	 * @param clazz 类，如 #cn.weforward.common.UniteId
 	 * @return 短名，如 UniteId
 	 */
 	public static String getSimpleName(Class<?> clazz) {

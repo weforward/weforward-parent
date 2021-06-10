@@ -102,8 +102,8 @@ public class Base64 {
 	 * @param bytes    要编码的数据（字节数组）
 	 * @param offset   开始位置
 	 * @param len      长度
-	 * @return appender
-	 * @throws IOException
+	 * @return appender 可追加的字符串
+	 * @throws IOException IO异常是抛出
 	 */
 	public static Appendable encode(Appendable appender, byte[] bytes, int offset, int len) throws IOException {
 		if (null == bytes) {
@@ -180,7 +180,7 @@ public class Base64 {
 		 * 
 		 * @return 可读取的长度，0表示结束
 		 * 
-		 * @throws IOException
+		 * @throws IOException IO异常是抛出
 		 */
 		int available() throws IOException;
 
@@ -188,7 +188,7 @@ public class Base64 {
 		 * 读取一个字节/字符
 		 * 
 		 * @return 返回0表示已读取完
-		 * @throws IOException
+		 * @throws IOException IO异常是抛出
 		 */
 		byte read() throws IOException;
 	}
@@ -297,7 +297,7 @@ public class Base64 {
 	 * 
 	 * @param base64 字节数组的BASE64编码串
 	 * @return 解码后的内容
-	 * @throws IOException
+	 * @throws IOException IO异常时抛出
 	 */
 	public static byte[] decode(byte[] base64) throws IOException {
 		if (null == base64) {
@@ -313,7 +313,7 @@ public class Base64 {
 	 * @param offset 开始位置
 	 * @param len    长度
 	 * @return 解码后的内容
-	 * @throws IOException
+	 * @throws IOException IO异常是抛出
 	 */
 	public static byte[] decode(byte[] base64, int offset, int len) throws IOException {
 		if (null == base64) {
@@ -334,7 +334,7 @@ public class Base64 {
 	 * 
 	 * @param base64 输入流
 	 * @return 解码后的内容
-	 * @throws IOException
+	 * @throws IOException IO异常是抛出
 	 */
 	public static byte[] decode(InputStream base64) throws IOException {
 		if (null == base64) {
@@ -348,6 +348,7 @@ public class Base64 {
 	 * 
 	 * @param base64 BASE64编码串
 	 * @return 解码后的数据（字节数组）
+	 * @throws IOException IO异常是抛出
 	 */
 	public static Bytes decode(Base64Input base64) throws IOException {
 		if (base64 == null) {

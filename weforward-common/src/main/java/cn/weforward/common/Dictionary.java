@@ -18,8 +18,8 @@ import java.util.Map;
  * 
  * @author zhangpengji
  *
- * @param <K>
- * @param <V>
+ * @param <K> 关键字
+ * @param <V> 关键字对应的值
  */
 public interface Dictionary<K, V> {
 
@@ -102,8 +102,8 @@ public interface Dictionary<K, V> {
 	 * 
 	 * @author liangyi
 	 *
-	 * @param <K>
-	 * @param <V>
+	 * @param <K> 关键字
+	 * @param <V> 关键字对应的值
 	 */
 	public static class ByArray<K, V> implements Dictionary<K, V> {
 		KvPair<K, V>[] items;

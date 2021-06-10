@@ -45,7 +45,7 @@ public class CompilerJavaUtil {
 	 * @param out         输文件
 	 * @param diagnostics 诊断监听
 	 * @return 是否编译成功
-	 * @throws IOException
+	 * @throws IOException IO异常是抛出
 	 */
 	public static boolean complier(File src, File out, DiagnosticListener<? super JavaFileObject> diagnostics)
 			throws IOException {
@@ -61,7 +61,7 @@ public class CompilerJavaUtil {
 	 * @param out         输文件
 	 * @param diagnostics 诊断程序监听
 	 * @return 是否编译成功
-	 * @throws IOException
+	 * @throws IOException IO异常是抛出
 	 */
 	public static boolean complier(URLClassLoader loader, File src, File out,
 			DiagnosticListener<? super JavaFileObject> diagnostics) throws IOException {
@@ -84,18 +84,29 @@ public class CompilerJavaUtil {
 
 	}
 
-	/** 清理文件夹 */
-	public static File clean(File outfile) throws IOException {
-		if (outfile.exists()) {
-			delete(outfile);
+	/**
+	 * 清理文件夹
+	 * 
+	 * @param file 要清理的文件夹
+	 * @return 清理后的文件夹
+	 * @throws IOException IO异常是抛出
+	 */
+	public static File clean(File file) throws IOException {
+		if (file.exists()) {
+			delete(file);
 		}
-		if (!outfile.mkdirs()) {
-			throw new IOException("无法创建[" + outfile + "]");
+		if (!file.mkdirs()) {
+			throw new IOException("无法创建[" + file + "]");
 		}
-		return outfile;
+		return file;
 	}
 
-	/** 删除文件 */
+	/**
+	 * 删除文件
+	 * 
+	 * @param file 要清理的文件
+	 * @throws IOException IO异常是抛出
+	 */
 	public static void delete(File file) throws IOException {
 		if (!file.exists()) {
 			return;

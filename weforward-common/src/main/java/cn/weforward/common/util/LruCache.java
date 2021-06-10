@@ -138,7 +138,7 @@ public class LruCache<K, V> extends LruHashMap<K, V> {
 	 * 最大加载并发数，默认不限制
 	 * 
 	 * @param max
-	 *            最大值（<=0为不限制）
+	 *            最大值（&lt;=0为不限制）
 	 */
 	public void setMaxLoadConcurrent(int max) {
 		m_MaxLoadConcurrent = max;

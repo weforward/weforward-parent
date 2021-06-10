@@ -48,6 +48,8 @@ public class BytesInputStream extends ByteArrayInputStream implements InputStrea
 
 	/**
 	 * 无内容流
+	 * 
+	 * @return 空的流量
 	 */
 	static public InputStream empty() {
 		return _empty;

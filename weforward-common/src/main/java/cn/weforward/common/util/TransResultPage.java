@@ -27,8 +27,9 @@ public abstract class TransResultPage<T, S> implements ResultPage<T> {
 	final protected ResultPage<S> m_Reference;
 
 	/**
-	 * 由ResultPage<S>构造
+	 * 由ResultPage构造
 	 * 
+	 * @param S  分页结果源对象
 	 * @param rp
 	 */
 	public TransResultPage(ResultPage<S> rp) {

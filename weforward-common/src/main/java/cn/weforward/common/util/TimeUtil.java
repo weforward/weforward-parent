@@ -52,8 +52,7 @@ public class TimeUtil {
 	public final static Date GMT1970 = new ReadonlyDate(0);
 
 	/** 大概1000年后的将来 */
-	public static final Date FAR_FUTURE = new ReadonlyDate(
-			System.currentTimeMillis() + 1000 * 365L * DAY_MILLS);
+	public static final Date FAR_FUTURE = new ReadonlyDate(System.currentTimeMillis() + 1000 * 365L * DAY_MILLS);
 
 	/** 日期/时间格式器共享实例表 */
 	static final ConcurrentMap<String, DateFormatPool> _DateFormats = new ConcurrentHashMap<>(16);
@@ -78,17 +77,14 @@ public class TimeUtil {
 	final static DateFormat TF_GENERAL = getDateFormatInstance("HH:mm:ss");// new
 																			// SimpleDateFormat("HH:mm:ss");
 	/** GMT 时间格式，如：Tue, 18 Aug 2009 14:11:02 GMT */
-	final static DateFormat DTF_GMT = new DateFormatPool("EEE, d MMM yyyy HH:mm:ss z",
-			Locale.ENGLISH);
+	final static DateFormat DTF_GMT = new DateFormatPool("EEE, d MMM yyyy HH:mm:ss z", Locale.ENGLISH);
 	/** CST 时间格式，如：Tue Aug 18 22:11:02 CST 2009 */
-	final static DateFormat DTF_CST = new DateFormatPool("EEE MMM d HH:mm:ss z yyyy",
-			Locale.ENGLISH);
+	final static DateFormat DTF_CST = new DateFormatPool("EEE MMM d HH:mm:ss z yyyy", Locale.ENGLISH);
 	/** UTC 时间格式，如：2009-8-18T22:31:02.000+0800 */
 	final static DateFormat DTF_UTC = getDateFormatInstance("yyyy-MM-dd'T'HH:mm:ss.SSSZ");// new
 	// SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
 	/** Weforward的GMT格式 */
-	static final DateFormat WF_DATE_TIME_FORMAT = getDateFormatInstance(
-			"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+	static final DateFormat WF_DATE_TIME_FORMAT = getDateFormatInstance("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 
 	/** GMT时区 */
 	public final static TimeZone TZ_GMT = TimeZone.getTimeZone("GMT");
@@ -122,9 +118,7 @@ public class TimeUtil {
 	/**
 	 * 转换字串格式的日期时间为Date对象（支持多种）
 	 * 
-	 * @param str
-	 *            日期时间格式串，如：20090818T223102000,20090818,yyyy-MM-dd
-	 *            HH:mm:ss,2009-
+	 * @param str 日期时间格式串，如：20090818T223102000,20090818,yyyy-MM-dd HH:mm:ss,2009-
 	 *            8-18T22:31:02.000+0800,yyyy-MM-dd'T'HH:mm:ss,yyyy-MM-dd等
 	 * @return 转换后的Date对象，若格式无效返回null
 	 */
@@ -214,8 +208,7 @@ public class TimeUtil {
 	/**
 	 * 转为日期时间格式字串（yyyy-MM-dd HH:mm:ss）
 	 * 
-	 * @param date
-	 *            日期时间
+	 * @param date 日期时间
 	 * @return 格式串，若date为null则返回长度为0的字串
 	 */
 	static public final String formatDateTime(Date date) {
@@ -230,8 +223,7 @@ public class TimeUtil {
 	/**
 	 * 转为日期格式字串
 	 * 
-	 * @param date
-	 *            日期
+	 * @param date 日期
 	 * @return yyyy-MM-dd 日期格式串
 	 */
 	static public final String formatDate(Date date) {
@@ -243,8 +235,7 @@ public class TimeUtil {
 	/**
 	 * 转为时间格式字串
 	 * 
-	 * @param date
-	 *            时间
+	 * @param date 时间
 	 * @return HH:mm:ss 时间格式串
 	 */
 	static public final String formatTime(Date date) {
@@ -256,8 +247,7 @@ public class TimeUtil {
 	/**
 	 * 转为UTC日期时间格式字串
 	 * 
-	 * @param date
-	 *            日期时间
+	 * @param date 日期时间
 	 * @return yyyy-MM-dd'T'HH:mm:ss.SSSZ 包含时区信息的日期时间格式串
 	 */
 	static public final String formatUTC(Date date) {
@@ -269,8 +259,7 @@ public class TimeUtil {
 	/**
 	 * 格式化为GMT日期时间串
 	 * 
-	 * @param date
-	 *            日期时间
+	 * @param date 日期时间
 	 * @return 格式串，如：Tue, 18 Aug 2009 14:11:02 GMT
 	 */
 	static public final String formatGMT(Date date) {
@@ -282,8 +271,7 @@ public class TimeUtil {
 	/**
 	 * 格式化为紧凑GMT日期时间格式字串
 	 * 
-	 * @param date
-	 *            日期时间
+	 * @param date 日期时间
 	 * @return 格式串，如：20090818T223102000
 	 */
 	static public final String formatCompactGMT(Date date) {
@@ -293,10 +281,8 @@ public class TimeUtil {
 	/**
 	 * 格式化为紧凑GMT日期时间格式字串，如：20090818T223102000
 	 * 
-	 * @param date
-	 *            日期时间
-	 * @param builder
-	 *            把格式串追加至其
+	 * @param date    日期时间
+	 * @param builder 把格式串追加至其
 	 * @return 传入的sb
 	 */
 	static public final StringBuilder formatCompactGMT(Date date, StringBuilder builder) {
@@ -321,8 +307,7 @@ public class TimeUtil {
 	/**
 	 * 转为紧凑GMT日期格式字串，如：20090818
 	 * 
-	 * @param date
-	 *            日期
+	 * @param date 日期
 	 * @return 格式串
 	 */
 	static public final String formatCompactDateGMT(Date date) {
@@ -332,10 +317,8 @@ public class TimeUtil {
 	/**
 	 * 转为紧凑GMT日期格式字串，如：20090818
 	 * 
-	 * @param date
-	 *            日期
-	 * @param builder
-	 *            把格式串追加至其
+	 * @param date    日期
+	 * @param builder 把格式串追加至其
 	 * @return 传入的sb
 	 */
 	static public final StringBuilder formatCompactDateGMT(Date date, StringBuilder builder) {
@@ -355,10 +338,8 @@ public class TimeUtil {
 	/**
 	 * 格式化GMT时区的时间为紧凑的“年月日时”格式串，如“2009081822”，其通常用于按小时为段建立查询索引或统计项
 	 * 
-	 * @param date
-	 *            日期时间
-	 * @param builder
-	 *            把格式串追加至其
+	 * @param date    日期时间
+	 * @param builder 把格式串追加至其
 	 * @return 传入的sb
 	 */
 	static public final StringBuilder formatYyyyMmDdHhGMT(Date date, StringBuilder builder) {
@@ -379,10 +360,8 @@ public class TimeUtil {
 	/**
 	 * 格式化GMT时区的时间为紧凑的“年月日时”格式串，如“2009081822”，其通常用于按小时为段建立查询索引或统计项
 	 * 
-	 * @param millis
-	 *            （毫秒的）日期时间
-	 * @param builder
-	 *            把格式串追加至其
+	 * @param millis  （毫秒的）日期时间
+	 * @param builder 把格式串追加至其
 	 * @return 传入的sb
 	 */
 	static public final StringBuilder formatYyyyMmDdHhGMT(long millis, StringBuilder builder) {
@@ -402,8 +381,7 @@ public class TimeUtil {
 	/**
 	 * 格式化GMT时区的时间为紧凑的“年月日时”格式串，如“2009081822”，其通常用于按小时为段建立查询索引或统计项
 	 * 
-	 * @param date
-	 *            日期时间
+	 * @param date 日期时间
 	 * @return 格式化后的时间
 	 */
 	static public final String formatYyyyMmDdHhGMT(Date date) {
@@ -413,8 +391,7 @@ public class TimeUtil {
 	/**
 	 * 转为紧凑（当前时区）日期格式字串，如：20090818
 	 * 
-	 * @param date
-	 *            日期
+	 * @param date 日期
 	 * @return 日期格式串
 	 */
 	static public final String formatCompactDate(Date date) {
@@ -424,10 +401,8 @@ public class TimeUtil {
 	/**
 	 * 转为紧凑（当前时区）日期格式字串，如：20090818
 	 * 
-	 * @param date
-	 *            日期
-	 * @param builder
-	 *            StringBuilder
+	 * @param date    日期
+	 * @param builder StringBuilder
 	 * @return 日期格式串
 	 */
 	static public final StringBuilder formatCompactDate(Date date, StringBuilder builder) {
@@ -442,10 +417,8 @@ public class TimeUtil {
 	/**
 	 * 转为紧凑（当前时区）日期时间格式字串yyyyMMddHHmmss，如：20090818010203
 	 * 
-	 * @param date
-	 *            日期
-	 * @param builder
-	 *            StringBuilder
+	 * @param date    日期
+	 * @param builder StringBuilder
 	 * @return 日期格式串
 	 */
 	static public final StringBuilder formatCompactDateTime(Date date, StringBuilder builder) {
@@ -463,8 +436,7 @@ public class TimeUtil {
 	/**
 	 * 转为紧凑（当前时区）日期时间格式字串yyyyMMddHHmmss，如：20090818010203
 	 * 
-	 * @param date
-	 *            日期 StringBuilder
+	 * @param date 日期 StringBuilder
 	 * @return 日期格式串
 	 */
 	static public final String formatCompactDateTime(Date date) {
@@ -474,10 +446,8 @@ public class TimeUtil {
 	/**
 	 * 格式化为紧凑的GMT时区的时间戳，如：20140311T181509000
 	 * 
-	 * @param timestamp
-	 *            时间戳（Date.getTime()）
-	 * @param builder
-	 *            把格式串追加至其，若为null则内部创建
+	 * @param timestamp 时间戳（Date.getTime()）
+	 * @param builder   把格式串追加至其，若为null则内部创建
 	 * @return 格式化输出
 	 */
 	static public final StringBuilder formatTimestamp(long timestamp, StringBuilder builder) {
@@ -505,10 +475,8 @@ public class TimeUtil {
 	/**
 	 * 格式化为紧凑的GMT时区的时间戳，如：20140311T181509000
 	 * 
-	 * @param timestamp
-	 *            时间戳（Date.getTime()）
-	 * @param appender
-	 *            把格式串追加至其，若为null则内部创建
+	 * @param timestamp 时间戳（Date.getTime()）
+	 * @param appender  把格式串追加至其，若为null则内部创建
 	 */
 	static public final void formatTimestamp(long timestamp, Appendable appender) {
 		if (null == appender) {
@@ -543,10 +511,8 @@ public class TimeUtil {
 	/**
 	 * 格式化（GMT）时间的格式串yyyyMMddHHmm，如：201708140102
 	 * 
-	 * @param ms
-	 *            时间戳（Date.getTime()）
-	 * @param builder
-	 *            把格式串追加至其，若为null则内部创建
+	 * @param ms      时间戳（Date.getTime()）
+	 * @param builder 把格式串追加至其，若为null则内部创建
 	 * @return 格式化输出
 	 */
 	static public final StringBuilder formatTimestampYmdhm(long ms, StringBuilder builder) {
@@ -571,10 +537,8 @@ public class TimeUtil {
 	/**
 	 * 格式化（GMT）时间的格式串yyMMddHHmm，如：1708140102
 	 * 
-	 * @param ms
-	 *            时间戳（Date.getTime()）
-	 * @param builder
-	 *            把格式串追加至其，若为null则内部创建
+	 * @param ms      时间戳（Date.getTime()）
+	 * @param builder 把格式串追加至其，若为null则内部创建
 	 * @return 格式化输出
 	 */
 	static public final StringBuilder formatTimestampMdhm(long ms, StringBuilder builder) {
@@ -599,8 +563,7 @@ public class TimeUtil {
 	/**
 	 * 转换（GMT）时间戳格式串的日期时间为Date对象（支持多种）
 	 * 
-	 * @param str
-	 *            （GMT）时间戳格式串，如：20140311T181509000，
+	 * @param str （GMT）时间戳格式串，如：20140311T181509000，
 	 *            2009，200908，20090818，2009081801，200908180102，20090818010203
 	 * @return 转换后的Date对象，若格式无效返回null
 	 */
@@ -670,11 +633,8 @@ public class TimeUtil {
 	/**
 	 * 整数转换为字符串
 	 * 
-	 * @param appender
-	 *            字符序列器
-	 * @param val
-	 *            整数
-	 * @throws IOException
+	 * @param appender 字符序列器
+	 * @param val      整数
 	 */
 	static public final void append(Appendable appender, int val) {
 		try {
@@ -708,8 +668,7 @@ public class TimeUtil {
 									if (val >= 10000000) {
 										if (val >= 100000000) {
 											if (val >= 1000000000) {
-												appender.append(
-														_TenDigits[(int) (val / 1000000000)]);
+												appender.append(_TenDigits[(int) (val / 1000000000)]);
 												val = val % 1000000000;
 											}
 											appender.append(_TenDigits[(int) (val / 100000000)]);
@@ -746,10 +705,8 @@ public class TimeUtil {
 	/**
 	 * 整数转换为字符串
 	 * 
-	 * @param appender
-	 *            字符序列器
-	 * @param val
-	 *            整数
+	 * @param appender 字符序列器
+	 * @param val      整数
 	 */
 	static public final void append(Appendable appender, long val) {
 		try {
@@ -776,54 +733,41 @@ public class TimeUtil {
 																	if (val >= 10000000000000000L) {
 																		if (val >= 100000000000000000L) {
 																			if (val >= 1000000000000000000L) {
-																				appender.append(
-																						_TenDigits[(int) (val
-																								/ 1000000000000000000L)]);
-																				val = val
-																						% 1000000000000000000L;
+																				appender.append(_TenDigits[(int) (val
+																						/ 1000000000000000000L)]);
+																				val = val % 1000000000000000000L;
 																			}
-																			appender.append(
-																					_TenDigits[(int) (val
-																							/ 100000000000000000L)]);
-																			val = val
-																					% 100000000000000000L;
+																			appender.append(_TenDigits[(int) (val
+																					/ 100000000000000000L)]);
+																			val = val % 100000000000000000L;
 																		}
-																		appender.append(
-																				_TenDigits[(int) (val
-																						/ 10000000000000000L)]);
-																		val = val
-																				% 10000000000000000L;
+																		appender.append(_TenDigits[(int) (val
+																				/ 10000000000000000L)]);
+																		val = val % 10000000000000000L;
 																	}
-																	appender.append(
-																			_TenDigits[(int) (val
-																					/ 1000000000000000L)]);
+																	appender.append(_TenDigits[(int) (val
+																			/ 1000000000000000L)]);
 																	val = val % 1000000000000000L;
 																}
 																appender.append(
-																		_TenDigits[(int) (val
-																				/ 100000000000000L)]);
+																		_TenDigits[(int) (val / 100000000000000L)]);
 																val = val % 100000000000000L;
 															}
 															if (val >= 10000000000000L) {
 																appender.append(
-																		_TenDigits[(int) (val
-																				/ 10000000000000L)]);
+																		_TenDigits[(int) (val / 10000000000000L)]);
 																val = val % 10000000000000L;
 															}
-															appender.append(_TenDigits[(int) (val
-																	/ 1000000000000L)]);
+															appender.append(_TenDigits[(int) (val / 1000000000000L)]);
 															val = val % 1000000000000L;
 														}
-														appender.append(_TenDigits[(int) (val
-																/ 100000000000L)]);
+														appender.append(_TenDigits[(int) (val / 100000000000L)]);
 														val = val % 100000000000L;
 													}
-													appender.append(
-															_TenDigits[(int) (val / 10000000000L)]);
+													appender.append(_TenDigits[(int) (val / 10000000000L)]);
 													val = val % 10000000000L;
 												}
-												appender.append(
-														_TenDigits[(int) (val / 1000000000)]);
+												appender.append(_TenDigits[(int) (val / 1000000000)]);
 												val = val % 1000000000;
 											}
 											appender.append(_TenDigits[(int) (val / 100000000)]);
@@ -924,10 +868,8 @@ public class TimeUtil {
 	/**
 	 * 比较两个日期（在当前时区下）是否同一天
 	 * 
-	 * @param d1
-	 *            日期1
-	 * @param d2
-	 *            日期1
+	 * @param d1 日期1
+	 * @param d2 日期1
 	 * @return 是则返回 true
 	 */
 	public static boolean isSameDay(Date d1, Date d2) {
@@ -937,12 +879,9 @@ public class TimeUtil {
 	/**
 	 * 比较两个日期是否同一天
 	 * 
-	 * @param d1
-	 *            日期1
-	 * @param d2
-	 *            日期2
-	 * @param timezone
-	 *            时区
+	 * @param d1       日期1
+	 * @param d2       日期2
+	 * @param timezone 时区
 	 * @return 是则返回 true
 	 */
 	public static boolean isSameDay(Date d1, Date d2, int timezone) {
@@ -960,10 +899,8 @@ public class TimeUtil {
 	/**
 	 * 比较日期前后
 	 * 
-	 * @param d1
-	 *            比较的日期
-	 * @param d2
-	 *            被比较的日期
+	 * @param d1 比较的日期
+	 * @param d2 被比较的日期
 	 * @return d1与d2相同返回0，d1早于d2返回-1，d1晚于d2返回1
 	 */
 	static public int compareTo(Date d1, Date d2) {
@@ -983,8 +920,7 @@ public class TimeUtil {
 	/**
 	 * 转换日期/时间单位为秒的（自1970年1月1日0时起）整数
 	 * 
-	 * @param time
-	 *            日期/时间
+	 * @param time 日期/时间
 	 * @return 秒为单位的日期时间
 	 */
 	public final static int getSecondsFromTime(Date time) {
@@ -997,8 +933,7 @@ public class TimeUtil {
 	/**
 	 * 转换日期/时间单位为秒的（自1970年1月1日0时起）整数
 	 * 
-	 * @param time
-	 *            系统毫秒为单位的时间，取自Date.getTime()，System.currentTimeMillis()
+	 * @param time 系统毫秒为单位的时间，取自Date.getTime()，System.currentTimeMillis()
 	 * @return 秒为单位的日期时间
 	 */
 	public final static int getSecondsFromTime(long time) {
@@ -1008,8 +943,7 @@ public class TimeUtil {
 	/**
 	 * 由单位为秒的（自1970年1月1日0时起）整数转为日期/时间对象
 	 * 
-	 * @param seconds
-	 *            秒为单位的日期时间
+	 * @param seconds 秒为单位的日期时间
 	 * @return Date对象
 	 */
 	public final static Date getTimeFromSeconds(int seconds) {
@@ -1028,8 +962,7 @@ public class TimeUtil {
 	/**
 	 * 由单位为秒的（自1970年1月1日0时起）整数转为日期/时间对象
 	 * 
-	 * @param seconds
-	 *            秒为单位的日期时间
+	 * @param seconds 秒为单位的日期时间
 	 * @return Date对象
 	 */
 	public final static Date getTimeFromSeconds(long seconds) {
@@ -1050,8 +983,7 @@ public class TimeUtil {
 	/**
 	 * 获取线程安全的日期/时间格式器
 	 * 
-	 * @param pattern
-	 *            格式串，如：yyyyMMddHHmmss，yyyy-MM-dd HH:mm:ss
+	 * @param pattern 格式串，如：yyyyMMddHHmmss，yyyy-MM-dd HH:mm:ss
 	 * @return 日期/时间格式器
 	 */
 	static public DateFormat getDateFormatInstance(String pattern) {
@@ -1152,8 +1084,7 @@ public class TimeUtil {
 		}
 
 		@Override
-		public StringBuffer format(Date date, StringBuffer toAppendTo,
-				FieldPosition fieldPosition) {
+		public StringBuffer format(Date date, StringBuffer toAppendTo, FieldPosition fieldPosition) {
 			TimeZone tz = getTimeZone();
 			SimpleDateFormat rc = m_Pool.poll();
 			try {

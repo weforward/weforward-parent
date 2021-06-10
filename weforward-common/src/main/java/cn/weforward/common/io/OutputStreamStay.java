@@ -25,7 +25,7 @@ public interface OutputStreamStay extends Flushable {
 	/**
 	 * 启动暂留
 	 * 
-	 * @throws StayException
+	 * @throws StayException 状态异常时抛出
 	 */
 	void stay() throws StayException;
 
@@ -43,8 +43,7 @@ public interface OutputStreamStay extends Flushable {
 		/**
 		 * 封装为支持在缓冲暂留
 		 * 
-		 * @param out
-		 *            输出流
+		 * @param out 输出流
 		 * @return 支持OutputStreamStay的流
 		 */
 		static public OutputStream wrap(OutputStream out) {

@@ -45,8 +45,7 @@ public class CachedInputStream extends InputStream {
 	/**
 	 * 若输入流不支持markSupported，缓存其支持mark/reset对流重读取
 	 * 
-	 * @param in
-	 *            源输入流
+	 * @param in 源输入流
 	 * @return 源输入流或有必要时缓存包装后的输入流
 	 */
 	public static InputStream cached(InputStream in) {
@@ -70,8 +69,7 @@ public class CachedInputStream extends InputStream {
 	/**
 	 * 扩展缓存容量
 	 * 
-	 * @param size
-	 *            期望扩展的大小
+	 * @param size 期望扩展的大小
 	 * @return 实际扩展的大小
 	 */
 	private int expand(int size) {
@@ -95,8 +93,7 @@ public class CachedInputStream extends InputStream {
 	/**
 	 * 扩展足够的缓存容量
 	 * 
-	 * @param size
-	 *            要扩展的大小
+	 * @param size 要扩展的大小
 	 */
 	private void capacity(int size) {
 		if (null == m_Cache) {
@@ -115,8 +112,7 @@ public class CachedInputStream extends InputStream {
 	/**
 	 * 填充到缓存
 	 * 
-	 * @param len
-	 *            期望填充的字节数
+	 * @param len 期望填充的字节数
 	 * @return 实际填充到缓存的字节数
 	 */
 	private int cache(int len) throws IOException {
@@ -163,8 +159,7 @@ public class CachedInputStream extends InputStream {
 	/**
 	 * 填充指定量（或完整）的数据到缓存
 	 * 
-	 * @param len
-	 *            要填充的字节数
+	 * @param len 要填充的字节数
 	 * @return 填充到缓存的字节数
 	 */
 	private int cacheFully(int len) throws IOException {
@@ -188,6 +183,8 @@ public class CachedInputStream extends InputStream {
 
 	/**
 	 * 当前已缓存的数据量
+	 * 
+	 * @return 数据量
 	 */
 	public int count() {
 		return m_Count;
@@ -195,6 +192,8 @@ public class CachedInputStream extends InputStream {
 
 	/**
 	 * 当前读取到的位置
+	 * 
+	 * @return 位置
 	 */
 	public int position() {
 		return m_Pos;
@@ -203,8 +202,7 @@ public class CachedInputStream extends InputStream {
 	/**
 	 * 重定位读取到的位置
 	 * 
-	 * @param pos
-	 *            要重定位的位置（0～count()）
+	 * @param pos 要重定位的位置（0～count()）
 	 */
 	public void position(int pos) {
 		if (pos < 0 || pos > m_Count) {
@@ -288,6 +286,8 @@ public class CachedInputStream extends InputStream {
 
 	/**
 	 * 源输入流已关闭（或已缓存完整）
+	 * 
+	 * @return 是否已关闭
 	 */
 	public boolean isEof() {
 		return null == m_Origin;
@@ -320,7 +320,7 @@ public class CachedInputStream extends InputStream {
 	/**
 	 * 完全缓存输入流数据
 	 * 
-	 * @throws IOException
+	 * @throws IOException IO异常时抛出
 	 */
 	synchronized public void fullyCached() throws IOException {
 		if (null == m_Origin) {
@@ -356,10 +356,9 @@ public class CachedInputStream extends InputStream {
 	/**
 	 * 输入流缓存到Bytes
 	 * 
-	 * @param in
-	 *            输入流
+	 * @param in 输入流
 	 * @return 相应的Bytes
-	 * @throws IOException
+	 * @throws IOException IO异常时抛出
 	 */
 	public static Bytes toBytes(InputStream in) throws IOException {
 		return toBytes(in, 0);
@@ -368,12 +367,10 @@ public class CachedInputStream extends InputStream {
 	/**
 	 * 输入流缓存到Bytes
 	 * 
-	 * @param in
-	 *            输入流
-	 * @param limit
-	 *            若>0则为限制缓存字节数
+	 * @param in    输入流
+	 * @param limit 若&gt;0则为限制缓存字节数
 	 * @return 相应的Bytes
-	 * @throws IOException
+	 * @throws IOException IO异常时抛出
 	 */
 	public static Bytes toBytes(InputStream in, int limit) throws IOException {
 		AtBuffers buffers = new AtBuffers(in, limit);
@@ -385,14 +382,11 @@ public class CachedInputStream extends InputStream {
 	/**
 	 * 由输入流读取（预期小于8K字节的）指定字符集编码字串
 	 * 
-	 * @param in
-	 *            输入流
-	 * @param expect
-	 *            预期的字节数
-	 * @param charset
-	 *            字符集，如：UTF-8，若指定为null则自动检查是否为utf-8，不是则使用GBK
+	 * @param in      输入流
+	 * @param expect  预期的字节数
+	 * @param charset 字符集，如：UTF-8，若指定为null则自动检查是否为utf-8，不是则使用GBK
 	 * @return 指定字符集的字串
-	 * @throws IOException
+	 * @throws IOException IO异常时抛出
 	 */
 	public static String readString(InputStream in, int expect, String charset) throws IOException {
 		return readString(in, expect, 0, charset);
@@ -401,19 +395,14 @@ public class CachedInputStream extends InputStream {
 	/**
 	 * 由输入流读取（预期小于8K字节的）指定字符集编码字串
 	 * 
-	 * @param in
-	 *            输入流
-	 * @param expect
-	 *            预期的字节数
-	 * @param limit
-	 *            限制的字节数（为0则不限制）
-	 * @param charset
-	 *            字符集，如：UTF-8，若指定为null则自动检查是否为utf-8，不是则使用GBK
+	 * @param in      输入流
+	 * @param expect  预期的字节数
+	 * @param limit   限制的字节数（为0则不限制）
+	 * @param charset 字符集，如：UTF-8，若指定为null则自动检查是否为utf-8，不是则使用GBK
 	 * @return 指定字符集的字串
-	 * @throws IOException
+	 * @throws IOException IO异常时抛出
 	 */
-	public static String readString(InputStream in, int expect, int limit, String charset)
-			throws IOException {
+	public static String readString(InputStream in, int expect, int limit, String charset) throws IOException {
 		if (null == in) {
 			return null;
 		}
@@ -468,10 +457,8 @@ public class CachedInputStream extends InputStream {
 	/**
 	 * 检查输入的字符流是否UTF-8字符
 	 * 
-	 * @param bytes
-	 *            字节数组（字串流）
-	 * @param len
-	 *            长度（字节）
+	 * @param bytes 字节数组（字串流）
+	 * @param len   长度（字节）
 	 * @return 是则返回true
 	 */
 	static public boolean isUtf8(byte[] bytes, int len) {
@@ -481,19 +468,14 @@ public class CachedInputStream extends InputStream {
 	/**
 	 * 完整读取需要的数据
 	 * 
-	 * @param in
-	 *            输入流
-	 * @param buffer
-	 *            读取缓冲区
-	 * @param off
-	 *            读缓冲区开始位置
-	 * @param len
-	 *            期望读取的长度
+	 * @param in     输入流
+	 * @param buffer 读取缓冲区
+	 * @param off    读缓冲区开始位置
+	 * @param len    期望读取的长度
 	 * @return 返回已读取的字节数，若小于期望读取的长度表示输入流已结束
-	 * @throws IOException
+	 * @throws IOException IO异常时抛出
 	 */
-	public static int readFully(InputStream in, byte[] buffer, int off, int len)
-			throws IOException {
+	public static int readFully(InputStream in, byte[] buffer, int off, int len) throws IOException {
 		int total = len;
 		while (len > 0) {
 			int n = in.read(buffer, off, len);
@@ -509,12 +491,10 @@ public class CachedInputStream extends InputStream {
 	/**
 	 * 由输入流复制到流出流（完成会关闭输入流）
 	 * 
-	 * @param in
-	 *            输入流
-	 * @param out
-	 *            输出流
+	 * @param in  输入流
+	 * @param out 输出流
 	 * @return 所复制的字节数
-	 * @throws IOException
+	 * @throws IOException IO异常时抛出
 	 */
 	public static int copy(InputStream in, OutputStream out) throws IOException {
 		int total = 0;
@@ -554,11 +534,9 @@ public class CachedInputStream extends InputStream {
 		/**
 		 * 使用缓冲区池读取输入流的数据进行暂存
 		 * 
-		 * @param in
-		 *            输入流
-		 * @param limit
-		 *            若>0则为限制读取的字节数
-		 * @throws IOException
+		 * @param in    输入流
+		 * @param limit 若&gt;0则为限制读取的字节数
+		 * @throws IOException IO异常时抛出
 		 */
 		public AtBuffers(InputStream in, int limit) throws IOException {
 			this();
@@ -577,12 +555,10 @@ public class CachedInputStream extends InputStream {
 		/**
 		 * 送入缓冲池
 		 * 
-		 * @param in
-		 *            输入流
-		 * @param limit
-		 *            若>0则为限制读取的字节数
+		 * @param in    输入流
+		 * @param limit 若&gt;0则为限制读取的字节数
 		 * @return 当次读取的节字数
-		 * @throws IOException
+		 * @throws IOException IO异常时抛出
 		 */
 		public int input(InputStream in, int limit) throws IOException {
 			byte[] buf;

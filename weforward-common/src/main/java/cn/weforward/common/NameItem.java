@@ -11,6 +11,7 @@
 package cn.weforward.common;
 
 import cn.weforward.common.util.NumberUtil;
+import cn.weforward.common.util.StringUtil;
 
 /**
  * 简单地提供一个name/value|id对照的项
@@ -54,8 +55,9 @@ public class NameItem {
 	/**
 	 * 取得name/id的对照
 	 * 
-	 * @param name 对照名
-	 * @param id   对照id
+	 * @param name  对照名
+	 * @param id    对照id
+	 * @param value 对照值
 	 * @return 对照项
 	 */
 	static public NameItem valueOf(String name, int id, Object value) {
@@ -76,6 +78,10 @@ public class NameItem {
 	/**
 	 * 由ID查询在items中的项
 	 * 
+	 * @param id    对照id
+	 * @param items 可遍历的对照项
+	 * @return 查询到的对照项
+	 * 
 	 */
 	static public NameItem findById(int id, Iterable<NameItem> items) {
 		for (NameItem item : items) {
@@ -87,6 +93,10 @@ public class NameItem {
 
 	/**
 	 * 由ID查询在items中的项
+	 * 
+	 * @param id    对照id
+	 * @param items 对照项数组
+	 * @return 查询到的对照项
 	 * 
 	 */
 	static public NameItem findById(int id, NameItem[] items) {
@@ -100,6 +110,9 @@ public class NameItem {
 	/**
 	 * 由ID查询到相应项的名称，没找到则返回null
 	 * 
+	 * @param id    对照id
+	 * @param items 可遍历的对照项
+	 * @return 查询到的对照项的名称
 	 */
 	static public String getNameById(int id, NameItem[] items) {
 		NameItem ni = findById(id, items);
@@ -108,6 +121,10 @@ public class NameItem {
 
 	/**
 	 * 由ID查询到相应项的名称，没找到则返回null
+	 * 
+	 * @param id    对照id
+	 * @param items 对照项数组
+	 * @return 查询到的对照项的名称
 	 * 
 	 */
 	static public String getNameById(int id, Iterable<NameItem> items) {
@@ -118,6 +135,9 @@ public class NameItem {
 	/**
 	 * 由value查询在items中的项
 	 * 
+	 * @param value 对照值
+	 * @param items 可遍历的对照项
+	 * @return 查询到的对照项
 	 */
 	static public NameItem findByValue(String value, Iterable<NameItem> items) {
 		for (NameItem item : items) {
@@ -130,6 +150,9 @@ public class NameItem {
 	/**
 	 * 由value查询在items中的项
 	 * 
+	 * @param value 对照值
+	 * @param items 对照项数组
+	 * @return 查询到的对照项
 	 */
 	static public NameItem findByValue(String value, NameItem[] items) {
 		for (NameItem item : items) {
@@ -142,6 +165,9 @@ public class NameItem {
 	/**
 	 * 由value查询到相应项的名称，没找到则返回null
 	 * 
+	 * @param value 对照值
+	 * @param items 对照项数组
+	 * @return 查询到的对照项名称
 	 */
 	static public String getNameByValue(String value, NameItem[] items) {
 		NameItem ni = findByValue(value, items);
@@ -151,6 +177,9 @@ public class NameItem {
 	/**
 	 * 由value查询到相应项的名称，没找到则返回null
 	 * 
+	 * @param value 对照值
+	 * @param items 可遍历的对照项
+	 * @return 查询到的对照项名称
 	 */
 	static public String getNameByValue(String value, Iterable<NameItem> items) {
 		NameItem ni = findByValue(value, items);
@@ -160,6 +189,9 @@ public class NameItem {
 	/**
 	 * 由name查询在items中的项
 	 * 
+	 * @param name  对照名
+	 * @param items 可遍历的对照项
+	 * @return 查询到的对照项
 	 */
 	static public NameItem findByName(String name, Iterable<NameItem> items) {
 		for (NameItem item : items) {
@@ -172,6 +204,9 @@ public class NameItem {
 	/**
 	 * 由name查询在items中的项
 	 * 
+	 * @param name  对照名
+	 * @param items 对照项数组
+	 * @return 查询到的对照项
 	 */
 	static public NameItem findByName(String name, NameItem[] items) {
 		for (NameItem item : items) {
@@ -184,6 +219,9 @@ public class NameItem {
 	/**
 	 * 由name查询到相应项的value，没找到则返回null
 	 * 
+	 * @param name  对照名
+	 * @param items 对照项数组
+	 * @return 查询到的对照项的值
 	 */
 	static public Object getValueByName(String name, NameItem[] items) {
 		NameItem ni = findByName(name, items);
@@ -193,6 +231,9 @@ public class NameItem {
 	/**
 	 * 由name查询到相应项的value，没找到则返回null
 	 * 
+	 * @param name  对照名
+	 * @param items 可遍历的对照项
+	 * @return 查询到的对照项的值
 	 */
 	static public Object getValueByName(String name, Iterable<NameItem> items) {
 		NameItem ni = findByName(name, items);
@@ -200,6 +241,7 @@ public class NameItem {
 	}
 
 	/**
+	 * 构造
 	 * 
 	 * @param name  对照名
 	 * @param value 对照值
@@ -221,6 +263,7 @@ public class NameItem {
 	}
 
 	/**
+	 * 构造
 	 * 
 	 * @param name  对照名
 	 * @param value 对照值
@@ -248,14 +291,29 @@ public class NameItem {
 		this.id = id;
 	}
 
+	/**
+	 * 获取对照项id
+	 * 
+	 * @return 对照项id
+	 */
 	public int getId() {
 		return id;
 	}
 
+	/**
+	 * 获取对照项名称
+	 * 
+	 * @return 对照项名称
+	 */
 	public String getName() {
 		return name;
 	}
 
+	/**
+	 * 获取对照项值
+	 * 
+	 * @return 对照项值
+	 */
 	public String getValue() {
 		return (String) value;
 	}
@@ -291,11 +349,30 @@ public class NameItem {
 	}
 
 	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof NameItem) {
+			NameItem ni = (NameItem) obj;
+			return this.id == ni.id && StringUtil.eq(this.name, ni.name) && eq(this.value, ni.value);
+		} else {
+			return false;
+		}
+	}
+
+	private static boolean eq(Object v1, Object v2) {
+		if (null == v1) {
+			return null == v2;
+		}
+		if (null == v2) {
+			return false;
+		}
+		return v1.equals(v2);
+	}
+
+	@Override
 	public String toString() {
 		if (null == value) {
 			return name + "[" + id + "]";
 		}
 		return name + "[" + id + "]=" + value;
 	}
-
 }

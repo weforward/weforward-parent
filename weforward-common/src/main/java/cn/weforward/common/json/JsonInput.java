@@ -22,14 +22,14 @@ public interface JsonInput {
 	/**
 	 * 返回当前可读的字符数
 	 * 
-	 * @return 返回0表示未知，返回-1表示已经结束，其它>0的值为当前可读
+	 * @return 返回0表示未知，返回-1表示已经结束，其它&gt;0的值为当前可读
 	 */
 	int available() throws IOException;
 
 	/**
 	 * 读取一个字符
 	 * 
-	 * @throws IOException
+	 * @throws IOException IO异常时抛出
 	 */
 	char readChar() throws IOException;
 
@@ -41,7 +41,7 @@ public interface JsonInput {
 	/**
 	 * 关闭
 	 * 
-	 * @throws IOException
+	 * @throws IOException IO异常时抛出
 	 */
 	void close() throws IOException;
 }

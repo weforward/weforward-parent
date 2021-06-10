@@ -208,26 +208,25 @@ public interface RestfulResponse {
 	/**
 	 * 指定响应超时值，若指定则在超时未响应时自动向请求端返回STATUS_MISDIRECTED_REQUEST(421)
 	 * 
-	 * @param timeout
-	 *            超时值（毫秒），0则不超时
+	 * @param timeout 超时值（毫秒），0则不超时
+	 * @throws IOException IO异常时抛出
 	 */
 	void setResponse(int timeout) throws IOException;
 
 	/**
 	 * 设置响应的头信息
 	 * 
-	 * @param name
-	 *            名称
-	 * @param value
-	 *            值
+	 * @param name  名称
+	 * @param value 值
+	 * @throws IOException IO异常时抛出
 	 */
 	void setHeader(String name, String value) throws IOException;
 
 	/**
 	 * 设置响应状态
 	 * 
-	 * @param status
-	 *            HTTP状态码（参考STATUS_xxx）
+	 * @param status HTTP状态码（参考STATUS_xxx）
+	 * @throws IOException IO异常时抛出
 	 */
 	void setStatus(int status) throws IOException;
 
@@ -235,7 +234,7 @@ public interface RestfulResponse {
 	 * 打开响应输出流
 	 * 
 	 * @return 输出流
-	 * @throws IOException
+	 * @throws IOException IO异常时抛出
 	 */
 	OutputStream openOutput() throws IOException;
 
