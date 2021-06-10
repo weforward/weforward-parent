@@ -16,13 +16,16 @@ import cn.weforward.common.util.StringUtil;
 /**
  * 微服务调用跟踪的令牌
  * <p>
- * 令牌组成格式：&lt;trace_id&gt;-&lt;span_id&gt;-&lt;parent_id&gt;-&lt;depth&gt，
- * 或&lt;trace_id&gt;-&lt;span_id&gt;-&lt;-&lt;depth&gt。
+ * 令牌组成格式：&lt;trace_id&gt;-&lt;span_id&gt;-&lt;parent_id&gt;-&lt;depth&gt;，
+ * 或&lt;trace_id&gt;-&lt;span_id&gt;-&lt;depth&gt;。
  * 其中trace_id、span_id、parent_id由小写字母与数字组成；depth为Hex格式，长度为2；
  * <p>
- * trace_id为一个完整调用链的标识；<br/>
- * span_id为当前调用节点的标识；<br/>
- * parent_id为上一个调用节点的标识；<br/>
+ * trace_id为一个完整调用链的标识；
+ * <p>
+ * span_id为当前调用节点的标识；
+ * <p>
+ * parent_id为上一个调用节点的标识；
+ * <p>
  * depth为调用链的栈深度
  * 
  * @author zhangpengji

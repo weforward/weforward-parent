@@ -63,7 +63,7 @@ public interface ClientContext {
 	 * 建立传输管道直接输出响应内容
 	 * 
 	 * @param writer    输出响应内容的流
-	 * @param skipBytes >0则跳过已在缓冲区的部分内容
+	 * @param skipBytes &gt;0则跳过已在缓冲区的部分内容
 	 */
 	void responseTransferTo(OutputStream writer, int skipBytes) throws IOException;
 

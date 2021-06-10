@@ -13,7 +13,8 @@ package cn.weforward.protocol.ops.secure;
 import java.util.List;
 
 /**
- * 微服务的ACL表。<br/>
+ * 微服务的ACL表。
+ * <p>
  * 描述Access对微服务资源的访问权限。 Access支持按id、kind、group匹配，若为空，则忽略匹配；
  * 依次按AclTableItem的顺序匹配，匹配成功则忽略后面的规则项；无匹配时，权限为0。
  * 

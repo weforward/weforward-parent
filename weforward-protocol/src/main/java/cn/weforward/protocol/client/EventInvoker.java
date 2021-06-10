@@ -33,7 +33,7 @@ public interface EventInvoker {
 	 * 事件
 	 * 
 	 * @param name 事件名 如onPaySuccess
-	 * @param uri  访问uri 如 event://微服务名?_group=方法组&参数1=值1&参数2=值2
+	 * @param uri  访问uri 如 event://微服务名?_group=方法组&amp;参数1=值1&amp;参数2=值2
 	 * @return 事件协议返回调用返回的内容，通知和广播返回接收到通知的实例列表
 	 */
 	DtBase invoke(String name, String uri);
@@ -42,7 +42,7 @@ public interface EventInvoker {
 	 * 事件
 	 * 
 	 * @param name   事件名 如onPaySuccess
-	 * @param uri    访问uri 如 event://微服务名?_group=方法组&参数1=值1&参数2=值2
+	 * @param uri    访问uri 如 event://微服务名?_group=方法组&amp;参数1=值1&amp;参数2=值2
 	 * @param params 参数
 	 * @return 事件协议返回调用返回的内容，通知和广播返回接收到通知的实例列表
 	 */

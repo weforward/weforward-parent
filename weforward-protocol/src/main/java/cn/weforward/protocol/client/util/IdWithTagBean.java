@@ -37,7 +37,7 @@ public class IdWithTagBean {
 	 * 构造
 	 * 
 	 * @param id  对象id
-	 * @param tag 对象源
+	 * @param obj 对象源
 	 * @return
 	 */
 	public static IdWithTagBean valueOf(String id, Object obj) {

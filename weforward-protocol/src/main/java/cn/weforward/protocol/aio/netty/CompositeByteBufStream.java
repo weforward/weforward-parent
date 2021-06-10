@@ -105,8 +105,7 @@ public class CompositeByteBufStream implements ByteBufStream, Leakable {
 	/**
 	 * 复制缓冲区且转包装为流
 	 * 
-	 * @param skipBytes
-	 *            >0则跳过已在缓冲区的部分内容
+	 * @param skipBytes &gt;0则跳过已在缓冲区的部分内容
 	 * @return 包装缓冲区的流
 	 * @throws IOException
 	 */

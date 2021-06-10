@@ -27,19 +27,22 @@ public interface DocAttribute {
 	String getName();
 
 	/**
-	 * 类型。<br/>
+	 * 类型。
+	 * <p>
 	 * 取值：基础类型名、自定义类名
 	 */
 	String getType();
 
 	/**
-	 * 当Type为List、ResultPage时，需要描述集合元素的类型。<br/>
+	 * 当Type为List、ResultPage时，需要描述集合元素的类型。
+	 * <p>
 	 * 取值同Type，排除List、ResultPage
 	 */
 	String getComponent();
 
 	/**
-	 * type的详细描述。<br/>
+	 * type的详细描述。
+	 * <p>
 	 * 当Type非基础类型和非通用对象时，需要提供
 	 */
 	DocObject getDetail();
@@ -50,7 +53,8 @@ public interface DocAttribute {
 	String getDescription();
 
 	/**
-	 * 示例值。<br/>
+	 * 示例值。
+	 * <p>
 	 * 做为方法入参，且Type为基础类型、List时，可以返回示例值，示例值将显示在页面中。示例值写法参考：
 	 * <p>
 	 * String : abc

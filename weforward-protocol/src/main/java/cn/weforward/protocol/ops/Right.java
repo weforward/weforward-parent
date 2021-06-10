@@ -32,7 +32,8 @@ public interface Right {
 	short getRule();
 
 	/**
-	 * 权限URI的模式串。<br/>
+	 * 权限URI的模式串。
+	 * <p>
 	 * 支持通配符"*"、"**"；"*"匹配"/"以外的字符；"**"放在最后，表示匹配全部字符。
 	 * 
 	 * <pre>

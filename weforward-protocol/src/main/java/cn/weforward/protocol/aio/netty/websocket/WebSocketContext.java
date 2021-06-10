@@ -203,7 +203,7 @@ public class WebSocketContext extends ChannelInboundHandlerAdapter implements Cl
 	}
 
 	/**
-	 * 启动PING->PONG心跳保持（一般由TCP服务端发送PING）
+	 * 启动PING-&gt;PONG心跳保持（一般由TCP服务端发送PING）
 	 * 
 	 * @param seconds 心跳间隔（秒），Firefox,Chrome等浏览器超过30秒会断开
 	 */

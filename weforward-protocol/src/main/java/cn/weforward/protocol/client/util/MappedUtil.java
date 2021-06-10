@@ -359,12 +359,12 @@ public class MappedUtil {
 	 * <pre>
 	 * 基于规则为：调用目标对象的valueOf(xxx)静态方法生成目标对象
 	 * 如
-	 * String=>UniteId
+	 * String=&gt;UniteId
 	 * 则调用
 	 * UniteId.valueOf(String)方法
 	 * 
 	 * 如
-	 * Double=>UniteId
+	 * Double=&gt;UniteId
 	 * 则调用
 	 *	UniteId.valueOf(Double)方法
 	 * </pre>
@@ -406,12 +406,12 @@ public class MappedUtil {
 	 * <pre>
 	 * 基于规则为：调用源对象的XXXValue方法转换成目标对象
 	 * 如
-	 * UniteId=>String
+	 * UniteId=&gt;String
 	 * 则调用
 	 * UniteId.stringValue()方法
 	 * 
 	 * 如
-	 * UniteId=>Double
+	 * UniteId=&gt;Double
 	 * 则调用
 	 * UniteId.doubleValue()方法
 	 * </pre>

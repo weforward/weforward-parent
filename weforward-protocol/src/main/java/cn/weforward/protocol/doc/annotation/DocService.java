@@ -43,8 +43,10 @@ public @interface DocService {
 	String description() default "";
 
 	/**
-	 * 修改记录。<br/>
-	 * 取值指向一个文本文件，文件采用csv格式，文件的每一行表示一个修改记录。<br/>
+	 * 修改记录。
+	 * <p>
+	 * 取值指向一个文本文件，文件采用csv格式，文件的每一行表示一个修改记录。
+	 * <p>
 	 * 默认情况读取当前包路径下的{service_name}.modify.csv文件
 	 */
 	String modifyPath() default "";

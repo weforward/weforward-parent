@@ -27,7 +27,8 @@ import cn.weforward.protocol.datatype.DtObject;
 import cn.weforward.protocol.support.NamingConverter;
 
 /**
- * 对象的简单实现。<br/>
+ * 对象的简单实现。
+ * <p>
  * 设置/获取属性时，自动将属性名称转换，以符合weforward命名规范
  * 
  * @author zhangpengji
@@ -48,8 +49,7 @@ public class SimpleDtObject extends AbstractDtObject implements Iterable<KvPair<
 	/**
 	 * 构造
 	 * 
-	 * @param autoNaming
-	 *            是否转换属性名称
+	 * @param autoNaming 是否转换属性名称
 	 */
 	public SimpleDtObject(boolean autoNaming) {
 		this((autoNaming ? new AutoNamingMap() : new HashMap<String, DtBase>()));
@@ -170,7 +170,7 @@ public class SimpleDtObject extends AbstractDtObject implements Iterable<KvPair<
 	 * @param obj
 	 */
 	public void putAll(DtObject obj) {
-		if(null == obj) {
+		if (null == obj) {
 			return;
 		}
 		Enumeration<KvPair<String, DtBase>> dtObjAtts = obj.getAttributes();
@@ -220,8 +220,7 @@ public class SimpleDtObject extends AbstractDtObject implements Iterable<KvPair<
 	/**
 	 * 移除属性
 	 * 
-	 * @param name
-	 *            属性名
+	 * @param name 属性名
 	 * @return 若名称对应的属性存在，则返回，否则为null
 	 */
 	public DtBase remove(String name) {

@@ -61,7 +61,7 @@ public interface HttpContext extends ServerContext {
 	/**
 	 * 创建请求内容镜像流，当请求接收完整后不受上下文状态影响，也不受requestTransferTo影响，但必须得在requestTransferTo前调用
 	 * 
-	 * @param skipBytes >0则跳过已在缓冲区的部分内容
+	 * @param skipBytes &gt;0则跳过已在缓冲区的部分内容
 	 */
 	public InputStream mirrorRequestStream(int skipBytes) throws IOException;
 
