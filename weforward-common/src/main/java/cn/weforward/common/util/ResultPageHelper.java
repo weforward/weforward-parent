@@ -30,7 +30,7 @@ public final class ResultPageHelper {
 	public static final int MAX_SIZE_ON_FOREACH = 1000;
 
 	/**
-	 * 快速封装（构造）单结果项ResultPage<E>
+	 * 快速封装（构造）单结果项ResultPage
 	 * 
 	 * @param <E>     项类型
 	 * @param element 结果项
@@ -41,7 +41,7 @@ public final class ResultPageHelper {
 	}
 
 	/**
-	 * 快速封装（构造）基于List<E>的ResultPage<E>
+	 * 快速封装（构造）基于List的ResultPage
 	 * 
 	 * @param <E>
 	 * @param ls  结果集（List）

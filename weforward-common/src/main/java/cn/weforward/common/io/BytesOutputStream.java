@@ -48,7 +48,7 @@ public class BytesOutputStream extends ByteArrayOutputStream implements OutputSt
 	 * 由输入流创建
 	 * 
 	 * @param in 内容输入流
-	 * @throws IOException
+	 * @throws IOException IO异常时抛出
 	 */
 	public BytesOutputStream(InputStream in) throws IOException {
 		this(new CachedInputStream.AtBuffers(in, 0));
@@ -57,6 +57,8 @@ public class BytesOutputStream extends ByteArrayOutputStream implements OutputSt
 
 	/**
 	 * 分离缓冲区内部数据
+	 * 
+	 * @return 内部数据
 	 */
 	synchronized public byte[] detach() {
 		byte[] bs;
@@ -81,6 +83,7 @@ public class BytesOutputStream extends ByteArrayOutputStream implements OutputSt
 	 * 重置最后写入位置
 	 * 
 	 * @param length 位置
+	 * @throws IOException IO异常时抛出
 	 */
 	synchronized public void setSize(int length) throws IOException {
 		if (length > this.count || length >= this.buf.length) {
@@ -145,9 +148,9 @@ public class BytesOutputStream extends ByteArrayOutputStream implements OutputSt
 	 * 
 	 * @param in    输入流
 	 * @param out   输出流
-	 * @param limit 若>0则限制读取的字节数
+	 * @param limit 若&gt;0则限制读取的字节数
 	 * @return 传送的总字节数
-	 * @throws IOException
+	 * @throws IOException IO异常时抛出
 	 */
 	static public int transfer(InputStream in, OutputStream out, int limit) throws IOException {
 		if (limit <= 0) {
@@ -221,9 +224,9 @@ public class BytesOutputStream extends ByteArrayOutputStream implements OutputSt
 	 * 
 	 * @param buffer 字节缓冲区的内容
 	 * @param out    输出流
-	 * @param limit  若>0则限制读取的字节数
+	 * @param limit  若&gt;0则限制读取的字节数
 	 * @return 传送的总字节数
-	 * @throws IOException
+	 * @throws IOException IO异常时抛出
 	 */
 	static public int transfer(ByteBuffer buffer, OutputStream out, int limit) throws IOException {
 		int total = 0;

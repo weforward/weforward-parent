@@ -44,6 +44,8 @@ public class VmStat {
 
 	/**
 	 * 系统负载（0%～100%）
+	 * 
+	 * @return 负载
 	 */
 	static public int getLoadAverage() {
 		return _VmStat.m_LoadAverage;
@@ -51,6 +53,8 @@ public class VmStat {
 
 	/**
 	 * 当前JVM进程CPU负载（0%～100%）
+	 * 
+	 * @return 负载
 	 */
 	static public int getProcessCpuLoad() {
 		return _VmStat.m_ProcessCpuLoad;
@@ -101,7 +105,7 @@ public class VmStat {
 
 	@Override
 	public String toString() {
-		return "{pid:" + m_Pid + ",cpus:" + _cpus + ",cpu-load:" + m_ProcessCpuLoad + ",sys-load:"
-				+ m_LoadAverage + ",mem:" + m_Memory + "}";
+		return "{pid:" + m_Pid + ",cpus:" + _cpus + ",cpu-load:" + m_ProcessCpuLoad + ",sys-load:" + m_LoadAverage
+				+ ",mem:" + m_Memory + "}";
 	}
 }

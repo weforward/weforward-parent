@@ -27,10 +27,8 @@ import cn.weforward.common.execption.OverquotaException;
  * 
  * @author liangyi
  *
- * @param <K>
- *            键的类型（通常是字串）
- * @param <V>
- *            值的类型
+ * @param <K> 键的类型（通常是字串）
+ * @param <V> 值的类型
  */
 public class LruHashMap<K, V> implements Iterable<KvPair<K, V>>, GcCleanable {
 	protected final static Logger _Logger = LoggerFactory.getLogger(LruHashMap.class);
@@ -92,8 +90,7 @@ public class LruHashMap<K, V> implements Iterable<KvPair<K, V>>, GcCleanable {
 	/**
 	 * 限制最大项数
 	 * 
-	 * @param maxCapacity
-	 *            最大项数，若=0为MAXIMUM_CAPACITY
+	 * @param maxCapacity 最大项数，若=0为MAXIMUM_CAPACITY
 	 */
 	public void setMaxCapacity(int maxCapacity) {
 		synchronized (tableLock()) {
@@ -112,6 +109,8 @@ public class LruHashMap<K, V> implements Iterable<KvPair<K, V>>, GcCleanable {
 
 	/**
 	 * 项数
+	 * 
+	 * @return 项数
 	 */
 	public int size() {
 		return m_Size;
@@ -177,6 +176,8 @@ public class LruHashMap<K, V> implements Iterable<KvPair<K, V>>, GcCleanable {
 
 	/**
 	 * 重建LRU
+	 * 
+	 * @param count 次数
 	 */
 	protected void fixLru(int count) {
 		_Logger.warn("LRU断链[" + count + "]？" + this);
@@ -288,8 +289,7 @@ public class LruHashMap<K, V> implements Iterable<KvPair<K, V>>, GcCleanable {
 	/**
 	 * 按LRU表移除N项
 	 * 
-	 * @param expect
-	 *            期望移除的项数
+	 * @param expect 期望移除的项数
 	 * @return 已移除的项数
 	 */
 	public int trim(int expect) {
@@ -338,10 +338,8 @@ public class LruHashMap<K, V> implements Iterable<KvPair<K, V>>, GcCleanable {
 	/**
 	 * 若指定缓存项未存在才置入，否则只返回已有项
 	 * 
-	 * @param key
-	 *            键
-	 * @param value
-	 *            新置入值
+	 * @param key   键
+	 * @param value 新置入值
 	 * @return 若已有项返回旧值，否则为新置入的值
 	 */
 	public V putIfAbsent(K key, V value) {
@@ -634,8 +632,7 @@ public class LruHashMap<K, V> implements Iterable<KvPair<K, V>>, GcCleanable {
 	/**
 	 * 更新到LRU链表首
 	 * 
-	 * @param node
-	 *            要更新的节点
+	 * @param node 要更新的节点
 	 */
 	protected void putLru(Node<K, V> node) {
 		synchronized (lruLock()) {
@@ -646,8 +643,7 @@ public class LruHashMap<K, V> implements Iterable<KvPair<K, V>>, GcCleanable {
 	/**
 	 * 由LRU表移除
 	 * 
-	 * @param node
-	 *            要由LRU移除的节点
+	 * @param node 要由LRU移除的节点
 	 */
 	protected void removeLru(Node<K, V> node) {
 		synchronized (lruLock()) {
@@ -799,8 +795,7 @@ public class LruHashMap<K, V> implements Iterable<KvPair<K, V>>, GcCleanable {
 	/**
 	 * 计算扩展的阀值
 	 * 
-	 * @param cap
-	 *            表容量
+	 * @param cap 表容量
 	 */
 	protected final int tableSizeFor(int cap) {
 		if (0 == cap) {
@@ -818,10 +813,8 @@ public class LruHashMap<K, V> implements Iterable<KvPair<K, V>>, GcCleanable {
 	/**
 	 * hash表项
 	 * 
-	 * @param <K>
-	 *            键的类型（通常是字串）
-	 * @param <V>
-	 *            值的类型
+	 * @param <K> 键的类型（通常是字串）
+	 * @param <V> 值的类型
 	 * 
 	 * @author liangyi
 	 */

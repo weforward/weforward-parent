@@ -50,8 +50,7 @@ public class GcCleaner implements DestroyableExt {
 	/**
 	 * 注册到全局的Gc控制器
 	 * 
-	 * @param cleanable
-	 *            要注册的清理项
+	 * @param cleanable 要注册的清理项
 	 * @return 加入列表则返回true，返回false表示其已在列表
 	 */
 	public static boolean register(GcCleanable cleanable) {
@@ -61,8 +60,7 @@ public class GcCleaner implements DestroyableExt {
 	/**
 	 * 移除在全局的Gc控制器的项
 	 * 
-	 * @param cleanable
-	 *            要取消的清理项
+	 * @param cleanable 要取消的清理项
 	 * @return 有此项则清除且返回true，否则false
 	 */
 	public static boolean unregister(GcCleanable cleanable) {
@@ -72,8 +70,7 @@ public class GcCleaner implements DestroyableExt {
 	/**
 	 * 尝试等待GC完成
 	 * 
-	 * @param timeout
-	 *            等待超时值（毫秒）
+	 * @param timeout 等待超时值（毫秒）
 	 */
 	public static void waitFor(long timeout) {
 		Thread thread = _Cleaner.m_Thread;
@@ -96,8 +93,8 @@ public class GcCleaner implements DestroyableExt {
 	/**
 	 * GC cleanup后是否还是内存严重不足，要挂起或中止消耗内存的数据加载操作
 	 * 
-	 * @param gc
-	 *            严重不足时是否触发GC
+	 * @param gc 严重不足时是否触发GC
+	 * @return 是不要挂起
 	 */
 	public static boolean isCriticalSuspend(boolean gc) {
 		NameItem state = getMemory().getLevel();
@@ -131,8 +128,7 @@ public class GcCleaner implements DestroyableExt {
 	/**
 	 * 调用System.gc
 	 * 
-	 * @param force
-	 *            若为true直接执行，否则按时间点检查是否调用时间过短
+	 * @param force 若为true直接执行，否则按时间点检查是否调用时间过短
 	 * 
 	 * @return 若距上次调用的时间太短（30秒内）不处理直接返回false，否则调用System.gc后返回true
 	 */
@@ -163,10 +159,8 @@ public class GcCleaner implements DestroyableExt {
 	/**
 	 * 用于很简单地计算缓存的内存量
 	 * 
-	 * @param rate
-	 *            总可用堆内存的百分比（1~80）
-	 * @param max
-	 *            上限（字节数）
+	 * @param rate 总可用堆内存的百分比（1~80）
+	 * @param max  上限（字节数）
 	 * @return 可用于缓存的内存量（字节数）
 	 */
 	public static long calcMemForCache(int rate, long max) {
@@ -196,8 +190,7 @@ public class GcCleaner implements DestroyableExt {
 	/**
 	 * 增加清理项
 	 * 
-	 * @param c
-	 *            清理项
+	 * @param c 清理项
 	 * @return 加入列表则返回true，返回false表示其已在列表
 	 */
 	public boolean add(GcCleanable c) {
@@ -216,8 +209,7 @@ public class GcCleaner implements DestroyableExt {
 	/**
 	 * 删除清理项
 	 * 
-	 * @param c
-	 *            清理项
+	 * @param c 清理项
 	 * @return 有此项则清除且返回true，否则false
 	 */
 	public boolean remove(GcCleanable c) {
@@ -260,8 +252,7 @@ public class GcCleaner implements DestroyableExt {
 	/**
 	 * 主动触发GC的最小间隔
 	 * 
-	 * @param ms
-	 *            间隔（毫秒）
+	 * @param ms 间隔（毫秒）
 	 */
 	public void setInterval(int ms) {
 		m_Interval = ms;
@@ -278,8 +269,8 @@ public class GcCleaner implements DestroyableExt {
 		getMemory().refresh();
 		_Logger.info("****dump** [" + m_Cleanables.size() + "]" + getMemory());
 		int i = 0;
-		for (SinglyLinked.SinglyLinkedNode<WeakReference<GcCleanable>> p = m_Cleanables
-				.getHead(); null != p; p = p.getNext(), i++) {
+		for (SinglyLinked.SinglyLinkedNode<WeakReference<GcCleanable>> p = m_Cleanables.getHead(); null != p; p = p
+				.getNext(), i++) {
 			// if(null==cc) continue;
 			GcCleanable c = p.value.get();
 			if (null == c) {
@@ -297,8 +288,7 @@ public class GcCleaner implements DestroyableExt {
 	}
 
 	protected GcCleaner() {
-		m_Interval = NumberUtil.toInt(
-				System.getProperty("cn.weforward.common.util.GcCleaner.interval", null),
+		m_Interval = NumberUtil.toInt(System.getProperty("cn.weforward.common.util.GcCleaner.interval", null),
 				5 * 60 * 1000);
 		init();
 		Shutdown.register(this);
@@ -326,9 +316,8 @@ public class GcCleaner implements DestroyableExt {
 							gcSignal = new SoftReference<Object>(new GcSignal(), m_ReferenceQueue);
 							gcSignalTick = GcSignal.getTicker();
 							if (_Logger.isInfoEnabled()) {
-								_Logger.info("{GcSignal-reinit:" + Hex.toHex(gcSignal.hashCode())
-										+ ",cleanables:" + m_Cleanables.size() + ",memory:"
-										+ getMemory() + "}");
+								_Logger.info("{GcSignal-reinit:" + Hex.toHex(gcSignal.hashCode()) + ",cleanables:"
+										+ m_Cleanables.size() + ",memory:" + getMemory() + "}");
 							}
 							// 创建后先等30秒
 							ret = m_ReferenceQueue.remove(30 * 1000);
@@ -360,9 +349,8 @@ public class GcCleaner implements DestroyableExt {
 								// gcSignal才创建不到60秒就要释放，内存太紧张了，可能需要主动触发FullGC
 								boolean fullGc = (GcSignal.getTicker() < gcSignalTick + 60);
 								if (_Logger.isInfoEnabled()) {
-									_Logger.info("GcSignal-signaled:" + Hex.toHex(ret.hashCode())
-											+ ",tick:" + (GcSignal.getTicker() - gcSignalTick)
-											+ "}");
+									_Logger.info("GcSignal-signaled:" + Hex.toHex(ret.hashCode()) + ",tick:"
+											+ (GcSignal.getTicker() - gcSignalTick) + "}");
 								}
 
 								// 计算POLICY_xxx
@@ -380,14 +368,13 @@ public class GcCleaner implements DestroyableExt {
 								}
 							} else {
 								// 不是当前的gcSignal？
-								_Logger.error("{GcSignal-unexpect:" + Hex.toHex(ret.hashCode())
-										+ ",ret:" + gcSignal + "}");
+								_Logger.error(
+										"{GcSignal-unexpect:" + Hex.toHex(ret.hashCode()) + ",ret:" + gcSignal + "}");
 								cleanup();
 							}
 						} else {
 							if (_Logger.isInfoEnabled()) {
-								_Logger.info("{GcSignal-idel:" + gcSignal + ",cleanables:"
-										+ m_Cleanables.size() + "}");
+								_Logger.info("{GcSignal-idel:" + gcSignal + ",cleanables:" + m_Cleanables.size() + "}");
 							}
 							// 空闲周期清理
 							cleanup();
@@ -395,8 +382,8 @@ public class GcCleaner implements DestroyableExt {
 						// getMemory().refresh();
 						policy = calcPolicy();
 					} catch (InterruptedException e) {
-						_Logger.info("{GcSignal-interrupt:" + gcSignal + ",cleanables:"
-								+ m_Cleanables.size() + ",memory:" + getMemory() + "}");
+						_Logger.info("{GcSignal-interrupt:" + gcSignal + ",cleanables:" + m_Cleanables.size()
+								+ ",memory:" + getMemory() + "}");
 						break;
 					} catch (Throwable e) {
 						// 若是内存不足够，别指望能输出日志添乱啊
@@ -407,8 +394,8 @@ public class GcCleaner implements DestroyableExt {
 				}
 				m_Thread = null;
 				if (_Logger.isInfoEnabled()) {
-					_Logger.info("{GcSignal-destroy:" + gcSignal + ",cleanables:"
-							+ m_Cleanables.size() + ",memory:" + getMemory() + "}");
+					_Logger.info("{GcSignal-destroy:" + gcSignal + ",cleanables:" + m_Cleanables.size() + ",memory:"
+							+ getMemory() + "}");
 				}
 			}
 		};
@@ -448,14 +435,15 @@ public class GcCleaner implements DestroyableExt {
 	private void log(int policy) {
 		if (policy < GcCleanable.POLICY_LOW) {
 			if (_Logger.isInfoEnabled()) {
-				_Logger.info("{GcSignal-cleanup:" + m_Cleanables.size() + ",state:IDLE" + ",memory:"
-						+ getMemory() + "}");
+				_Logger.info(
+						"{GcSignal-cleanup:" + m_Cleanables.size() + ",state:IDLE" + ",memory:" + getMemory() + "}");
 			}
 		} else if (_Logger.isWarnEnabled()) {
-			_Logger.warn("{GcSignal-cleanup:" + m_Cleanables.size() + ",state:"
-					+ ((GcCleanable.POLICY_CRITICAL == policy) ? "CRITICAL"
-							: ((GcCleanable.POLICY_LOW == policy) ? "LOW" : "IDLE"))
-					+ ",memory:" + getMemory() + "}");
+			_Logger.warn(
+					"{GcSignal-cleanup:" + m_Cleanables.size() + ",state:"
+							+ ((GcCleanable.POLICY_CRITICAL == policy) ? "CRITICAL"
+									: ((GcCleanable.POLICY_LOW == policy) ? "LOW" : "IDLE"))
+							+ ",memory:" + getMemory() + "}");
 		}
 	}
 
@@ -487,14 +475,13 @@ public class GcCleaner implements DestroyableExt {
 	/**
 	 * 对注册的GcCleanable表执行onGcCleanup
 	 * 
-	 * @param policy
-	 *            传给onGcCleanup的POLICY_xxx
+	 * @param policy 传给onGcCleanup的POLICY_xxx
 	 * @return 执行后发现的空项数
 	 */
 	public int cleanup(int policy) {
 		int nilCount = 0;
-		for (SinglyLinked.SinglyLinkedNode<WeakReference<GcCleanable>> p = m_Cleanables
-				.getHead(); null != p; p = p.getNext()) {
+		for (SinglyLinked.SinglyLinkedNode<WeakReference<GcCleanable>> p = m_Cleanables.getHead(); null != p; p = p
+				.getNext()) {
 			GcCleanable c = p.value.get();
 			if (null == c) {
 				++nilCount;
@@ -563,8 +550,7 @@ public class GcCleaner implements DestroyableExt {
 	@Override
 	public String toString() {
 		getMemory().refresh();
-		return "{mem:" + getMemory() + ",lastGc:"
-				+ ((System.currentTimeMillis() - m_LastSystemGc) / 1000) + ",interval:" + m_Interval
-				+ ",cleanables:" + m_Cleanables.size() + ",thread:" + m_Thread + "}";
+		return "{mem:" + getMemory() + ",lastGc:" + ((System.currentTimeMillis() - m_LastSystemGc) / 1000)
+				+ ",interval:" + m_Interval + ",cleanables:" + m_Cleanables.size() + ",thread:" + m_Thread + "}";
 	}
 }

@@ -23,10 +23,9 @@ public interface OutputStreamObserve {
 	/**
 	 * 指定观察者
 	 * 
-	 * @param observer
-	 *            观察者
+	 * @param observer 观察者
 	 * @return 之前的观察者
-	 * @throws IOException
+	 * @throws IOException IO异常时抛出
 	 */
 	public OutputStream setObserver(OutputStream observer) throws IOException;
 }

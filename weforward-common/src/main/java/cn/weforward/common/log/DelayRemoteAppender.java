@@ -152,24 +152,40 @@ public class DelayRemoteAppender extends AppenderBase<ILoggingEvent> implements 
 		m_MaxSupport = max;
 	}
 
-	/** 访问帐号 */
+	/**
+	 * 访问帐号
+	 * 
+	 * @param name 帐号名
+	 */
 	public void setUserName(String name) {
 		m_UserName = name;
 		m_Authorization = null;
 	}
 
-	/** 访问密码 */
+	/**
+	 * 访问密码
+	 * 
+	 * @param password 密码
+	 */
 	public void setPassword(String password) {
 		m_Password = password;
 		m_Authorization = null;
 	}
 
-	/** 连接超时值（毫秒） */
+	/**
+	 * 连接超时值（毫秒）
+	 * 
+	 * @param t 时间
+	 */
 	public void setConnectTimeout(int t) {
 		m_ConnectTimeout = t;
 	}
 
-	/** 读/等待结果超时值（毫秒） */
+	/**
+	 * 读/等待结果超时值（毫秒）
+	 * 
+	 * @param t 时间
+	 */
 	public void setReadTimeout(int t) {
 		m_ReadTimeout = t;
 	}

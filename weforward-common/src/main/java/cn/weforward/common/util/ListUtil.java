@@ -27,7 +27,7 @@ public final class ListUtil {
 	/**
 	 * 列表是否为空
 	 * 
-	 * @param list
+	 * @param list 列表
 	 * @return 为空返回true
 	 */
 	public static boolean isEmpty(List<?> list) {
@@ -37,7 +37,8 @@ public final class ListUtil {
 	/**
 	 * 反转list
 	 * 
-	 * @param list
+	 * @param <E>  列表项
+	 * @param list 列表
 	 * @return 反转后的列表
 	 */
 	public static <E> List<E> reverse(List<E> list) {
@@ -50,8 +51,8 @@ public final class ListUtil {
 	/**
 	 * 安全的转换成list
 	 * 
-	 * @param <E>
-	 * @param list
+	 * @param <E>  列表项
+	 * @param list 列表
 	 * @return 转换后的列表
 	 */
 	public static <E> List<E> toList(List<E> list) {
@@ -64,7 +65,8 @@ public final class ListUtil {
 	/**
 	 * 遍历ResultPage
 	 * 
-	 * @param rp
+	 * @param <E> 列表项
+	 * @param rp  结果集
 	 * @return 转换后的list
 	 */
 	public static <E> List<E> toList(ResultPage<E> rp) {
@@ -81,8 +83,8 @@ public final class ListUtil {
 	/**
 	 * 当list不包含obj时添加
 	 * 
-	 * @param list
-	 * @param obj
+	 * @param list 列表
+	 * @param obj  列表项
 	 */
 	public static <E> void add(List<E> list, E obj) {
 		if (!list.contains(obj)) {
@@ -93,8 +95,9 @@ public final class ListUtil {
 	/**
 	 * 将list2添加到list1中（当list1不包含该项时）
 	 * 
-	 * @param list1
-	 * @param list2
+	 * @param <E>   列表项
+	 * @param list1 列表1
+	 * @param list2 列表2
 	 */
 	public static <E> void addAll(List<E> list1, List<E> list2) {
 		for (E obj : list2) {
@@ -223,11 +226,11 @@ public final class ListUtil {
 	/**
 	 * 对有序的list进行二分查找
 	 * 
-	 * @param <E>
-	 * @param <K>
-	 * @param list
-	 * @param key
-	 * @param c
+	 * @param <E>  列表项
+	 * @param <K>  关键字
+	 * @param list 列表
+	 * @param key  关键字
+	 * @param c    比较器
 	 * @return 当找到<code>key</code>时，返回对应的下标；否则返回 <tt>(-(<i>插入点</i>) - 1)</tt>
 	 */
 	public static <E, K> int binarySearch(List<? extends E> list, K key, ComparatorExt<? super E, K> c) {

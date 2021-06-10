@@ -65,6 +65,9 @@ public abstract class Timestamp {
 
 	/**
 	 * 取（全局的）时间戳生成器
+	 * 
+	 * @param policy 策略
+	 * @return 时间戳生成器
 	 */
 	public static Timestamp getInstance(int policy) {
 		if (POLICY_CAS == policy) {
@@ -85,8 +88,7 @@ public abstract class Timestamp {
 	/**
 	 * 取得（自1970后的）毫秒数的基准时间，如 new Date(Timestamp.getTimestamp(ts))
 	 * 
-	 * @param v
-	 *            时间戳
+	 * @param v 时间戳
 	 * @return 毫秒为单位的时间
 	 */
 	final static public long getTime(long v) {
@@ -96,8 +98,7 @@ public abstract class Timestamp {
 	/**
 	 * 取基准时间及补充序号位
 	 * 
-	 * @param v
-	 *            时间戳
+	 * @param v 时间戳
 	 * @return 基准时间及补充序号所占位
 	 */
 	final static public long getTimeBits(long v) {
@@ -107,8 +108,7 @@ public abstract class Timestamp {
 	/**
 	 * 取得补充序数
 	 * 
-	 * @param v
-	 *            时间戳
+	 * @param v 时间戳
 	 * @return 补充序数
 	 */
 	final static public int getOrdinal(long v) {
@@ -118,8 +118,7 @@ public abstract class Timestamp {
 	/**
 	 * 取得服务器ID
 	 * 
-	 * @param v
-	 *            时间戳
+	 * @param v 时间戳
 	 * @return 服务器ID
 	 */
 	final static public int getServerId(long v) {
@@ -129,10 +128,8 @@ public abstract class Timestamp {
 	/**
 	 * 检查标记位
 	 * 
-	 * @param v
-	 *            时间戳
-	 * @param mark
-	 *            要检查的标记位 MARK_xxx
+	 * @param v    时间戳
+	 * @param mark 要检查的标记位 MARK_xxx
 	 * @return 是则返回true
 	 */
 	final static public boolean isMark(long v, long mark) {
@@ -142,12 +139,9 @@ public abstract class Timestamp {
 	/**
 	 * 合成时间戳
 	 * 
-	 * @param t
-	 *            毫秒为单位的时间
-	 * @param ordinal
-	 *            补充序数（0～255）
-	 * @param serverId
-	 *            服务器ID（0～255）
+	 * @param t        毫秒为单位的时间
+	 * @param ordinal  补充序数（0～255）
+	 * @param serverId 服务器ID（0～255）
 	 * @return 时间戳
 	 */
 	final static public long getTimestamp(long t, int ordinal, int serverId) {
@@ -160,8 +154,7 @@ public abstract class Timestamp {
 	/**
 	 * 去除时间戳中的标记位
 	 * 
-	 * @param timestamp
-	 *            时间戳
+	 * @param timestamp 时间戳
 	 * @return 不包含标记位的时间戳
 	 */
 	final static public long unmark(long timestamp) {
@@ -171,8 +164,7 @@ public abstract class Timestamp {
 	/**
 	 * 生成时间戳
 	 * 
-	 * @param serverId
-	 *            服务器ID（0～255）
+	 * @param serverId 服务器ID（0～255）
 	 * @return 时间戳
 	 */
 	public abstract long next(int serverId);
@@ -227,8 +219,7 @@ public abstract class Timestamp {
 				t = v + 1;
 				m = (m_Datum + MAX_INTERVAL);
 				if (t > m) {
-					throw new OverflowException(
-							"在短时（" + TIME_TICKS + "秒）内生成太多时间戳：" + (t - m_Datum));
+					throw new OverflowException("在短时（" + TIME_TICKS + "秒）内生成太多时间戳：" + (t - m_Datum));
 				}
 				if (m_LastStamp.compareAndSet(v, t)) {
 					// break;

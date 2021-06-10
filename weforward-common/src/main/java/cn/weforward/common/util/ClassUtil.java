@@ -49,9 +49,9 @@ public class ClassUtil {
 	/**
 	 * 根据名称加载类
 	 * 
-	 * @param clazz
+	 * @param clazz 类F
 	 * @return 类对象
-	 * @throws ClassNotFoundException
+	 * @throws ClassNotFoundException 找不到类时抛出
 	 */
 	public static Class<?> forName(String clazz) throws ClassNotFoundException {
 		return Class.forName(clazz, true, getDefaultClassLoader());
@@ -83,7 +83,8 @@ public class ClassUtil {
 	/**
 	 * 取得某个接口下所有实现这个接口的类
 	 * 
-	 * @throws IOException
+	 * @param c 类
+	 * @throws IOException IO异常时抛出
 	 */
 	public static List<Class<?>> getAllClassByInterface(Class<?> c) throws IOException {
 		List<Class<?>> returnClassList = null;
@@ -110,6 +111,10 @@ public class ClassUtil {
 
 	/**
 	 * 取得某一类所在包的所有类名 不含迭代
+	 * 
+	 * @param classLocation 类位置
+	 * @param packageName   包名
+	 * @return 所在包的所有类名
 	 */
 	public static String[] getPackageAllClassName(String classLocation, String packageName) {
 		// 将packageName分解
@@ -130,9 +135,8 @@ public class ClassUtil {
 	/**
 	 * 从包package中获取所有的Class
 	 * 
-	 * @param packageName
+	 * @param packageName 包名
 	 * @return 类对象列表
-	 * @throws IOException
 	 */
 	public static List<Class<?>> getClasses(String packageName) {
 		// 第一个class类的集合
@@ -223,10 +227,10 @@ public class ClassUtil {
 	/**
 	 * 以文件的形式来获取包下的所有Class
 	 * 
-	 * @param packageName
-	 * @param packagePath
-	 * @param recursive
-	 * @param classes
+	 * @param packageName 包名
+	 * @param packagePath 包路径
+	 * @param recursive   是否递归查
+	 * @param classes     类列表
 	 */
 	public static void findAndAddClassesInPackageByFile(String packageName, String packagePath, final boolean recursive,
 			List<Class<?>> classes) {
@@ -265,8 +269,8 @@ public class ClassUtil {
 	/**
 	 * 查找类
 	 * 
-	 * @param type
-	 * @param index
+	 * @param type  类型
+	 * @param index 位置
 	 * @return 类对象
 	 */
 	public static Class<?> find(Type type, int index) {

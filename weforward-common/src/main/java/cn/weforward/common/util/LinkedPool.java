@@ -23,8 +23,7 @@ import cn.weforward.common.sys.StackTracer;
 /**
  * 使用链表结构的资源池管理器
  * 
- * @param <E>
- *            放入池中的资源类型
+ * @param <E> 放入池中的资源类型
  * @author liangyi
  * 
  */
@@ -77,10 +76,8 @@ public class LinkedPool<E> {
 	/**
 	 * 构造池
 	 * 
-	 * @param maxSize
-	 *            池的最大项
-	 * @param name
-	 *            指定池的名称
+	 * @param maxSize 池的最大项
+	 * @param name    指定池的名称
 	 */
 	public LinkedPool(int maxSize, String name) {
 		m_Name = (null == name) ? "" : name;
@@ -91,6 +88,8 @@ public class LinkedPool<E> {
 
 	/**
 	 * 名称
+	 * 
+	 * @return 名称
 	 */
 	public String getName() {
 		return m_Name;
@@ -174,8 +173,7 @@ public class LinkedPool<E> {
 	/**
 	 * 关闭资源项
 	 *
-	 * @param element
-	 *            要关闭的项
+	 * @param element 要关闭的项
 	 */
 	protected void onCloseElement(Element<E> element) {
 	}
@@ -183,10 +181,8 @@ public class LinkedPool<E> {
 	/**
 	 * 项空闲
 	 *
-	 * @param element
-	 *            空闲的项
-	 * @param idle
-	 *            空闲值
+	 * @param element 空闲的项
+	 * @param idle    空闲值
 	 */
 	protected void onIdle(Element<E> element, int idle) {
 		if (_Logger.isWarnEnabled()) {
@@ -226,18 +222,16 @@ public class LinkedPool<E> {
 	/**
 	 * 资源项占用时间过长
 	 *
-	 * @param element
-	 *            耗时的资源项
-	 * @param useup
-	 *            使用时间（毫秒）
+	 * @param element 耗时的资源项
+	 * @param useup   使用时间（毫秒）
 	 */
 	protected void onLongtime(Element<E> element, int useup) {
 		if (_Logger.isWarnEnabled()) {
 			// 输出状态
 			Thread thread = element.thread;
 			StringBuilder sb = new StringBuilder(128);
-			sb.append('[').append(m_Name).append(']').append(thread).append("占资源时间太长(")
-					.append(useup).append("ms)--->\n");
+			sb.append('[').append(m_Name).append(']').append(thread).append("占资源时间太长(").append(useup)
+					.append("ms)--->\n");
 			// element.routing.dump(sb);
 			if (null != thread) {
 				// 输出其调用堆栈
@@ -250,6 +244,8 @@ public class LinkedPool<E> {
 
 	/**
 	 * 池的最大项数
+	 * 
+	 * @return 项数
 	 */
 	public int getMaxSize() {
 		return m_MaxSize;
@@ -258,13 +254,11 @@ public class LinkedPool<E> {
 	/**
 	 * 设置最大排队项数（=池的最大项数+等待的项数）
 	 *
-	 * @param size
-	 *            最大排队数，必须不小于QueueMax
+	 * @param size 最大排队数，必须不小于QueueMax
 	 */
 	synchronized public void setQueueLengthMax(int size) {
 		if (size < getMaxSize()) {
-			throw new IllegalArgumentException(
-					"size必须大于或等于maxSize(" + getMaxSize() + "), 但它=" + size);
+			throw new IllegalArgumentException("size必须大于或等于maxSize(" + getMaxSize() + "), 但它=" + size);
 		}
 		m_QueueLengthMax = size;
 	}
@@ -276,8 +270,7 @@ public class LinkedPool<E> {
 	/**
 	 * 在池中取得空闲项的排队超时值
 	 *
-	 * @param mills
-	 *            超时值（单位为毫秒），若=0为不等待
+	 * @param mills 超时值（单位为毫秒），若=0为不等待
 	 */
 	synchronized public void setQueueTimeout(int mills) {
 		if (mills < 0) {
@@ -293,8 +286,7 @@ public class LinkedPool<E> {
 	/**
 	 * 设置池中项空闲时间检查
 	 *
-	 * @param seconds
-	 *            空闲时间（单位为秒），若=0为不检查空闲
+	 * @param seconds 空闲时间（单位为秒），若=0为不检查空闲
 	 */
 	synchronized public void setIdle(int seconds) {
 		if (seconds < 0) {
@@ -316,8 +308,7 @@ public class LinkedPool<E> {
 	/**
 	 * 使用池中项的（检查）超时值
 	 *
-	 * @param seconds
-	 *            超时值（单位为秒），若为0则不检查
+	 * @param seconds 超时值（单位为秒），若为0则不检查
 	 */
 	synchronized public void setLongtime(int seconds) {
 		if (seconds < 0) {
@@ -344,6 +335,8 @@ public class LinkedPool<E> {
 
 	/**
 	 * 在等待及处理中的项数
+	 * 
+	 * @return 项数
 	 */
 	public int getInQueue() {
 		return m_InQueue.get();
@@ -355,6 +348,8 @@ public class LinkedPool<E> {
 
 	/**
 	 * 使用中的项数
+	 * 
+	 * @return 项数
 	 */
 	public int getInUseCount() {
 		return m_InUseCount;
@@ -386,11 +381,10 @@ public class LinkedPool<E> {
 		try {
 			if (count > m_QueueLengthMax) {
 				if (m_QueueLengthMax > 0) {
-					_Logger.warn("等待数过多 {n:" + m_Name + ",q-in:" + count + ",q-len:"
-							+ getQueueLengthMax() + ",thread:" + Thread.currentThread() + "}");
-				} else {
-					_Logger.warn("池已关停 {n:" + m_Name + ",q-in:" + count + ",thread:"
+					_Logger.warn("等待数过多 {n:" + m_Name + ",q-in:" + count + ",q-len:" + getQueueLengthMax() + ",thread:"
 							+ Thread.currentThread() + "}");
+				} else {
+					_Logger.warn("池已关停 {n:" + m_Name + ",q-in:" + count + ",thread:" + Thread.currentThread() + "}");
 				}
 				return null;
 			}
@@ -404,8 +398,7 @@ public class LinkedPool<E> {
 						// 动态创建项
 						element = new Element<E>();
 					} else if (m_QueueTimeout <= 0) {
-						_Logger.warn("无空闲项 {n:" + m_Name + ",c:" + count + ",thread:"
-								+ Thread.currentThread() + "}");
+						_Logger.warn("无空闲项 {n:" + m_Name + ",c:" + count + ",thread:" + Thread.currentThread() + "}");
 						return null;
 					} else {
 						// 只好等了
@@ -414,8 +407,8 @@ public class LinkedPool<E> {
 							// 等待
 							long v = (ts - System.currentTimeMillis());
 							if (v <= 0) {
-								_Logger.warn("等待超时 {n:" + m_Name + ",c:" + count + ",thread:"
-										+ Thread.currentThread() + "}");
+								_Logger.warn("等待超时 {n:" + m_Name + ",c:" + count + ",thread:" + Thread.currentThread()
+										+ "}");
 								return null;
 							}
 							this.wait(v);
@@ -445,8 +438,8 @@ public class LinkedPool<E> {
 			element = null;
 			return resource;
 		} catch (InterruptedException e) {
-			_Logger.error(StackTracer.printStackTrace(e,
-					(new StringBuilder(m_Name)).append("进入失败：").append(Thread.currentThread()))
+			_Logger.error(StackTracer
+					.printStackTrace(e, (new StringBuilder(m_Name)).append("进入失败：").append(Thread.currentThread()))
 					.toString());
 			// Thread.currentThread().interrupt();
 			throw new AbortException("等待进入时中断" + this);
@@ -465,8 +458,7 @@ public class LinkedPool<E> {
 	/**
 	 * 把用完的资源放回池中
 	 *
-	 * @param resource
-	 *            用完的资源项
+	 * @param resource 用完的资源项
 	 */
 	public void offer(E resource) {
 		offer(resource, false);
@@ -475,10 +467,8 @@ public class LinkedPool<E> {
 	/**
 	 * 把用完的资源放回池
 	 *
-	 * @param resource
-	 *            用完的资源项
-	 * @param empty
-	 *            是否在池中清空此项
+	 * @param resource 用完的资源项
+	 * @param empty    是否在池中清空此项
 	 */
 	public void offer(E resource, boolean empty) {
 		if (null == resource) {
@@ -523,8 +513,7 @@ public class LinkedPool<E> {
 	/**
 	 * 放入正在使用表
 	 *
-	 * @param element
-	 *            准备使用的资源项
+	 * @param element 准备使用的资源项
 	 */
 	synchronized private void use(Element<E> element) {
 		element.inUse();
@@ -535,8 +524,7 @@ public class LinkedPool<E> {
 	/**
 	 * 由正使用表释放
 	 * 
-	 * @param element
-	 *            不占用的资源项
+	 * @param element 不占用的资源项
 	 */
 	synchronized private void free(Element<E> element) {
 		if (null == m_InUseChain) {
@@ -563,9 +551,9 @@ public class LinkedPool<E> {
 	}
 
 	public StringBuilder toString(StringBuilder sb) {
-		sb.append("{n:").append(getName()).append(",c:").append(getInUseCount()).append(",max:")
-				.append(getMaxSize()).append(",in-q:").append(m_InQueue.get()).append(",len-q:")
-				.append(m_QueueLengthMax).append(",t-o:").append(m_QueueTimeout);
+		sb.append("{n:").append(getName()).append(",c:").append(getInUseCount()).append(",max:").append(getMaxSize())
+				.append(",in-q:").append(m_InQueue.get()).append(",len-q:").append(m_QueueLengthMax).append(",t-o:")
+				.append(m_QueueTimeout);
 		if (m_CreateTimes > 0) {
 			sb.append(",c-t:").append(getCreateTimes());
 		}
@@ -612,8 +600,7 @@ public class LinkedPool<E> {
 	 * 
 	 * @author liangyi
 	 * 
-	 * @param <E>
-	 *            池中的项
+	 * @param <E> 池中的项
 	 */
 	public static class Element<E> {
 		/** 下一项 */
@@ -677,6 +664,8 @@ public class LinkedPool<E> {
 
 		/**
 		 * 使用次数
+		 * 
+		 * @return 次数
 		 */
 		public int getTimes() {
 			return times;
@@ -684,6 +673,8 @@ public class LinkedPool<E> {
 
 		/**
 		 * 当次使用的时间
+		 * 
+		 * @return 使用时间
 		 */
 		public int getUseup() {
 			if (0 == startTime) {
@@ -694,6 +685,8 @@ public class LinkedPool<E> {
 
 		/**
 		 * 使用的线程
+		 * 
+		 * @return 线程
 		 */
 		public Thread getThread() {
 			return thread;
@@ -701,6 +694,8 @@ public class LinkedPool<E> {
 
 		/**
 		 * 池中的资源项
+		 * 
+		 * @return 资源项
 		 */
 		public E getResource() {
 			return resource;
@@ -708,6 +703,8 @@ public class LinkedPool<E> {
 
 		/**
 		 * 状态 STATE_xxx
+		 * 
+		 * @return 状态
 		 */
 		public int getState() {
 			return state;

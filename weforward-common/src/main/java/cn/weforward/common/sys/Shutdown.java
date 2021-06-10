@@ -44,8 +44,7 @@ public class Shutdown {
 	/**
 	 * 注册Destroyable
 	 * 
-	 * @param destroyable
-	 *            实现可销毁接口的对象
+	 * @param destroyable 实现可销毁接口的对象
 	 * @return 若已有此项返回false，否则true
 	 */
 	public static boolean register(Destroyable destroyable) {
@@ -55,8 +54,7 @@ public class Shutdown {
 	/**
 	 * 删除Destroyable注册
 	 * 
-	 * @param destroyable
-	 *            实现可销毁接口的对象
+	 * @param destroyable 实现可销毁接口的对象
 	 * @return 若已有此项且删除返回true，否则false
 	 */
 	public static boolean unregister(Destroyable destroyable) {
@@ -73,8 +71,7 @@ public class Shutdown {
 	/**
 	 * 指定执行最后处理
 	 * 
-	 * @param finalizer
-	 *            最后执行的处理
+	 * @param finalizer 最后执行的处理
 	 */
 	public static void finalizer(Runnable finalizer) {
 		_ShutdownHook.setFinalizer(finalizer);
@@ -82,6 +79,8 @@ public class Shutdown {
 
 	/**
 	 * 顶层的线程组（估计是Main线程的组）
+	 * 
+	 * @return 线程组
 	 */
 	public static ThreadGroup getRootThreadGroup() {
 		ThreadGroup rg = Thread.currentThread().getThreadGroup();
@@ -111,8 +110,8 @@ public class Shutdown {
 				_Logger.info("{shutdown-end:" + Hex.toHex(Shutdown.this.hashCode()) + "}");
 				Runnable finalizer = m_Finalizer;
 				if (null != finalizer) {
-					_Logger.info("{shutdown-finality:" + Hex.toHex(Shutdown.this.hashCode())
-							+ ",finalizer:" + finalizer + "}");
+					_Logger.info("{shutdown-finality:" + Hex.toHex(Shutdown.this.hashCode()) + ",finalizer:" + finalizer
+							+ "}");
 					finalizer.run();
 				}
 			}
@@ -126,8 +125,7 @@ public class Shutdown {
 	/**
 	 * 指定执行最后处理
 	 * 
-	 * @param finalizer
-	 *            最后执行的处理
+	 * @param finalizer 最后执行的处理
 	 */
 	public void setFinalizer(Runnable finalizer) {
 		m_Finalizer = finalizer;
@@ -136,8 +134,7 @@ public class Shutdown {
 	/**
 	 * 增加
 	 * 
-	 * @param destroyable
-	 *            实现可销毁接口的对象
+	 * @param destroyable 实现可销毁接口的对象
 	 * @return 若已有此项返回false，否则true
 	 */
 	public boolean add(Destroyable destroyable) {
@@ -154,8 +151,8 @@ public class Shutdown {
 
 			m_Destroyables.add(new WeakReference<Destroyable>(destroyable));
 			if (_Logger.isTraceEnabled()) {
-				_Logger.trace("{add:" + Hex.toHex(hashCode()) + ",size:" + m_Destroyables.size()
-						+ ",destroyable:" + destroyable.hashCode() + "}");
+				_Logger.trace("{add:" + Hex.toHex(hashCode()) + ",size:" + m_Destroyables.size() + ",destroyable:"
+						+ destroyable.hashCode() + "}");
 			}
 			return true;
 		}
@@ -164,8 +161,7 @@ public class Shutdown {
 	/**
 	 * 删除
 	 * 
-	 * @param destroyable
-	 *            实现可销毁接口的对象
+	 * @param destroyable 实现可销毁接口的对象
 	 * @return 若已有此项且删除返回true，否则false
 	 */
 	public boolean remove(Destroyable destroyable) {
@@ -179,9 +175,8 @@ public class Shutdown {
 					// 找到了
 					m_Destroyables.remove(i);
 					if (_Logger.isTraceEnabled()) {
-						_Logger.trace("{remove:" + Hex.toHex(hashCode()) + ",size:"
-								+ m_Destroyables.size() + ",destroyable:" + destroyable.hashCode()
-								+ "}");
+						_Logger.trace("{remove:" + Hex.toHex(hashCode()) + ",size:" + m_Destroyables.size()
+								+ ",destroyable:" + destroyable.hashCode() + "}");
 					}
 					return true;
 				}
@@ -196,14 +191,12 @@ public class Shutdown {
 	private void cleanup() {
 		synchronized (m_Destroyables) {
 			try {
-				_Logger.info("{signal:" + Hex.toHex(hashCode()) + ",size:" + m_Destroyables.size()
-						+ "}");
+				_Logger.info("{signal:" + Hex.toHex(hashCode()) + ",size:" + m_Destroyables.size() + "}");
 			} catch (Throwable e) {
 			}
 
 			// 用于存放执行destroySignal的项，并在最后执行destroy
-			ArrayList<DestroyableExt> signals = new ArrayList<DestroyableExt>(
-					m_Destroyables.size());
+			ArrayList<DestroyableExt> signals = new ArrayList<DestroyableExt>(m_Destroyables.size());
 			ArrayList<Destroyable> destroy = new ArrayList<Destroyable>(m_Destroyables.size());
 
 			// 第一遍执行DestroyableExt的destroySignal
@@ -235,8 +228,8 @@ public class Shutdown {
 			// 第二遍执行非DestroyableExt的destroy
 			if (destroy.size() > 0) {
 				try {
-					_Logger.info("{destroy:" + Hex.toHex(hashCode()) + ",count:" + destroy.size()
-							+ ",size:" + m_Destroyables.size() + "}");
+					_Logger.info("{destroy:" + Hex.toHex(hashCode()) + ",count:" + destroy.size() + ",size:"
+							+ m_Destroyables.size() + "}");
 					// _Logger.info("#" + Thread.currentThread().hashCode() +
 					// " destroy general... "
 					// + m_Destroyables.size());
@@ -275,8 +268,8 @@ public class Shutdown {
 			long stopTime = System.currentTimeMillis() + (4 * 60 * 1000L);
 			for (int t = 0; System.currentTimeMillis() < stopTime && t < 10000; t++) {
 				try {
-					_Logger.info("{signal:" + Hex.toHex(hashCode()) + ",loop:" + t + ",size:"
-							+ loop.size() + ",remain:" + remain.size() + "}");
+					_Logger.info("{signal:" + Hex.toHex(hashCode()) + ",loop:" + t + ",size:" + loop.size() + ",remain:"
+							+ remain.size() + "}");
 				} catch (Throwable e) {
 				}
 				remain.clear();
@@ -296,8 +289,9 @@ public class Shutdown {
 						if (!(e instanceof OutOfMemoryError)) {
 							// _Logger.error("destroySignal loop failed:" + de,
 							// e);
-							_Logger.error("{signal:" + Hex.toHex(hashCode()) + ",fail:" + de
-									+ ",size:" + loop.size() + "}", e);
+							_Logger.error(
+									"{signal:" + Hex.toHex(hashCode()) + ",fail:" + de + ",size:" + loop.size() + "}",
+									e);
 						}
 					}
 				}
@@ -333,8 +327,7 @@ public class Shutdown {
 					_Logger.info("{final:" + Hex.toHex(hashCode()) + "}");
 				} else {
 					StringBuilder sb = new StringBuilder(256);
-					sb.append("{force:").append(Hex.toHex(hashCode())).append(",size:")
-							.append(signals.size());
+					sb.append("{force:").append(Hex.toHex(hashCode())).append(",size:").append(signals.size());
 					sb.append(",remain-").append(remain.size()).append(":[\n");
 					for (int i = 0; i < remain.size(); i++) {
 						if (i > 0) {
@@ -365,9 +358,7 @@ public class Shutdown {
 					o.destroy();
 				} catch (Throwable e) {
 					if (!(e instanceof OutOfMemoryError)) {
-						_Logger.error(
-								"{destroy-final:" + Hex.toHex(hashCode()) + ",fail:{" + o + "}}",
-								e);
+						_Logger.error("{destroy-final:" + Hex.toHex(hashCode()) + ",fail:{" + o + "}}", e);
 					}
 				}
 			}
@@ -380,8 +371,8 @@ public class Shutdown {
 	static public final Runnable PID_FILE_FINALIZER = new Runnable() {
 		@Override
 		public void run() {
-			String tmpDir = System.getProperty("java.io.tmpdir", "/tmp") + File.separatorChar
-					+ "wf-down" + File.separatorChar;
+			String tmpDir = System.getProperty("java.io.tmpdir", "/tmp") + File.separatorChar + "wf-down"
+					+ File.separatorChar;
 			try {
 				File tmp = new File(tmpDir);
 				tmp.mkdirs();

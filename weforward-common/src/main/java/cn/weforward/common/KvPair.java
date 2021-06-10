@@ -17,19 +17,21 @@ import java.util.Map.Entry;
  * 
  * @author liangyi
  * 
- * @param <K>
- *            Key
- * @param <V>
- *            Value
+ * @param <K> 关键字
+ * @param <V> 关键字对应的值
  */
 public interface KvPair<K, V> {
 	/**
 	 * Key
+	 * 
+	 * @return 关键字
 	 */
 	public K getKey();
 
 	/**
 	 * Value
+	 * 
+	 * @return 关键字对应的值
 	 */
 	public V getValue();
 

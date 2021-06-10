@@ -72,14 +72,10 @@ public class JsonUtil {
 		/**
 		 * 找到新的JSON节点
 		 * 
-		 * @param value
-		 *            节点值
-		 * @param name
-		 *            节点名称（若根节点或数组项则为空）
-		 * @param depth
-		 *            深度（层）
-		 * @throws JsonParseAbort
-		 *             抛出此异常能中止分析
+		 * @param value 节点值
+		 * @param name  节点名称（若根节点或数组项则为空）
+		 * @param depth 深度（层）
+		 * @throws JsonParseAbort 抛出此异常能中止分析
 		 */
 		void foundNode(JsonNode value, String name, int depth) throws JsonParseAbort;
 	}
@@ -134,12 +130,10 @@ public class JsonUtil {
 	/**
 	 * 由JSON格式流解析为JsonNode
 	 * 
-	 * @param in
-	 *            格式流
-	 * @param listener
-	 *            可选的监听器（可以为null）
+	 * @param in       格式流
+	 * @param listener 可选的监听器（可以为null）
 	 * @return 解析所得的JsonNode
-	 * @throws IOException
+	 * @throws IOException IO异常时抛出
 	 */
 	static public JsonNode parse(JsonInput in, Listener listener) throws IOException {
 		return parse(in, listener, DEFAULT_BUILDER);
@@ -148,17 +142,13 @@ public class JsonUtil {
 	/**
 	 * 由JSON格式流解析为JsonNode
 	 * 
-	 * @param in
-	 *            格式流
-	 * @param listener
-	 *            可选的监听器（可以为null）
-	 * @param builder
-	 *            节点构建器
+	 * @param in       格式流
+	 * @param listener 可选的监听器（可以为null）
+	 * @param builder  节点构建器
 	 * @return 解析所得的JsonNode
-	 * @throws IOException
+	 * @throws IOException IO异常时抛出
 	 */
-	static public JsonNode parse(JsonInput in, Listener listener, NodeBuilder builder)
-			throws IOException {
+	static public JsonNode parse(JsonInput in, Listener listener, NodeBuilder builder) throws IOException {
 		// 找到第一个“{”或“[”符号
 		char ch = skipBlank(in, 100);
 		JsonNode ret = null;
@@ -181,25 +171,14 @@ public class JsonUtil {
 	}
 
 	/**
-	 * 解析Json对象
-	 * 
-	 * @param ctx
-	 *            分析过程环境
-	 * @return 解析得到的JosnObject
-	 * @throws IOException
-	 */
-	/**
 	 * 解析Json节点值
 	 * 
-	 * @param ctx
-	 *            分析过程环境
-	 * @param name
-	 *            节点名称
+	 * @param ctx  分析过程环境
+	 * @param name 节点名称
 	 * @return JSON值（字串、数值、布尔、数组或对象）
-	 * @throws IOException
+	 * @throws IOException IO异常时抛出
 	 */
-	static private Object parseValue(Context ctx, String name, NodeBuilder builder)
-			throws IOException {
+	static private Object parseValue(Context ctx, String name, NodeBuilder builder) throws IOException {
 		char ch, first;
 		StringBuilder valueBuilder = StringBuilderPool._8k.poll();
 		try {
@@ -294,10 +273,9 @@ public class JsonUtil {
 	/**
 	 * 解析Json对象
 	 * 
-	 * @param ctx
-	 *            分析过程环境
+	 * @param ctx 分析过程环境
 	 * @return 解析得到的JosnObject
-	 * @throws IOException
+	 * @throws IOException IO异常时抛出
 	 */
 	static private JsonObject parseObject(Context ctx, NodeBuilder builder) throws IOException {
 		char ch;
@@ -390,10 +368,9 @@ public class JsonUtil {
 	/**
 	 * 解析Json数组
 	 * 
-	 * @param ctx
-	 *            分析过程环境
+	 * @param ctx 分析过程环境
 	 * @return 解析得到的JosnArray
-	 * @throws IOException
+	 * @throws IOException IO异常时抛出
 	 */
 	static private JsonArray parseArray(Context ctx, NodeBuilder builder) throws IOException {
 		char ch;
@@ -519,8 +496,7 @@ public class JsonUtil {
 	/**
 	 * 转换为小写
 	 * 
-	 * @param ch
-	 *            字符
+	 * @param ch 字符
 	 * @return 小写字符
 	 */
 	static private char toLowerCase(char ch) {
@@ -533,10 +509,8 @@ public class JsonUtil {
 	/**
 	 * 忽略大小写比较
 	 * 
-	 * @param str1
-	 *            比较字串
-	 * @param str2
-	 *            被比较字串
+	 * @param str1 比较字串
+	 * @param str2 被比较字串
 	 * @return 是否相同
 	 */
 	static public boolean equalsIgnoreCase(CharSequence str1, CharSequence str2) {
@@ -564,8 +538,7 @@ public class JsonUtil {
 	/**
 	 * 去除后部空格
 	 * 
-	 * @param builder
-	 *            要去除后空格的字串
+	 * @param builder 要去除后空格的字串
 	 */
 	static public void rtrim(StringBuilder builder) {
 		int i = builder.length() - 1;
@@ -578,11 +551,10 @@ public class JsonUtil {
 	/**
 	 * 跳过空格、换行符等
 	 * 
-	 * @param in
-	 *            JSON格式流
-	 * @param limit
-	 *            限制跳过的字符数
-	 * @throws InvalidFormatException
+	 * @param in    JSON格式流
+	 * @param limit 限制跳过的字符数
+	 * @return 字符
+	 * @throws IOException IO异常时抛出
 	 */
 	static public char skipBlank(JsonInput in, int limit) throws IOException {
 		char ch;
@@ -598,8 +570,8 @@ public class JsonUtil {
 	/**
 	 * 是否空白字符（空格、TAB、换行符等）
 	 * 
-	 * @param ch
-	 *            要检查的字符
+	 * @param ch 要检查的字符
+	 * @return 是否为空白字符
 	 */
 	final public static boolean isBlank(char ch) {
 		return ' ' == ch || '\t' == ch || '\r' == ch || '\n' == ch;
@@ -608,10 +580,8 @@ public class JsonUtil {
 	/**
 	 * 格式无效异常
 	 * 
-	 * @param in
-	 *            格式串
-	 * @param pos
-	 *            位置
+	 * @param in  格式串
+	 * @param pos 位置
 	 * @return InvalidFormatException异常
 	 */
 	private static InvalidFormatException illegalFormat(JsonInput in, String errorMsg) {
@@ -631,30 +601,45 @@ public class JsonUtil {
 	/**
 	 * 编码JOSN字串
 	 * 
-	 * any-Unicode-character-except-"-or-\-or- control-character<br/>
-	 * \" \\ \/ \b \f \n \r \t \ u four-hex-digits<br/>
-	 * <br/>
-	 * char = unescaped /<br/>
-	 * escape (<br/>
-	 * %x22 / ; " quotation mark U+0022<br/>
-	 * %x5C / ; \ reverse solidus U+005C<br/>
-	 * %x2F / ; / solidus U+002F<br/>
-	 * %x62 / ; b backspace U+0008<br/>
-	 * %x66 / ; f form feed U+000C<br/>
-	 * %x6E / ; n line feed U+000A<br/>
-	 * %x72 / ; r carriage return U+000D<br/>
-	 * %x74 / ; t tab U+0009<br/>
-	 * %x75 4HEXDIG ) ; uXXXX U+XXXX<br/>
-	 * escape = %x5C ; \<br/>
-	 * quotation-mark = %x22 ; "<br/>
-	 * unescaped = %x20-21 / %x23-5B / %x5D-10FFFF<br/>
+	 * any-Unicode-character-except-"-or-\-or- control-character
+	 * <p>
+	 * \" \\ \/ \b \f \n \r \t \ u four-hex-digits
+	 * <p>
+	 * <p>
+	 * char = unescaped /
+	 * <p>
+	 * escape (
+	 * <p>
+	 * %x22 / ; " quotation mark U+0022
+	 * <p>
+	 * %x5C / ; \ reverse solidus U+005C
+	 * <p>
+	 * %x2F / ; / solidus U+002F
+	 * <p>
+	 * %x62 / ; b backspace U+0008
+	 * <p>
+	 * %x66 / ; f form feed U+000C
+	 * <p>
+	 * %x6E / ; n line feed U+000A
+	 * <p>
+	 * %x72 / ; r carriage return U+000D
+	 * <p>
+	 * %x74 / ; t tab U+0009
+	 * <p>
+	 * %x75 4HEXDIG ) ; uXXXX U+XXXX
+	 * <p>
+	 * escape = %x5C ; \
+	 * <p>
+	 * quotation-mark = %x22 ; "
+	 * <p>
+	 * unescaped = %x20-21 / %x23-5B / %x5D-10FFFF
+	 * <p>
 	 * 
-	 * <url>http://www.ietf.org/rfc/rfc4627.txt?number=4627</url>
+	 * @see <a href="http://www.ietf.org/rfc/rfc4627.txt?number=4627"></a>
 	 * 
-	 * @param string
-	 *            要转义的字串
-	 * @param appender
-	 *            转义后输出的序列器
+	 * @param string   要转义的字串
+	 * @param appender 转义后输出的序列器
+	 * @throws IOException IO异常时抛出
 	 */
 	static public void escape(CharSequence string, Appendable appender) throws IOException {
 		if (isEmpty(string)) {
@@ -688,8 +673,7 @@ public class JsonUtil {
 				appender.append("\\t");
 				break;
 			default:
-				if (0x20 == ch || 0x21 == ch || (ch >= 0x23 && ch <= 0x5B) || ch >= 0x5D
-						|| ch < 0) {
+				if (0x20 == ch || 0x21 == ch || (ch >= 0x23 && ch <= 0x5B) || ch >= 0x5D || ch < 0) {
 					appender.append(ch);
 				} else {
 					// \\uxxxx编码

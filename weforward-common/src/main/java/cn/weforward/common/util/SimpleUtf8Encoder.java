@@ -7,11 +7,13 @@ import java.io.UnsupportedEncodingException;
 import cn.weforward.common.crypto.Hex;
 
 /**
- * 简单的UTF-8编码器。<br/>
- * 根据编码表，直接将UTF-16转为UTF-8，参考：<a href=
- * "https://zh.wikipedia.org/wiki/UTF-16">UTF-16</a>，<a href=
- * "https://zh.wikipedia.org/wiki/UTF-8">UTF-8</a>，<a href=
- * "https://zh.wikipedia.org/wiki/Unicode">Unicode</a>
+ * 简单的UTF-8编码器。
+ * <p>
+ * 根据编码表，直接将UTF-16转为UTF-8，参考：
+ * 
+ * @see <a href="https://zh.wikipedia.org/wiki/UTF-16">UTF-16</a>
+ * @see <a href="https://zh.wikipedia.org/wiki/UTF-8">UTF-8</a>
+ * @see <a href="https://zh.wikipedia.org/wiki/Unicode">Unicode</a>
  * 
  * @author zhangpengji
  *
@@ -45,13 +47,11 @@ public class SimpleUtf8Encoder {
 					throw new UnsupportedEncodingException("不在字符集内\\X" + Hex.toHex16((short) ch));
 				}
 				/*
-				 UTF-8编码规则：
-				 1字节 0x00000000 - 0x0000007F 0xxxxxxx   ANSI码（英文,数字符号）
-				 2字节 0x00000080 - 0x000007FF 110xxxxx 10xxxxxx 
-				 3字节  0x00000800 - 0x0000FFFF 1110xxxx 10xxxxxx 10xxxxxx   中日韩文等编码
-				 4字节  0x00010000 - 0x001FFFFF 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
-				 5字节  0x00200000 - 0x03FFFFFF 111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
-				 6字节   1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+				 * UTF-8编码规则： 1字节 0x00000000 - 0x0000007F 0xxxxxxx ANSI码（英文,数字符号） 2字节 0x00000080
+				 * - 0x000007FF 110xxxxx 10xxxxxx 3字节 0x00000800 - 0x0000FFFF 1110xxxx 10xxxxxx
+				 * 10xxxxxx 中日韩文等编码 4字节 0x00010000 - 0x001FFFFF 11110xxx 10xxxxxx 10xxxxxx
+				 * 10xxxxxx 5字节 0x00200000 - 0x03FFFFFF 111110xx 10xxxxxx 10xxxxxx 10xxxxxx
+				 * 10xxxxxx 6字节 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
 				 */
 				if (ch <= 0x7F) {
 					// ANSI码
@@ -82,11 +82,10 @@ public class SimpleUtf8Encoder {
 										"辅助平面的代理对未按顺序出现(low)：" + Hex.toHex16((short) ch));
 							}
 							/*
-							 * UTF16对U+10000到U+10FFFF的处理过程，以U+10437编码（𐐷）为例:
-							 * 0x10437 减去 0x10000，结果为0x00437，二进制为 0000 0000 0100 0011 0111
-							 * 分割它的上10位值和下10位值（使用二进制）：0000 0000 01 和 00 0011 0111
-							 * 添加 0xD800 到上值，以形成高位：0xD800 + 0x0001 = 0xD801
-							 * 添加 0xDC00 到下值，以形成低位：0xDC00 + 0x0037 = 0xDC37
+							 * UTF16对U+10000到U+10FFFF的处理过程，以U+10437编码（𐐷）为例: 0x10437 减去
+							 * 0x10000，结果为0x00437，二进制为 0000 0000 0100 0011 0111 分割它的上10位值和下10位值（使用二进制）：0000
+							 * 0000 01 和 00 0011 0111 添加 0xD800 到上值，以形成高位：0xD800 + 0x0001 = 0xD801 添加 0xDC00
+							 * 到下值，以形成低位：0xDC00 + 0x0037 = 0xDC37
 							 */
 							// 先把UTF16转回Unicode
 							int u32 = ((0x3FF & ((~0xD800) & hs)) << 10);
@@ -121,13 +120,11 @@ public class SimpleUtf8Encoder {
 			throw new UnsupportedEncodingException("不在字符集内\\X" + Hex.toHex16((short) ch));
 		}
 		/*
-		 UTF-8编码规则：
-		 1字节 0x00000000 - 0x0000007F 0xxxxxxx   ANSI码（英文,数字符号）
-		 2字节 0x00000080 - 0x000007FF 110xxxxx 10xxxxxx 
-		 3字节  0x00000800 - 0x0000FFFF 1110xxxx 10xxxxxx 10xxxxxx   中日韩文等编码
-		 4字节  0x00010000 - 0x001FFFFF 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
-		 5字节  0x00200000 - 0x03FFFFFF 111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
-		 6字节   1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+		 * UTF-8编码规则： 1字节 0x00000000 - 0x0000007F 0xxxxxxx ANSI码（英文,数字符号） 2字节 0x00000080
+		 * - 0x000007FF 110xxxxx 10xxxxxx 3字节 0x00000800 - 0x0000FFFF 1110xxxx 10xxxxxx
+		 * 10xxxxxx 中日韩文等编码 4字节 0x00010000 - 0x001FFFFF 11110xxx 10xxxxxx 10xxxxxx
+		 * 10xxxxxx 5字节 0x00200000 - 0x03FFFFFF 111110xx 10xxxxxx 10xxxxxx 10xxxxxx
+		 * 10xxxxxx 6字节 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
 		 */
 		if (ch <= 0x7F) {
 			// ANSI码
@@ -156,11 +153,10 @@ public class SimpleUtf8Encoder {
 						throw new UnsupportedEncodingException("辅助平面的代理对未按顺序出现(low)：" + Hex.toHex16((short) ch));
 					}
 					/*
-					 * UTF16对U+10000到U+10FFFF的处理过程，以U+10437编码（𐐷）为例:
-					 * 0x10437 减去 0x10000，结果为0x00437，二进制为 0000 0000 0100 0011 0111
-					 * 分割它的上10位值和下10位值（使用二进制）：0000 0000 01 和 00 0011 0111
-					 * 添加 0xD800 到上值，以形成高位：0xD800 + 0x0001 = 0xD801
-					 * 添加 0xDC00 到下值，以形成低位：0xDC00 + 0x0037 = 0xDC37
+					 * UTF16对U+10000到U+10FFFF的处理过程，以U+10437编码（𐐷）为例: 0x10437 减去
+					 * 0x10000，结果为0x00437，二进制为 0000 0000 0100 0011 0111 分割它的上10位值和下10位值（使用二进制）：0000
+					 * 0000 01 和 00 0011 0111 添加 0xD800 到上值，以形成高位：0xD800 + 0x0001 = 0xD801 添加 0xDC00
+					 * 到下值，以形成低位：0xDC00 + 0x0037 = 0xDC37
 					 */
 					// 先把UTF16转回Unicode
 					int u32 = ((0x3FF & ((~0xD800) & m_HighSurrogateChar)) << 10);

@@ -20,7 +20,8 @@ import cn.weforward.common.execption.Unexpected;
 import cn.weforward.common.util.StringBuilderPool;
 
 /**
- * 用来代替System.currentTimeMillis()获取秒单位以上的时间点（基于性能及时间点总是增长的需求）的生成器<br/>
+ * 用来代替System.currentTimeMillis()获取秒单位以上的时间点（基于性能及时间点总是增长的需求）的生成器
+ * <p>
  * 注：若是按每秒单位生成的时间点在2068年后溢出
  * 
  * @author liangyi
@@ -39,8 +40,7 @@ public class Timepoint {
 	/**
 	 * 取得共享的时间点发生器
 	 * 
-	 * @param unit
-	 *            时间点精度/单位（秒）
+	 * @param unit 时间点精度/单位（秒）
 	 * @return 时间点发生器
 	 */
 	public static Timepoint getInstance(int unit) {
@@ -62,8 +62,7 @@ public class Timepoint {
 	/**
 	 * 构建计时间点发生器
 	 * 
-	 * @param unit
-	 *            时间点单位（秒）
+	 * @param unit 时间点单位（秒）
 	 */
 	public Timepoint(int unit) {
 		m_ClockTick = new Tick(unit);
@@ -72,6 +71,8 @@ public class Timepoint {
 
 	/**
 	 * 时间点
+	 * 
+	 * @return 时间点
 	 */
 	public int getTimepoint() {
 		return m_ClockTick.getTicker();
@@ -79,6 +80,8 @@ public class Timepoint {
 
 	/**
 	 * 时间点单位（秒）
+	 * 
+	 * @return （秒）
 	 */
 	public int getUnit() {
 		return m_ClockTick.getPeriod();
@@ -86,6 +89,8 @@ public class Timepoint {
 
 	/**
 	 * 未对时的步数
+	 * 
+	 * @return 步数
 	 */
 	public int getSteps() {
 		return m_ClockTick.m_Steps;
@@ -109,8 +114,7 @@ public class Timepoint {
 	/**
 	 * 由GMT毫秒时间计算时间点
 	 * 
-	 * @param time
-	 *            相对对GMT1970基准点的毫秒时间
+	 * @param time 相对对GMT1970基准点的毫秒时间
 	 * @return 相应的时间点值（单位秒）
 	 */
 	public int getTimepoint(long time) {
@@ -121,8 +125,7 @@ public class Timepoint {
 	/**
 	 * 取得自1970年1月1日的GMT毫秒时间(Date.getTime())
 	 * 
-	 * @param timepoint
-	 *            时间点
+	 * @param timepoint 时间点
 	 * @return 相对对GMT1970基准点的毫秒时间
 	 */
 	public long getTime(int timepoint) {
@@ -199,10 +202,8 @@ public class Timepoint {
 	/**
 	 * 格式化为紧凑的GMT时区的时间戳，如：20140311T181509000
 	 * 
-	 * @param timestamp
-	 *            时间戳（Date.getTime()）
-	 * @param appender
-	 *            把格式串追加至其
+	 * @param timestamp 时间戳（Date.getTime()）
+	 * @param appender  把格式串追加至其
 	 * @return 格式化输出
 	 */
 	static public final Appendable formatTimestamp(long timestamp, Appendable appender) {

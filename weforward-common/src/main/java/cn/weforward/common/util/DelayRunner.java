@@ -90,8 +90,8 @@ public abstract class DelayRunner<E> implements DestroyableExt {
 	/**
 	 * 子类提供具体的任务执行
 	 * 
-	 * @param task
-	 *            要执行的任务
+	 * @param task 要执行的任务
+	 * @throws Exception 异常时抛出
 	 */
 	protected abstract void execute(E task) throws Exception;
 
@@ -110,8 +110,7 @@ public abstract class DelayRunner<E> implements DestroyableExt {
 	/**
 	 * 执行（批量）任务开始时，供子类覆盖加入事务控制
 	 * 
-	 * @param size
-	 *            这次执行的批量任务数
+	 * @param size 这次执行的批量任务数
 	 */
 	protected void onBegin(int size) {
 	}
@@ -125,10 +124,8 @@ public abstract class DelayRunner<E> implements DestroyableExt {
 	/**
 	 * 执行（批量）任务结束时，供子类覆盖加入事务控制
 	 * 
-	 * @param completes
-	 *            批次完成的任务数
-	 * @param count
-	 *            批次总任务数
+	 * @param completes 批次完成的任务数
+	 * @param count     批次总任务数
 	 */
 	protected void onEnd(int completes, int count) {
 		onEnd();
@@ -145,10 +142,8 @@ public abstract class DelayRunner<E> implements DestroyableExt {
 	/**
 	 * 执行（批量）任务错误/异常时，供子类覆盖加入流程/事务控制
 	 * 
-	 * @param chain
-	 *            执行中的任务链
-	 * @param e
-	 *            出错的异常
+	 * @param chain 执行中的任务链
+	 * @param e     出错的异常
 	 * @return 返回true表示忽略当前出错的任务继续，false表示中止且丢掉链里的所有任务
 	 */
 	protected boolean onFail(SinglyLinked.Node<E> chain, Throwable e) {
@@ -158,6 +153,8 @@ public abstract class DelayRunner<E> implements DestroyableExt {
 
 	/**
 	 * 创建任务链表
+	 * 
+	 * @return 链表
 	 */
 	protected SinglyLinked<E> createTasks() {
 		return new SinglyLinked<E>();
@@ -173,8 +170,7 @@ public abstract class DelayRunner<E> implements DestroyableExt {
 	/**
 	 * 构造
 	 * 
-	 * @param interval
-	 *            两批任务之间的最小执行间隔（秒），若0为则没有间隔
+	 * @param interval 两批任务之间的最小执行间隔（秒），若0为则没有间隔
 	 */
 	public DelayRunner(int interval) {
 		// m_Interval = interval;
@@ -185,10 +181,8 @@ public abstract class DelayRunner<E> implements DestroyableExt {
 	/**
 	 * 构造
 	 * 
-	 * @param name
-	 *            名称
-	 * @param interval
-	 *            两批任务之间的最小执行间隔（秒），若0为则没有间隔
+	 * @param name     名称
+	 * @param interval 两批任务之间的最小执行间隔（秒），若0为则没有间隔
 	 */
 	public DelayRunner(String name, int interval) {
 		m_Name = name;
@@ -199,8 +193,7 @@ public abstract class DelayRunner<E> implements DestroyableExt {
 	/**
 	 * 每次执行任务的最小间隔（秒）
 	 * 
-	 * @param seconds
-	 *            控制最小间隔（秒），若0为则没有控制，有任务马上通知执行
+	 * @param seconds 控制最小间隔（秒），若0为则没有控制，有任务马上通知执行
 	 */
 	public void setInterval(int seconds) {
 		m_Interval = seconds;
@@ -208,6 +201,8 @@ public abstract class DelayRunner<E> implements DestroyableExt {
 
 	/**
 	 * 每次执行任务的最小间隔（秒）
+	 * 
+	 * @return 间隔（秒）
 	 */
 	public int getInterval() {
 		return m_Interval;
@@ -216,8 +211,7 @@ public abstract class DelayRunner<E> implements DestroyableExt {
 	/**
 	 * 延时执行任务的最大累积项数
 	 * 
-	 * @param limit
-	 *            要控制的项数，0表示不控制
+	 * @param limit 要控制的项数，0表示不控制
 	 */
 	public void setMaxSuspend(int limit) {
 		m_MaxSuspend = limit;
@@ -225,6 +219,8 @@ public abstract class DelayRunner<E> implements DestroyableExt {
 
 	/**
 	 * 延时执行任务的最大累积项数
+	 * 
+	 * @return 数据量
 	 */
 	public int getMaxSuspend() {
 		return m_MaxSuspend;
@@ -232,6 +228,8 @@ public abstract class DelayRunner<E> implements DestroyableExt {
 
 	/**
 	 * 已完成任务量
+	 * 
+	 * @return 数据量
 	 */
 	public int getCompletes() {
 		return m_Completes;
@@ -239,6 +237,8 @@ public abstract class DelayRunner<E> implements DestroyableExt {
 
 	/**
 	 * 在执行中的任务量
+	 * 
+	 * @return 数据量
 	 */
 	public int getPending() {
 		return m_Pending;
@@ -246,6 +246,8 @@ public abstract class DelayRunner<E> implements DestroyableExt {
 
 	/**
 	 * 当前任务执行连续失败数
+	 * 
+	 * @return 数据量
 	 */
 	public int getFails() {
 		return m_Fails;
@@ -253,6 +255,8 @@ public abstract class DelayRunner<E> implements DestroyableExt {
 
 	/**
 	 * 总处理任务数据（完成及失败）
+	 * 
+	 * @return 数据量
 	 */
 	public int getTotal() {
 		return m_Total;
@@ -261,8 +265,7 @@ public abstract class DelayRunner<E> implements DestroyableExt {
 	/**
 	 * 把任务提交到队列中
 	 * 
-	 * @param task
-	 *            要提交的任务
+	 * @param task 要提交的任务
 	 * @return 成功则返回true
 	 */
 	public boolean submit(E task) {
@@ -272,10 +275,8 @@ public abstract class DelayRunner<E> implements DestroyableExt {
 	/**
 	 * 把任务提交到队列中
 	 * 
-	 * @param task
-	 *            要提交的任务
-	 * @param absent
-	 *            若为true则不重复的才加入队列
+	 * @param task   要提交的任务
+	 * @param absent 若为true则不重复的才加入队列
 	 * @return 成功则返回true
 	 */
 	public boolean submit(E task, boolean absent) {
@@ -284,6 +285,8 @@ public abstract class DelayRunner<E> implements DestroyableExt {
 
 	/**
 	 * 取得任务（还在等待的）
+	 * 
+	 * @return 任务列表
 	 */
 	public Iterator<E> getQueueTasks() {
 		return new SinglyLinked.LinkedIterator<E>(m_Tasks.getHead());
@@ -291,6 +294,8 @@ public abstract class DelayRunner<E> implements DestroyableExt {
 
 	/**
 	 * 取得正在处理的任务
+	 * 
+	 * @return 任务列表
 	 */
 	public Iterator<E> getPendingTasks() {
 		SinglyLinked.Node<E> node = m_PendingTask;
@@ -305,11 +310,9 @@ public abstract class DelayRunner<E> implements DestroyableExt {
 	/**
 	 * 批量增加到任务列表
 	 * 
-	 * @param it
-	 *            要加入的任务
+	 * @param it 要加入的任务
 	 * @return 总共加入的项数
-	 * @throws OverflowException
-	 *             若要加入的项超过100W则抛出
+	 * @throws OverflowException 若要加入的项超过100W则抛出
 	 */
 	protected int addAll(Iterator<E> it) {
 		int count = m_Tasks.size();
@@ -335,10 +338,8 @@ public abstract class DelayRunner<E> implements DestroyableExt {
 	/**
 	 * 把任务提交到队列中
 	 * 
-	 * @param task
-	 *            要提交的任务
-	 * @param absent
-	 *            若为true则不重复的才加入队列
+	 * @param task   要提交的任务
+	 * @param absent 若为true则不重复的才加入队列
 	 * @return 成功则返回任务项
 	 */
 	public SinglyLinked.Node<E> submitInternal(E task, boolean absent) {
@@ -407,6 +408,8 @@ public abstract class DelayRunner<E> implements DestroyableExt {
 
 	/**
 	 * 任务列表有变化
+	 * 
+	 * @return 是否有变化
 	 */
 	public boolean isQueueChanged() {
 		return STATE_QUEUE_CHANGED == (m_State & STATE_QUEUE_CHANGED);
@@ -415,9 +418,8 @@ public abstract class DelayRunner<E> implements DestroyableExt {
 	/**
 	 * 启动任务线程
 	 * 
-	 * @param delay
-	 *            延迟时间（毫秒）
-	 * @return
+	 * @param delay 延迟时间（毫秒）
+	 * @return 是否启动成功
 	 */
 	private boolean startThread(final int delay) {
 		if (isStop()) {
@@ -450,8 +452,7 @@ public abstract class DelayRunner<E> implements DestroyableExt {
 					}
 				}
 				if (StringUtil.isEmpty(m_Name)) {
-					setName("DR-" + Hex.toHex(DelayRunner.this.hashCode()) + "-"
-							+ Hex.toHex(hashCode()));
+					setName("DR-" + Hex.toHex(DelayRunner.this.hashCode()) + "-" + Hex.toHex(hashCode()));
 				} else {
 					setName("DR-" + m_Name);
 				}
@@ -501,8 +502,7 @@ public abstract class DelayRunner<E> implements DestroyableExt {
 	/**
 	 * 启动执行器
 	 * 
-	 * @param delay
-	 *            延时时间（毫米）
+	 * @param delay 延时时间（毫米）
 	 */
 	public void start(int delay) {
 		m_Lock.lock();
@@ -558,8 +558,7 @@ public abstract class DelayRunner<E> implements DestroyableExt {
 		m_Lock.lock();
 		try {
 			thread = m_Thread;
-			if (!(STATE_CLOSED == (STATE_CLOSED & m_State) || null == thread
-					|| !thread.isAlive())) {
+			if (!(STATE_CLOSED == (STATE_CLOSED & m_State) || null == thread || !thread.isAlive())) {
 				// 发送信号停止任务线程（标明要重启线程）
 				m_State |= (STATE_STOP | STATE_RESTART);
 				m_WaitForTask.signal();
@@ -575,9 +574,8 @@ public abstract class DelayRunner<E> implements DestroyableExt {
 	/**
 	 * 执行任务
 	 * 
-	 * @param task
-	 *            任务（链表节点）
-	 * @throws Exception
+	 * @param task 任务（链表节点）
+	 * @throws Exception 异常时抛出
 	 */
 	protected void execute(SinglyLinked.Node<E> task) throws Exception {
 		execute(task.value);
@@ -782,12 +780,10 @@ public abstract class DelayRunner<E> implements DestroyableExt {
 	}
 
 	public StringBuilder toString(StringBuilder sb) {
-		sb.append("{name:").append(m_Name).append(",state:").append(m_State).append(",queue:")
-				.append(m_Tasks.size()).append(",pending:").append(getPending())
-				.append(",complete:").append(getCompletes()).append(",fails:").append(getFails())
-				.append(",total:").append(getTotal()).append(",interval:").append(m_Interval)
-				.append(",max:").append(m_MaxSuspend).append(",thread:").append(m_Thread)
-				.append("}");
+		sb.append("{name:").append(m_Name).append(",state:").append(m_State).append(",queue:").append(m_Tasks.size())
+				.append(",pending:").append(getPending()).append(",complete:").append(getCompletes()).append(",fails:")
+				.append(getFails()).append(",total:").append(getTotal()).append(",interval:").append(m_Interval)
+				.append(",max:").append(m_MaxSuspend).append(",thread:").append(m_Thread).append("}");
 		return sb;
 	}
 

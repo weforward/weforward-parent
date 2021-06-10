@@ -19,20 +19,23 @@ package cn.weforward.common.json;
 public interface JsonObject extends JsonNode {
 	/**
 	 * 属性项数
+	 * 
+	 * @return 项数
 	 */
 	int size();
 
 	/**
 	 * 对象属性
 	 * 
-	 * @param name
-	 *            属性名
+	 * @param name 属性名
 	 * @return 属性
 	 */
 	JsonPair property(String name);
 
 	/**
 	 * 所有属性
+	 * 
+	 * @return 所有属性
 	 */
 	Iterable<JsonPair> items();
 
@@ -46,10 +49,8 @@ public interface JsonObject extends JsonNode {
 		/**
 		 * 追加属性项
 		 * 
-		 * @param name
-		 *            属性名
-		 * @param value
-		 *            属性值
+		 * @param name  属性名
+		 * @param value 属性值
 		 */
 		void add(String name, Object value);
 	}

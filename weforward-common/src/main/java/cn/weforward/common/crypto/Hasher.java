@@ -115,8 +115,8 @@ public class Hasher {
 	/**
 	 * 64位整数hash算法
 	 * 
-	 * @param str
-	 * @param sign
+	 * @param str  字符串
+	 * @param sign 签名
 	 * @return hash结果
 	 */
 	public static long hashInt64(String str, int sign) {

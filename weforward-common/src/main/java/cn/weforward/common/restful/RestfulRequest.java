@@ -30,21 +30,29 @@ public interface RestfulRequest {
 
 	/**
 	 * 执行动作，如：GET/POST/PUT/DELETE/HEAD...
+	 * 
+	 * @return 执行动作
 	 */
 	String getVerb();
 
 	/**
 	 * 资源路径，如：/order，/order/payment
+	 * 
+	 * @return 资源路径
 	 */
 	String getUri();
 
 	/**
 	 * 附加参数
+	 * 
+	 * @return 附加参数
 	 */
 	DictionaryExt<String, String> getParams();
 
 	/**
 	 * 头信息（元数据）
+	 * 
+	 * @return 头信息（元数据）
 	 */
 	DictionaryExt<String, String> getHeaders();
 
@@ -52,11 +60,14 @@ public interface RestfulRequest {
 	 * 取得调用请求的内容
 	 * 
 	 * @return 输入流形式的内容
+	 * @throws IOException IO异常时抛出
 	 */
 	InputStream getContent() throws IOException;
 
 	/**
 	 * 调用者IP
+	 * 
+	 * @return IP
 	 */
 	String getClientIp();
 }

@@ -32,10 +32,8 @@ public class StackTracer {
 	/**
 	 * 简化方式打印指定线程的调用堆栈
 	 * 
-	 * @param thread
-	 *            要dump的线程，若null则为当前线程
-	 * @param builder
-	 *            要输出的Appendable
+	 * @param thread  要dump的线程，若null则为当前线程
+	 * @param builder 要输出的Appendable
 	 * @return 打印后的Appendable
 	 */
 	public static final Appendable printStackTrace(Thread thread, Appendable builder) {
@@ -55,10 +53,8 @@ public class StackTracer {
 	/**
 	 * 简化方式打印指定异常的调用堆栈
 	 * 
-	 * @param e
-	 *            要dump的异常
-	 * @param builder
-	 *            要输出的Appendable
+	 * @param e       要dump的异常
+	 * @param builder 要输出的Appendable
 	 * @return 打印后的Appendable
 	 */
 	public static final Appendable printStackTrace(Throwable e, Appendable builder) {
@@ -115,18 +111,14 @@ public class StackTracer {
 	/**
 	 * 把堆栈输出到StringBuilder
 	 * 
-	 * @param stacks
-	 *            要输出的堆栈表
-	 * @param offset
-	 *            开始层（下标）
-	 * @param limit
-	 *            限制到层（下标）
-	 * @param appender
-	 *            把堆栈表输出到其后（可null）
+	 * @param stacks   要输出的堆栈表
+	 * @param offset   开始层（下标）
+	 * @param limit    限制到层（下标）
+	 * @param appender 把堆栈表输出到其后（可null）
 	 * @return 输出堆栈表后的Appendable
 	 */
-	private static final Appendable printStackTrace(StackTraceElement[] stacks, int offset,
-			int limit, Appendable appender) throws IOException {
+	private static final Appendable printStackTrace(StackTraceElement[] stacks, int offset, int limit,
+			Appendable appender) throws IOException {
 		String jarLast = null;
 		if (limit <= 0 || limit > stacks.length) {
 			limit = stacks.length;
@@ -174,8 +166,7 @@ public class StackTracer {
 	/**
 	 * 取得指定类所在.jar中MANIFEST.MF标示的版本号
 	 * 
-	 * @param className
-	 *            类名
+	 * @param className 类名
 	 * @return 所在JAR的版本号
 	 */
 	public static final String getJarVersion(String className) {
@@ -205,9 +196,9 @@ public class StackTracer {
 	/**
 	 * 取得指定类所在.jar中MANIFEST.MF标示的版本号
 	 * 
-	 * @param clazz
-	 *            类
+	 * @param clazz 类
 	 * @return 所在JAR的版本号
+	 * @throws IOException IO异常时抛出
 	 */
 	public static final String getJarVersion(Class<?> clazz) throws IOException {
 		String className = clazz.getName();
@@ -341,9 +332,9 @@ public class StackTracer {
 	/**
 	 * URL编码解码
 	 * 
-	 * @param url
-	 *            URL串
+	 * @param url URL串
 	 * @return 解码后的字串
+	 * @throws UnsupportedEncodingException 不支持的编码时抛出
 	 */
 	public static String decodeUrl(String url) throws UnsupportedEncodingException {
 		if (null == url || 0 == url.length()) {

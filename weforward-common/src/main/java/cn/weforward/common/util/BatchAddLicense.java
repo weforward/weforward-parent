@@ -14,7 +14,6 @@ import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,10 +31,9 @@ public class BatchAddLicense {
 	 * 入口
 	 * 
 	 * @param args 传入项目路径，如里没有就用user.dir
-	 * @throws FileNotFoundException
-	 * @throws IOException
+	 * @throws IOException IO异常时抛出
 	 */
-	public static void main(String[] args) throws FileNotFoundException, IOException {
+	public static void main(String[] args) throws IOException {
 		String dir;
 		if (null != args && args.length > 0) {
 			dir = args[0];

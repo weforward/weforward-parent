@@ -22,9 +22,9 @@ public interface RestfulAuthorizer {
 	/**
 	 * 对请求进行验证
 	 * 
-	 * @param request
-	 *            调用请求
+	 * @param request 调用请求
 	 * @return 返回null为验证不通过，通过则返回相应的访问标识（access id）
+	 * @throws IOException IO异常时抛出
 	 */
 	String auth(RestfulRequest request) throws IOException;
 }

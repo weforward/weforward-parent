@@ -287,7 +287,7 @@ public class AntPathPattern {
 	/**
 	 * 判断传入的<code>path</code>是否匹配
 	 * 
-	 * @param path
+	 * @param path 路径
 	 * @return 是否匹配
 	 */
 	public boolean match(String path) {
@@ -297,7 +297,7 @@ public class AntPathPattern {
 	/**
 	 * 判断传入的<code>path</code>是否符合前缀匹配
 	 * 
-	 * @param path
+	 * @param path 路径
 	 * @return 是否匹配
 	 */
 	public boolean matchStart(String path) {

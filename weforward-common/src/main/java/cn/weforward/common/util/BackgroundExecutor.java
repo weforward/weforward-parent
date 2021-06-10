@@ -68,8 +68,7 @@ public class BackgroundExecutor implements TaskExecutor, DestroyableExt {
 	/**
 	 * 指定上层执行器来构建
 	 * 
-	 * @param executor
-	 *            上层执行器
+	 * @param executor 上层执行器
 	 */
 	public BackgroundExecutor(Executor executor) {
 		m_Mark = new ThreadLocal<Object>();
@@ -86,10 +85,8 @@ public class BackgroundExecutor implements TaskExecutor, DestroyableExt {
 	/**
 	 * 创建执行器
 	 * 
-	 * @param maxThreads
-	 *            最大线程数
-	 * @param name
-	 *            名称
+	 * @param maxThreads 最大线程数
+	 * @param name       名称
 	 */
 	public BackgroundExecutor(int maxThreads, String name) {
 		this(new ThreadPool(maxThreads, name));
@@ -102,17 +99,14 @@ public class BackgroundExecutor implements TaskExecutor, DestroyableExt {
 	/**
 	 * 构造执行器
 	 * 
-	 * @param minThreads
-	 *            最小维持/核心线程数
-	 * @param maxThreads
-	 *            最大线程数
-	 * @param queueSize
-	 *            最大任务等待队列
+	 * @param minThreads 最小维持/核心线程数
+	 * @param maxThreads 最大线程数
+	 * @param queueSize  最大任务等待队列
 	 */
 	public BackgroundExecutor(int minThreads, int maxThreads, int queueSize) {
 		this(null);
-		ThreadPoolExecutor threadPool = new ThreadPoolExecutor(minThreads, maxThreads, 2,
-				TimeUnit.MINUTES, new ArrayBlockingQueue<Runnable>(queueSize), new ThreadFactory() {
+		ThreadPoolExecutor threadPool = new ThreadPoolExecutor(minThreads, maxThreads, 2, TimeUnit.MINUTES,
+				new ArrayBlockingQueue<Runnable>(queueSize), new ThreadFactory() {
 					@Override
 					public Thread newThread(Runnable r) {
 						String name = getName();
@@ -161,8 +155,7 @@ public class BackgroundExecutor implements TaskExecutor, DestroyableExt {
 	/**
 	 * 指定一个名称方便标识，没业务用途
 	 * 
-	 * @param name
-	 *            名称
+	 * @param name 名称
 	 */
 	public void setName(String name) {
 		m_Name = name;
@@ -191,9 +184,8 @@ public class BackgroundExecutor implements TaskExecutor, DestroyableExt {
 		sb.append(",tasks:").append(m_Tasks.size());
 		if (m_Executor instanceof ExecutorService) {
 			ThreadPoolExecutor tpe = (ThreadPoolExecutor) m_Executor;
-			sb.append(",core:").append(tpe.getCorePoolSize()).append(",max:")
-					.append(tpe.getMaximumPoolSize()).append(",active:")
-					.append(tpe.getActiveCount()).append(",done:")
+			sb.append(",core:").append(tpe.getCorePoolSize()).append(",max:").append(tpe.getMaximumPoolSize())
+					.append(",active:").append(tpe.getActiveCount()).append(",done:")
 					.append(tpe.getCompletedTaskCount());
 		} else {
 			sb.append(",pool:").append(m_Executor);
@@ -213,14 +205,10 @@ public class BackgroundExecutor implements TaskExecutor, DestroyableExt {
 	/**
 	 * 增加一个后台任务
 	 * 
-	 * @param worker
-	 *            要执行的任务
-	 * @param options
-	 *            选项 CONDITION_*|EVENT_*
-	 * @param delay
-	 *            任务在（毫秒后）执行
-	 * @param period
-	 *            任务按（毫秒）周期地执行
+	 * @param worker  要执行的任务
+	 * @param options 选项 CONDITION_*|EVENT_*
+	 * @param delay   任务在（毫秒后）执行
+	 * @param period  任务按（毫秒）周期地执行
 	 */
 	synchronized public Task execute(Runnable worker, int options, long delay, long period) {
 		if (isShutdown()) {
@@ -280,12 +268,9 @@ public class BackgroundExecutor implements TaskExecutor, DestroyableExt {
 	/**
 	 * 增加一个后台任务
 	 * 
-	 * @param worker
-	 *            要执行的任务
-	 * @param options
-	 *            选项 CONDITION_*|EVENT_*
-	 * @param delay
-	 *            任务在（毫秒后）执行
+	 * @param worker  要执行的任务
+	 * @param options 选项 CONDITION_*|EVENT_*
+	 * @param delay   任务在（毫秒后）执行
 	 */
 	public Task execute(Runnable worker, int options, long delay) {
 		return execute(worker, options, delay, 0);
@@ -294,10 +279,8 @@ public class BackgroundExecutor implements TaskExecutor, DestroyableExt {
 	/**
 	 * 增加一个后台任务
 	 * 
-	 * @param worker
-	 *            要执行的任务
-	 * @param options
-	 *            选项 CONDITION_*|EVENT_*
+	 * @param worker  要执行的任务
+	 * @param options 选项 CONDITION_*|EVENT_*
 	 */
 	public Task execute(Runnable worker, int options) {
 		return execute(worker, options, 0, 0);
@@ -315,7 +298,7 @@ public class BackgroundExecutor implements TaskExecutor, DestroyableExt {
 	/**
 	 * 使用线程池来运行后台任务
 	 * 
-	 * @param runnable
+	 * @param runnable 可执行线程
 	 */
 	public void execute(Runnable runnable) {
 		if (isShutdown()) {
@@ -332,8 +315,7 @@ public class BackgroundExecutor implements TaskExecutor, DestroyableExt {
 	/**
 	 * 运行指定事件下的任务
 	 * 
-	 * @param event
-	 *            事件 EVENT_*
+	 * @param event 事件 EVENT_*
 	 * 
 	 */
 	public void runTasksAtEvent(int event) {
@@ -349,6 +331,8 @@ public class BackgroundExecutor implements TaskExecutor, DestroyableExt {
 
 	/**
 	 * 是否已经关停
+	 * 
+	 * @return 是否已经关停
 	 */
 	public boolean isShutdown() {
 		return _Dead == m_Timer;
@@ -405,8 +389,7 @@ public class BackgroundExecutor implements TaskExecutor, DestroyableExt {
 	/**
 	 * 检查指定的条件或事件是否都具备
 	 * 
-	 * @param options
-	 *            选项CONDITION_*或EVENT_*
+	 * @param options 选项CONDITION_*或EVENT_*
 	 * @return 具备则返回true
 	 */
 	public boolean isReady(int options) {
@@ -544,8 +527,7 @@ public class BackgroundExecutor implements TaskExecutor, DestroyableExt {
 		/**
 		 * 是否有指定选项
 		 * 
-		 * @param option
-		 *            选项CONDITION_*或EVENT_*
+		 * @param option 选项CONDITION_*或EVENT_*
 		 * @return 有则返回true
 		 */
 		public boolean isOption(int option) {
@@ -609,6 +591,8 @@ public class BackgroundExecutor implements TaskExecutor, DestroyableExt {
 
 		/**
 		 * 是否继续执行（状态不是结束或取消且执行器未关闭的）
+		 * 
+		 * @return 是否继续执行
 		 */
 		public boolean isContinue() {
 			return 0 == ((STATE_FINISH | STATE_CANCEL) & m_State) && !isShutdown();
@@ -623,6 +607,8 @@ public class BackgroundExecutor implements TaskExecutor, DestroyableExt {
 
 		/**
 		 * 只运行一次的任务
+		 * 
+		 * @return 是否只运行一次的任务
 		 */
 		public boolean isOnce() {
 			return (STATE_ONCE == (m_State & STATE_ONCE));
@@ -631,8 +617,7 @@ public class BackgroundExecutor implements TaskExecutor, DestroyableExt {
 		@Override
 		public String toString() {
 			StringBuilder sb = new StringBuilder(160);
-			sb.append("{worker:").append(m_Worker).append(",fre:").append(m_Frequency)
-					.append(",last:");
+			sb.append("{worker:").append(m_Worker).append(",fre:").append(m_Frequency).append(",last:");
 			Timepoint.formatTimestamp(m_LastFinish, sb);
 			sb.append(",ops:").append(m_Options).append(",state:").append(m_State).append(",pool:");
 			BackgroundExecutor.this.toString(sb);

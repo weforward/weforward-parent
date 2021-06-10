@@ -27,16 +27,16 @@ public abstract class TransResultPage<T, S> implements ResultPage<T> {
 	final protected ResultPage<S> m_Reference;
 
 	/**
-	 * 由ResultPage<S>构造
+	 * 由ResultPage构造
 	 * 
-	 * @param rp
+	 * @param rp 分页结果源对象
 	 */
 	public TransResultPage(ResultPage<S> rp) {
 		m_Reference = rp;
 	}
 
 	/**
-	 * 子类实现此抽象方法提供S->T的封装功能
+	 * 子类实现此抽象方法提供S-&gt;T的封装功能
 	 * 
 	 * @param src 源条目
 	 * @return 目标条目

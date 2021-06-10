@@ -42,17 +42,15 @@ public abstract class AbstractResultPage<E> implements ResultPage<E> {
 	/**
 	 * 由下标取得对象（需要子类实现）
 	 * 
-	 * @param idx
-	 *            在结果中的第N项（0~getCount()-1）
+	 * @param idx 在结果中的第N项（0~getCount()-1）
 	 * @return 结果项
 	 */
 	protected abstract E get(int idx);
 
 	/**
-	 * 若nextCount>=在每次next时调用其，且直至返回flase
+	 * 若nextCount&gt;=在每次next时调用其，且直至返回flase
 	 * 
-	 * @param nextCount
-	 *            最新next调用次数
+	 * @param nextCount 最新next调用次数
 	 * @return 返回true则保持每次调用，返回false则结束不再调用
 	 */
 	protected boolean onCountNext(int nextCount) {
@@ -107,8 +105,7 @@ public abstract class AbstractResultPage<E> implements ResultPage<E> {
 	/**
 	 * 检查是否超出页的最大项数
 	 * 
-	 * @param size
-	 *            每页项数
+	 * @param size 每页项数
 	 */
 	protected void checkPageSize(int size) {
 		// 子类重载
@@ -188,7 +185,7 @@ public abstract class AbstractResultPage<E> implements ResultPage<E> {
 
 	@Override
 	public String toString() {
-		return "{c:" + getCount() + ",ps:" + m_PageSize + ",pc:" + m_PageCount + ",p:"
-				+ m_CurrentPage + ",idx:" + m_CurrentPos + "}";
+		return "{c:" + getCount() + ",ps:" + m_PageSize + ",pc:" + m_PageCount + ",p:" + m_CurrentPage + ",idx:"
+				+ m_CurrentPos + "}";
 	}
 }
