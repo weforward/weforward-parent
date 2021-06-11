@@ -12,6 +12,7 @@ package cn.weforward.common.util;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.nio.charset.Charset;
 
 import cn.weforward.common.crypto.Base64;
 
@@ -28,6 +29,8 @@ public class StringUtil {
 	public static final String UNICODE_REPLACEMENT_STRING = String.valueOf(UNICODE_REPLACEMENT_CHAR);
 	/** 0项的字串数组 */
 	public static final String[] _nilStrings = new String[0];
+
+	public static final Charset UTF8 = Charset.forName("UTF-8");
 
 	/**
 	 * 是否空字串（null或length为0）

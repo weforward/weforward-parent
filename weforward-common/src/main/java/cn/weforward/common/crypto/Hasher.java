@@ -10,6 +10,13 @@
  */
 package cn.weforward.common.crypto;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+
+import cn.weforward.common.execption.UnsupportedException;
+import cn.weforward.common.util.RingBuffer;
+import cn.weforward.common.util.StringUtil;
+
 /**
  * 散列计算工具类
  * 
@@ -17,6 +24,26 @@ package cn.weforward.common.crypto;
  *
  */
 public class Hasher {
+	/** MD5摘要计算器池 */
+	public static final RingBuffer<MessageDigest> _md5Pool = new RingBuffer<MessageDigest>(64) {
+		@Override
+		protected MessageDigest onEmpty() {
+			try {
+				return java.security.MessageDigest.getInstance("MD5");
+			} catch (NoSuchAlgorithmException e) {
+				throw new UnsupportedException(e);
+			}
+		}
+
+		@Override
+		public boolean offer(MessageDigest item) {
+			if (null == item) {
+				return false;
+			}
+			item.reset();
+			return super.offer(item);
+		}
+	};
 
 	/**
 	 * java String 的散列计算
@@ -130,4 +157,20 @@ public class Hasher {
 		return hash;
 	}
 
+	/**
+	 * 计算UTF-8字符串的MD5摘要
+	 * 
+	 * @param content
+	 * @return 十六进制格式串
+	 */
+	public static String md5(String content) {
+		byte[] bytes = content.getBytes(StringUtil.UTF8);
+		MessageDigest md = _md5Pool.poll();
+		try {
+			md.update(bytes);
+			return Hex.encode(md.digest());
+		} finally {
+			_md5Pool.offer(md);
+		}
+	}
 }
