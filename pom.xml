@@ -226,7 +226,7 @@
 					<plugin>
 						<groupId>cn.weforward</groupId>
 						<artifactId>build-maven-plugin</artifactId>
-						<version>1.1.4</version>
+						<version>1.2.0</version>
 						<configuration>
 							<mainVersion>1.2</mainVersion>
 						</configuration>
