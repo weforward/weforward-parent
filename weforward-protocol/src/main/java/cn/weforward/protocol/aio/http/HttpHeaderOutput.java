@@ -15,6 +15,7 @@ import java.net.HttpURLConnection;
 import java.util.Map;
 
 import cn.weforward.protocol.aio.ClientContext;
+import cn.weforward.protocol.aio.ServerContext;
 
 /**
  * 用于输出http头
@@ -28,9 +29,9 @@ public interface HttpHeaderOutput {
 
 	class HttpContextOutput implements HttpHeaderOutput {
 
-		HttpContext m_Ctx;
+		ServerContext m_Ctx;
 
-		public HttpContextOutput(HttpContext context) {
+		public HttpContextOutput(ServerContext context) {
 			m_Ctx = context;
 		}
 
