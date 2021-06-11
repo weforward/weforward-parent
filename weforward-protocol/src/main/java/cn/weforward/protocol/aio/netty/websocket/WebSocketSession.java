@@ -20,9 +20,11 @@ import cn.weforward.common.DictionaryExt;
 import cn.weforward.common.util.NumberUtil;
 import cn.weforward.common.util.StringBuilderPool;
 import cn.weforward.common.util.StringUtil;
+import cn.weforward.protocol.aio.ClientChannel;
 import cn.weforward.protocol.aio.ClientContext;
 import cn.weforward.protocol.aio.ClientHandler;
 import cn.weforward.protocol.aio.Headers;
+import cn.weforward.protocol.aio.ServerBackwardChannel;
 import cn.weforward.protocol.aio.ServerContext;
 import cn.weforward.protocol.aio.ServerHandler;
 import cn.weforward.protocol.aio.http.HttpConstants;
@@ -345,7 +347,7 @@ public class WebSocketSession {
 	/**
 	 * 对ServerContext支持
 	 */
-	class ServerSide extends ResponseChecker implements ServerContext, Runnable {
+	class ServerSide extends ResponseChecker implements ServerContext, ServerBackwardChannel, Runnable {
 		String m_Uri;
 		String m_QueryString;
 		DictionaryExt<String, String> m_Params;
@@ -489,6 +491,11 @@ public class WebSocketSession {
 		@Override
 		protected void onTimeout() {
 			m_ServerHandler.responseTimeout();
+		}
+
+		@Override
+		public ClientChannel getClientChannel() {
+			return m_Websocket;
 		}
 	}
 
